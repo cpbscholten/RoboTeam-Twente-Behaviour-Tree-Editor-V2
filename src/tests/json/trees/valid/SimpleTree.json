@@ -1,0 +1,17 @@
+{
+  "name": "SimpleTree",
+  "data": {
+    "trees": [
+      {
+        "title": "SimpleTree",
+        "root": "1",
+        "nodes": {
+          "1": {
+            "id": "1",
+            "title": "Sequence"
+          }
+        }
+      }
+    ]
+  }
+}
