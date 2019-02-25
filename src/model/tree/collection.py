@@ -39,24 +39,23 @@ class Collection:
         collection = {}
         # find the current directories in the main json folder and create dict for each
         # skip branch checking in coverage as the loop will only be executed once
-        for root, dirs, files in os.walk(path):     # pragma: no branch
-            for dir in dirs:
-                collection[dir] = {}
+        for root, dirs, _ in os.walk(path):     # pragma: no branch
+            for directory in dirs:
+                collection[directory] = {}
                 # for each directory make a tree object of each json file inside the folder
                 # add the object to the dict of that folder
-                # todo better naming
                 # skip branch checking in coverage as the loop will only be executed once
-                for root1, dirs1, files1 in os.walk(root + dir):    # pragma: no branch
-                    for file1 in files1:
+                for sub_root, _, files in os.walk(root + directory):    # pragma: no branch
+                    for file in files:
                         # skip hidden files
-                        if file1[0] == '.':
+                        if file[0] == '.':
                             continue
                         # only parse json files
-                        elif file1.endswith('.json'):
+                        elif file.endswith('.json'):
                             try:
-                                json_file: Dict[str, Any] = read_json(os.path.join(root1, file1))
+                                json_file: Dict[str, Any] = read_json(os.path.join(sub_root, file))
                                 tree: Tree = Tree.from_json(json_file)
-                                collection[dir][file1] = tree
+                                collection[directory][file] = tree
                             # skip incorrect json files
                             except InvalidTreeException:
                                 # TODO better error handling and logging
@@ -73,41 +72,41 @@ class Collection:
         # make a copy of the current collection
         collection = dict(self.collection)
         # read each nested dictionary and write each file in that directory
-        for dir, files in collection.items():
+        for directory, files in collection.items():
             # create directories if it does not exist
-            if not os.path.isdir(path + dir):
-                os.makedirs(path + dir)
+            if not os.path.isdir(path + directory):
+                os.makedirs(path + directory)
             for name, content in files.items():
-                write_json(os.path.join(path + dir, name), Tree.create_json(content))
+                write_json(os.path.join(path + directory, name), Tree.create_json(content))
 
-    def add_tree(self, dir: str, name: str, tree: Tree):
+    def add_tree(self, directory: str, name: str, tree: Tree):
         """
         Adds a tree to a directory in the collection
-        :param dir: the directory the tree needs to be in
+        :param directory: the directory the tree needs to be in
         :param name: the name of the file
         :param tree: the tree object
         """
-        if dir in self.collection.keys():
-            self.collection[dir][name] = tree
+        if directory in self.collection.keys():
+            self.collection[directory][name] = tree
         else:
-            self.collection[dir] = {name: tree}
+            self.collection[directory] = {name: tree}
 
-    def remove_tree(self, dir: str, filename: str):
+    def remove_tree(self, directory: str, filename: str):
         """
         Removes a tree from the collection from the requested directory
-        :param dir: the directory of the tree
+        :param directory: the directory of the tree
         :param filename: the name of the tree file
         :raises TreeNotFoundException if the requested tree does not exist
         """
-        if not (dir in self.collection.keys() and filename in self.collection[dir].keys()):
+        if not (directory in self.collection.keys() and filename in self.collection[directory].keys()):
             raise TreeNotFoundException
-        self.collection[dir].pop(filename)
+        self.collection[directory].pop(filename)
 
-    def remove_tree_by_name(self, dir: str, name: str):
-        if dir in self.collection.keys():
-            for key, value in self.collection[dir].items():
+    def remove_tree_by_name(self, directory: str, name: str):
+        if directory in self.collection.keys():
+            for key, value in self.collection[directory].items():
                 if value.name == name:
-                    self.remove_tree(dir, key)
+                    self.remove_tree(directory, key)
                     return
         raise TreeNotFoundException
 

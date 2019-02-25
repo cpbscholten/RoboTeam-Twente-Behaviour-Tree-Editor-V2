@@ -27,23 +27,23 @@ class Tree:
                     or when required attributes have the wrong type
         """
         # TODO cleanup
-        if 'name' in file and type(file['name']) == str \
-                and 'data' in file and type(file['data']) == dict:
-            data = file['data']
-            if 'trees' in data and type(data['trees']) == list:
-                trees: List[Any] = data['trees']
+        if 'name' in file and type(file.get('name')) == str \
+                and 'data' in file and type(file.get('data')) == dict:
+            data = file.get('data')
+            if 'trees' in data and type(data.get('trees')) == list:
+                trees: List[Any] = data.get('trees')
                 if len(trees) == 1 and type(trees[0]) == dict:
                     tree: Dict[str, Any] = trees[0]
-                    if 'root' in tree and type(tree['root']) == str \
-                            and 'title' in tree and type(tree['title']) == str \
-                            and 'nodes' in tree and type(tree['nodes']) == dict \
-                            and len(tree['nodes']) > 0:
+                    if 'root' in tree and type(tree.get('root')) == str \
+                            and 'title' in tree and type(tree.get('title')) == str \
+                            and 'nodes' in tree and type(tree.get('nodes')) == dict \
+                            and len(tree.get('nodes')) > 0:
                         # create node objects for each node and add them to a dict
                         nodes: Dict[str, Any] = {}
                         for key, value in tree.get('nodes').items():
                             nodes[key] = Node.from_json(value)
                         # create the new tree object
-                        return cls(file['name'], tree['root'], nodes)
+                        return cls(file.get('name'), tree.get('root'), nodes)
         # TODO more elaborate error logging
         raise InvalidTreeException
 
@@ -65,16 +65,16 @@ class Tree:
             raise NodeNotFoundException
         self.nodes.pop(node.id)
 
-    def remove_node_by_id(self, id: str):
+    def remove_node_by_id(self, node_id: str):
         """
         Removes a node from the tree by id
-        :param id: The id of the node to remove
+        :param node_id: The id of the node to remove
         :raises NodeNotFoundException: if the tree does not have a node with this id
         """
-        if id not in self.nodes.keys():
+        if node_id not in self.nodes.keys():
             # TODO more elaborate error logging
             raise NodeNotFoundException
-        self.nodes.pop(id)
+        self.nodes.pop(node_id)
 
     def create_json(self) -> Dict[str, Any]:
         """

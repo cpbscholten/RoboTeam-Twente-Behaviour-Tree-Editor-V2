@@ -5,15 +5,15 @@ from typing import Dict, List, Any
 
 
 class Node:
-    def __init__(self, id: str, title: str, attributes: Dict[str, Any] = None, children: List[str] = None):
+    def __init__(self, node_id: str, title: str, attributes: Dict[str, Any] = None, children: List[str] = None):
         """
         Constructor for a Node object
-        :param id: a unique identification string
+        :param node_id: a unique identification string
         :param title: The name of the node
         :param attributes: other attributes with values the nodes has in a dict
         :param children: The id's of the node as children
         """
-        self.id: str = id
+        self.id: str = node_id
         self.title: str = title
         # if statements and list/dict copies because because of mutability
         self.attributes: Dict[str, Any] = dict(attributes) if attributes is not None else {}
@@ -30,32 +30,32 @@ class Node:
         """
         attributes = node.copy()
         attributes.pop('children', None)
-        if not ('id' in attributes and type(attributes['id']) == str
-                and 'title' in attributes and type(attributes['title']) == str) \
-                or ('children' in attributes and not type(attributes['children']) == list):
+        if not ('id' in attributes and type(attributes.get('id')) == str
+                and 'title' in attributes and type(attributes.get('title')) == str) \
+                or ('children' in attributes and not type(attributes.get('children')) == list):
             # TODO more elaborate error logging
             raise InvalidTreeException
         attributes.pop('id')
         attributes.pop('title')
-        return cls(node['id'], node['title'], attributes, node.get('children'))
+        return cls(node.get('id'), node.get('title'), attributes, node.get('children'))
 
-    def add_child(self, id: str):
+    def add_child(self, node_id: str):
         """
         Adds a child to a node
-        :param id: the id of the child
+        :param node_id: the id of the child
         """
-        self.children.append(id)
+        self.children.append(node_id)
 
-    def remove_child(self, id: str):
+    def remove_child(self, node_id: str):
         """
         Removes a child from the node
-        :param id: the id of the child
+        :param node_id: the id of the child
         :raises ChildNotFoundException: when the node does not have this child
         """
-        if id not in self.children:
+        if node_id not in self.children:
             # TODO more elaborate error logging
             raise ChildNotFoundException
-        self.children.remove(id)
+        self.children.remove(node_id)
 
     def add_attribute(self, key: str, value: Any):
         """

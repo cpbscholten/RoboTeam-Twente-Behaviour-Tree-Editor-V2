@@ -3,8 +3,9 @@ from model.tree.collection import Collection
 from model.tree.node import Node
 from model.tree.tree import Tree
 from typing import Dict
-from controller.utils.json_utils import read_json, write_json
+from controller.utils.json_utils import read_json
 import pytest
+
 
 class TestCollection(object):
     path = "json/collection/"
@@ -20,7 +21,7 @@ class TestCollection(object):
     def test_from_path(self):
         collection = Collection.from_path(self.path)
         # collection should not contain the invalid roles/InvalidRole.json
-        assert 'InvalidRole' not in collection.collection['roles'].keys()
+        assert 'InvalidRole' not in collection.collection.get('roles').keys()
         assert Collection(self.collection) == collection
 
     def test_build_collection(self):
@@ -28,9 +29,9 @@ class TestCollection(object):
         collection.build_collection(self.path)
         assert Collection(self.collection) == collection
         # check if hidden file is not added to collection
-        assert '.hiddenTree' not in collection.collection['roles']
+        assert '.hiddenTree.json' not in collection.collection.get('roles')
         # check if file with wrong file extension is not added
-        assert 'TreeWithoutJsonFileExtension' not in collection.collection['roles']
+        assert 'TreeWithoutJsonFileExtension' not in collection.collection.get('roles')
 
     def test_write_collection(self, tmpdir):
         collection = Collection.from_path(self.path)
@@ -55,18 +56,18 @@ class TestCollection(object):
         collection = Collection.from_path(self.path)
         tree = Tree("name", "1", {"1": Node("1", "node")})
         collection.add_tree("keeper", "tree.json", tree)
-        assert "tree.json" in collection.collection['keeper']
+        assert "tree.json" in collection.collection.get('keeper')
 
     def test_add_tree_folder_not_exists(self):
         collection = Collection.from_path(self.path)
         tree = Tree("name", "1", {"1": Node("1", "node")})
         collection.add_tree("test", "tree.json", tree)
-        assert "tree.json" in collection.collection['test']
+        assert "tree.json" in collection.collection.get('test')
 
     def test_remove_tree_exists(self):
         collection = Collection.from_path(self.path)
         collection.remove_tree("roles", "Assister.json")
-        assert "Assister.json" not in collection.collection['roles']
+        assert "Assister.json" not in collection.collection.get('roles')
 
     def test_remove_tree_not_exists(self):
         collection = Collection.from_path(self.path)
@@ -76,8 +77,7 @@ class TestCollection(object):
     def test_remove_tree_by_name_exists(self):
         collection = Collection.from_path(self.path)
         collection.remove_tree_by_name('roles', "Assister")
-        print(collection.collection['roles'])
-        assert "Assister.json" not in collection.collection['roles']
+        assert "Assister.json" not in collection.collection.get('roles')
 
     def test_remove_tree_by_name_dir_not_exists(self):
         collection = Collection.from_path(self.path)
