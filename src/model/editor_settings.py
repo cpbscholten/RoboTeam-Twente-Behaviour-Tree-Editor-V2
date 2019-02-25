@@ -1,7 +1,7 @@
 from controller.utils.json_utils import *
 import logging
 
-settings = read_json('settings.json')
+settings = read_json('config/settings.json')
 logger = logging.getLogger("main")
 
 

@@ -4,11 +4,13 @@ from model.exceptions.TreeNotFoundException import TreeNotFoundException
 from model.exceptions.InvalidTreeException import InvalidTreeException
 from model.tree.tree import Tree
 from controller.utils.json_utils import read_json, write_json
+from model.editor_settings import query_setting
 
 import os
+import logging
 
-# TODO: Read path from config
-DEF_PATH = "/home/christian/PycharmProjects/roboteam_ai-development/roboteam_ai/src/jsons/"
+# DEF_PATH = "/home/christian/PycharmProjects/roboteam_ai-development/roboteam_ai/src/jsons/"
+DEF_PATH = query_setting("default_json_folder", "collection")
 
 
 class Collection:
@@ -58,7 +60,8 @@ class Collection:
                                 collection[directory][file] = tree
                             # skip incorrect json files
                             except InvalidTreeException:
-                                # TODO better error handling and logging
+                                # TODO better error handling and more information in log
+
                                 continue
                     break
             break

@@ -6,6 +6,3 @@ logging.basicConfig(level=logging.ERROR,
                     datefmt='%m-%d %H:%M',
                     filename=query_setting("logfile_name", "main"),
                     filemode='w')
-
-query_setting("poop", "main")
-alter_setting("logfile_folder", "test", "main")
