@@ -5,10 +5,10 @@ from typing import Dict, List, Any
 
 import logging
 
-logger = logging.getLogger("tree")
-
 
 class Tree:
+    logger = logging.getLogger("tree")
+
     def __init__(self, name: str, root: str, nodes: Dict[str, Node] = None):
         """
         Constructor of the Tree object
@@ -49,7 +49,7 @@ class Tree:
                         # create the new tree object
                         return cls(file.get('name'), tree.get('root'), nodes)
         # TODO more elaborate error logging
-        logger.error("Attempted to process invalid tree.")
+        Node.logger.error("Attempted to process invalid tree.")
         raise InvalidTreeException
 
     def add_node(self, node: Node):
@@ -67,7 +67,7 @@ class Tree:
         """
         if node not in self.nodes.values():
             # TODO more elaborate error logging
-            logger.error("Attempted to remove non-existent node () from tree ()".format(node.id, self.name))
+            Node.logger.error("Attempted to remove non-existent node () from tree ()".format(node.id, self.name))
             raise NodeNotFoundException
         self.nodes.pop(node.id)
 
@@ -79,7 +79,7 @@ class Tree:
         """
         if node_id not in self.nodes.keys():
             # TODO more elaborate error logging
-            logger.error("Attempted to remove non-existent node () from tree ()".format(node_id, self.name))
+            Node.logger.error("Attempted to remove non-existent node () from tree ()".format(node_id, self.name))
             raise NodeNotFoundException
         self.nodes.pop(node_id)
 

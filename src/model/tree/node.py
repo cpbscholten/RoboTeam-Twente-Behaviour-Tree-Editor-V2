@@ -5,10 +5,10 @@ from typing import Dict, List, Any
 
 import logging
 
-logger = logging.getLogger("node")
-
 
 class Node:
+    logger = logging.getLogger("node")
+
     def __init__(self, node_id: str, title: str, attributes: Dict[str, Any] = None, children: List[str] = None):
         """
         Constructor for a Node object
@@ -38,7 +38,7 @@ class Node:
                 and 'title' in attributes and type(attributes.get('title')) == str) \
                 or ('children' in attributes and not type(attributes.get('children')) == list):
             # TODO more elaborate error logging
-            logger.error("Attempted to process invalid tree.")
+            Node.logger.error("Attempted to process invalid tree.")
             raise InvalidTreeException
         attributes.pop('id')
         attributes.pop('title')
@@ -59,7 +59,7 @@ class Node:
         """
         if node_id not in self.children:
             # TODO more elaborate error logging
-            logger.error("Attempted to remove non-existent child () from node ()".format(node_id, self.id))
+            Node.logger.error("Attempted to remove non-existent child () from node ()".format(node_id, self.id))
             raise ChildNotFoundException
         self.children.remove(node_id)
 

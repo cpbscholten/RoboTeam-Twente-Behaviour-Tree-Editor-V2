@@ -1,8 +1,11 @@
 from model.editor_settings import *
+from model.exceptions.SettingNotFoundException import SettingNotFoundException
+import pytest
 
 
 def test_invalid_query():
-    assert query_setting("nonexistent", "test") is None
+    with pytest.raises(SettingNotFoundException):
+        assert query_setting("nonexistent", "test")
 
 
 def test_valid_query():
@@ -16,6 +19,6 @@ def test_valid_alteration():
     assert query_setting("default_json_folder", "test") == "jsons"
 
 
-test_invalid_query()
-test_valid_query()
-test_valid_alteration()
+def test_invalid_alteration():
+    with pytest.raises(SettingNotFoundException):
+        alter_setting("blah", "blah", "test")

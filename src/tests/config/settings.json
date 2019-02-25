@@ -1,4 +1,4 @@
 {
-   "logfile_name": "log",
-   "default_json_folder": "jsons"
+  "default_json_folder": "jsons",
+  "logfile_name": "log"
 }

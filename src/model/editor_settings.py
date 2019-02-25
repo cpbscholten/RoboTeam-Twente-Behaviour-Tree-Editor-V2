@@ -1,5 +1,6 @@
 from controller.utils.json_utils import *
 import logging
+from model.exceptions.SettingNotFoundException import SettingNotFoundException
 
 settings = read_json('config/settings.json')
 logger = logging.getLogger("main")
@@ -14,8 +15,8 @@ def query_setting(setting, caller):
     """
     if setting not in settings.keys():
         # If the setting doesn't exist, log the error and return None
-        logger.error("Invalid setting " + "\'" + setting + "\'" + " queried by " + caller + ".")
-        return
+        logger.error("Invalid setting () queried by ()".format(setting, caller))
+        raise SettingNotFoundException
     return settings[setting]
 
 
@@ -28,8 +29,8 @@ def alter_setting(setting, val, caller):
     """
     if setting not in settings.keys():
         # If the setting doesn't exist, log the error and change nothing
-        logger.error("Invalid setting " + "\'" + setting + "\'" + " accessed by " + caller + ".")
-        return
+        logger.error("Invalid setting () accessed by ()".format(setting, caller))
+        raise SettingNotFoundException()
     # Update the corresponding setting in the settings dict and also the settings JSON
     settings[setting] = val
-    write_json('settings.json', settings)
+    write_json('config/settings.json', settings)
