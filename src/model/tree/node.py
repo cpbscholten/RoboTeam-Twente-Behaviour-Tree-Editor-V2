@@ -59,7 +59,7 @@ class Node:
         """
         if node_id not in self.children:
             # TODO more elaborate error logging
-            Node.logger.error("Attempted to remove non-existent child () from node ()".format(node_id, self.id))
+            Node.logger.error("Attempted to remove non-existent child {} from node {}".format(node_id, self.id))
             raise ChildNotFoundException
         self.children.remove(node_id)
 
@@ -79,7 +79,7 @@ class Node:
         """
         if key not in self.attributes.keys():
             # TODO more elaborate error logging
-            logging.error("Attempted to remove non-existent attribute () from node ()".format(key, self.id))
+            logging.error("Attempted to remove non-existent attribute {} from node {}".format(key, self.id))
             raise AttributeNotFoundException
         self.attributes.pop(key)
 

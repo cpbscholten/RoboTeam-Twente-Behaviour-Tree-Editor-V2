@@ -67,7 +67,7 @@ class Tree:
         """
         if node not in self.nodes.values():
             # TODO more elaborate error logging
-            Node.logger.error("Attempted to remove non-existent node () from tree ()".format(node.id, self.name))
+            Node.logger.error("Attempted to remove non-existent node {} from tree {}".format(node.id, self.name))
             raise NodeNotFoundException
         self.nodes.pop(node.id)
 
@@ -79,7 +79,7 @@ class Tree:
         """
         if node_id not in self.nodes.keys():
             # TODO more elaborate error logging
-            Node.logger.error("Attempted to remove non-existent node () from tree ()".format(node_id, self.name))
+            Node.logger.error("Attempted to remove non-existent node {} from tree {}".format(node_id, self.name))
             raise NodeNotFoundException
         self.nodes.pop(node_id)
 
