@@ -1,11 +1,15 @@
 import math
+from copy import deepcopy
 
 from PyQt5.QtCore import QRectF, Qt
-from PyQt5.QtWidgets import QGraphicsScene
+from PyQt5.QtGui import QPixmap
+from PyQt5.QtWidgets import QGraphicsScene, QGraphicsPixmapItem
 
 from model.tree.node import Node as ModelNode
 from model.tree.tree import Tree
 from src.view.Node import Node as ViewNode
+from view.CollapseExpandButton import CollapseExpandButton
+from view.Edge import Edge
 
 
 class TreeScene(QGraphicsScene):
@@ -20,10 +24,11 @@ class TreeScene(QGraphicsScene):
         :param view: The view for this scene
         :param parent: The parent widget of this scene
         """
-        super(TreeScene, self).__init__(QRectF(parent.rect()), parent)
+        super(TreeScene, self).__init__(QRectF(0, 0, 1, 1), parent)
         self.view = view
         # Indicates if the TreeScene is dragged around
         self.dragging = False
+        self.collapsed = False
         # Indicates the node being dragged
         self.dragging_node = None
         self.tree = None
@@ -132,6 +137,8 @@ class TreeScene(QGraphicsScene):
         # If stop function if node is clicked
         item = self.itemAt(m_event.scenePos(), self.view.transform())
         if m_event.button() == Qt.LeftButton and item:
+            if isinstance(item, CollapseExpandButton):
+                return
             if isinstance(item, ViewNode):
                 self.dragging_node = item
                 item.dragging = True
@@ -152,11 +159,13 @@ class TreeScene(QGraphicsScene):
         super(TreeScene, self).mouseReleaseEvent(m_event)
         # reset dragging state of the scene and all nodes
         if m_event.button() == Qt.LeftButton:
-            self.dragging = False
-            self.view.setCursor(Qt.OpenHandCursor)
-            for i in self.items():
-                if isinstance(i, ViewNode):
-                    i.mouseReleaseEvent(m_event)
+            if self.dragging:
+                self.dragging = False
+                self.view.setCursor(Qt.OpenHandCursor)
+            elif self.dragging_node:
+                # reset node to default mode
+                self.dragging_node.dragging = False
+                self.dragging_node = None
 
     def mouseMoveEvent(self, m_event):
         """
@@ -164,11 +173,24 @@ class TreeScene(QGraphicsScene):
         :param m_event: The mouse move event and its details
         """
         super(TreeScene, self).mouseMoveEvent(m_event)
-        # move dragged node
+        # pass move event to dragged node
         if self.dragging_node:
             self.dragging_node.mouseMoveEvent(m_event)
             return
-        # move root items in the scene according to mouse movement
+        # pass mouse move event to top item that accepts hover events
+        item = self.itemAt(m_event.scenePos(), self.view.transform())
+        if item:
+            if item.acceptHoverEvents():
+                item.mouseMoveEvent(m_event)
+                return
+            else:
+                # look for parent that accepts hover events
+                while item.parentItem():
+                    item = item.parentItem()
+                    if item.acceptHoverEvents():
+                        item.mouseMoveEvent(m_event)
+                        return
+        # check if scene is being dragged and move all items accordingly
         if self.dragging:
             dx = m_event.scenePos().x() - m_event.lastScenePos().x()
             dy = m_event.scenePos().y() - m_event.lastScenePos().y()

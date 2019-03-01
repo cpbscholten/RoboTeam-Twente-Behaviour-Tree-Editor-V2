@@ -1,24 +1,21 @@
-import sys
-
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPainter
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QGraphicsView, QApplication
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QGraphicsView
 
 from controller.utils.json_utils import read_json
 from model.tree.node import Node as ModelNode
 from model.tree.tree import Tree
-from src.view.TreeScene import TreeScene
+from view.widget.TreeScene import TreeScene
 
 
-class MainWidget(QWidget):
+class TreeViewWidget(QWidget):
 
     def __init__(self, parent: QWidget = None):
         """
-        Constructor for the main widget
-        :param parent: The parent of this widget
+        The constructor for a tree view widget
+        :param parent: The parent widget
         """
-        super(MainWidget, self).__init__(parent, Qt.Widget)
-        self.setWindowTitle('RoboTeam Behaviour Tree Editor V2')
+        super(TreeViewWidget, self).__init__(parent, Qt.Widget)
         self.layout = QVBoxLayout(self)
         self.graphics_view = QGraphicsView(self)
         self.graphics_view.setCursor(Qt.OpenHandCursor)
@@ -28,9 +25,8 @@ class MainWidget(QWidget):
         self.graphics_view.setMinimumSize(500, 500)
         self.graphics_view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.graphics_view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.layout.addWidget(self.graphics_view, 100)
+        self.layout.addWidget(self.graphics_view)
         self.setLayout(self.layout)
-        self.resize(1000, 800)
 
     def show_complex_tree(self, view: QGraphicsView):
         """
@@ -88,12 +84,3 @@ class MainWidget(QWidget):
         scene = TreeScene(view, self)
         scene.add_tree(tree)
         return scene
-
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    main_widget = MainWidget()
-    main_widget.show()
-    exit_state = app.exec()
-    sys.exit(exit_state)
-

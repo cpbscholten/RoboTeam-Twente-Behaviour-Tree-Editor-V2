@@ -2,9 +2,10 @@ import random
 
 from PyQt5.QtCore import QRectF, Qt
 from PyQt5.QtGui import QBrush, QColor, QFontMetrics
-from PyQt5.QtWidgets import QGraphicsEllipseItem, QGraphicsSimpleTextItem, QWidget
+from PyQt5.QtWidgets import QGraphicsEllipseItem, QGraphicsSimpleTextItem, QGraphicsItem
 
 from src.view.Edge import Edge
+from view.CollapseExpandButton import CollapseExpandButton
 
 
 class Node(QGraphicsEllipseItem):
@@ -13,7 +14,7 @@ class Node(QGraphicsEllipseItem):
     NODE_MAX_WIDTH = 150
     NODE_HEIGHT = 50
 
-    def __init__(self, x: float, y: float, title: str = None, parent: QWidget = None):
+    def __init__(self, x: float, y: float, title: str = None, parent: QGraphicsItem = None):
         """
         The constructor for a UI node
         :param x: x position for the center of the node
@@ -32,6 +33,8 @@ class Node(QGraphicsEllipseItem):
         metrics = QFontMetrics(self.node_text.font())
         elided_title = metrics.elidedText(self.title, Qt.ElideRight, self.NODE_MAX_WIDTH)
         self.node_text.setText(elided_title)
+        self.node_text.setAcceptedMouseButtons(Qt.NoButton)
+        self.node_text.setAcceptHoverEvents(False)
         text_width = self.node_text.boundingRect().width()
         text_height = self.node_text.boundingRect().height()
         self.node_text.setPos(x - (text_width / 2), y - (text_height / 2))
@@ -46,9 +49,19 @@ class Node(QGraphicsEllipseItem):
         # indicates if node is being dragged
         self.dragging = False
         self.setCursor(Qt.PointingHandCursor)
+        self.setAcceptHoverEvents(True)
         # give node a random color
         # TODO: Determine color scheme for nodes
         self.setBrush(QBrush(QColor(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))))
+        # create the collapse/expand button for this node
+        self.collapse_expand_button = CollapseExpandButton(self)
+        self.collapse_expand_button.setParentItem(self)
+        # position the button at the bottom-middle of the node
+        x = self.xpos() - self.collapse_expand_button.boundingRect().width() / 2
+        y = self.ypos() + (self.NODE_HEIGHT / 2) - self.collapse_expand_button.boundingRect().height() / 2
+        self.collapse_expand_button.setPos(x, y)
+        # hidden by default, the button is only needed if the node has children
+        self.collapse_expand_button.hide()
 
     def add_child(self, child):
         """
@@ -58,6 +71,11 @@ class Node(QGraphicsEllipseItem):
         """
         edge = Edge(self, child)
         edge.setParentItem(self)
+        # edge should stay behind the expand/collapse button
+        edge.stackBefore(self.collapse_expand_button)
+        # show the expand/collapse button when the first child is added
+        if not self.collapse_expand_button.isVisible():
+            self.collapse_expand_button.show()
 
     def xoffset(self):
         """
@@ -93,6 +111,22 @@ class Node(QGraphicsEllipseItem):
         """
         return self.rect().y() + self.rect().height() / 2 + self.yoffset()
 
+    def collapse(self):
+        """
+        Collapses this node by hiding all child edges (and therefore the whole subtree)
+        """
+        for c in self.childItems():
+            if isinstance(c, Edge):
+                c.hide()
+
+    def expand(self):
+        """
+        Expands this node by showing all child edges previously hidden by the collapse function
+        """
+        for c in self.childItems():
+            if isinstance(c, Edge):
+                c.show()
+
     def mousePressEvent(self, m_event):
         """
         Handles a mouse press on a node
@@ -102,16 +136,6 @@ class Node(QGraphicsEllipseItem):
         if m_event.button() == Qt.RightButton:
             # change color
             self.setBrush(QBrush(QColor(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))))
-
-    def mouseReleaseEvent(self, m_event):
-        """
-        Handles a mouse release on a node
-        :param m_event: The mouse release event and its details
-        """
-        super(Node, self).mouseReleaseEvent(m_event)
-        # reset node to default mode
-        self.dragging = False
-        self.scene().dragging_node = None
 
     def mouseMoveEvent(self, m_event):
         """
