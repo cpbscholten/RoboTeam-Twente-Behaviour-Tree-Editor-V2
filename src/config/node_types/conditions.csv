@@ -1,0 +1,12 @@
+HasBall
+TheyHaveBall
+HasBall
+BallKickedToOurGoal
+BallInDefenseAreaAndStill
+IsInDefenseArea
+IsOnOurSide
+WeHaveBall
+IsRobotClosestToBall,secondsAhead
+IsBallOnOurSide,inField
+IsBeingPassedTo
+IsCloseToPoint,ball,position,margin

@@ -1,14 +1,15 @@
+import logging
 import sys
 
 from PyQt5.QtWidgets import QApplication
 
-from model.editor_settings import *
+from model.config.settings import Settings
 from view.widget.MainWidget import MainWidget
 
 logging.basicConfig(level=logging.ERROR,
                     format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
                     datefmt='%m-%d %H:%M',
-                    filename=query_setting("logfile_name", "main"),
+                    filename=Settings.query_setting("logfile_name", "main"),
                     filemode='w')
 
 # start UI

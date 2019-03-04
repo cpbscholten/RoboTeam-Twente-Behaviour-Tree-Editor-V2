@@ -2,7 +2,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPainter
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QGraphicsView
 
-from controller.utils.json_utils import read_json
+from controller.utils.file_utils import read_json
 from model.tree.node import Node as ModelNode
 from model.tree.tree import Tree
 from view.widget.TreeScene import TreeScene

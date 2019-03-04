@@ -1,9 +1,14 @@
-from model.exceptions.InvalidTreeException import InvalidTreeException
-from model.exceptions.NodeNotFoundException import NodeNotFoundException
+from pathlib import Path
+
+from controller.utils.file_utils import write_json
+from model.exceptions.invalid_tree_json_format_exception import InvalidTreeJsonFormatException
 from model.tree.node import Node
 from typing import Dict, List, Any
 
+import os
 import logging
+
+from model.tree.verification import Verification
 
 
 class Tree:
@@ -19,6 +24,7 @@ class Tree:
         self.name: str = name
         self.root: str = root
         # if statement and dict copy because of mutability
+        # TODO: Check if it's valid?
         self.nodes: Dict[str, Node] = dict(nodes) if nodes is not None else {}
 
     @classmethod
@@ -30,7 +36,6 @@ class Tree:
         :raises InvalidTreeException; if required attributes are missing
                     or when required attributes have the wrong type
         """
-        # TODO cleanup
         if 'name' in file and type(file.get('name')) == str \
                 and 'data' in file and type(file.get('data')) == dict:
             data = file.get('data')
@@ -48,9 +53,14 @@ class Tree:
                             nodes[key] = Node.from_json(value)
                         # create the new tree object
                         return cls(file.get('name'), tree.get('root'), nodes)
-        # TODO more elaborate error logging
-        Node.logger.error("Attempted to process invalid tree.")
-        raise InvalidTreeException
+        raise InvalidTreeJsonFormatException
+
+    def write(self, path: Path, filename: str):
+        # todo fix verification coverage thing
+        if Verification.verify(self):
+            write_json(path / filename, Tree.create_json(self))
+        else:
+            Tree.logger.error('Tree {} is invalid and can not be written'.format(filename))
 
     def add_node(self, node: Node):
         """
@@ -63,24 +73,20 @@ class Tree:
         """
         Removes a node from the tree
         :param node: the node object to remove
-        :raises NodeNotFoundException: if the tree does not contain this node
         """
         if node not in self.nodes.values():
-            # TODO more elaborate error logging
-            Node.logger.error("Attempted to remove non-existent node {} from tree {}".format(node.id, self.name))
-            raise NodeNotFoundException
+            Node.logger.warning("Attempted to remove non-existent node {} from tree {}".format(node.id, self.name))
+            return
         self.nodes.pop(node.id)
 
     def remove_node_by_id(self, node_id: str):
         """
         Removes a node from the tree by id
         :param node_id: The id of the node to remove
-        :raises NodeNotFoundException: if the tree does not have a node with this id
         """
         if node_id not in self.nodes.keys():
-            # TODO more elaborate error logging
-            Node.logger.error("Attempted to remove non-existent node {} from tree {}".format(node_id, self.name))
-            raise NodeNotFoundException
+            Tree.logger.warning("Attempted to remove non-existent node {} from tree {}".format(node_id, self.name))
+            return
         self.nodes.pop(node_id)
 
     def create_json(self) -> Dict[str, Any]:

@@ -1,0 +1,34 @@
+{
+  "name": "NonCyclicTree",
+  "data": {
+    "trees": [
+      {
+        "title": "NonCyclicTree",
+        "root": "1",
+        "nodes": {
+          "1": {
+            "id": "1",
+            "title": "Sequence",
+            "children": [
+              "2"
+            ]
+          },
+          "2": {
+            "id": "2",
+            "title": "Sequence",
+            "children": [
+              "3"
+            ]
+          },
+          "3": {
+            "id": "3",
+            "title": "Sequence",
+            "children": [
+
+            ]
+          }
+        }
+      }
+    ]
+  }
+}
