@@ -59,8 +59,6 @@ class TestNodeTypes:
 
     def test_add_node_type(self, tmpdir):
         node_types = NodeTypes.from_csv()
-        # change the path, so the original config file does not get overridden
-        node_types.path = tmpdir
         # check if a new category gets created if it does not exist
         node_types.add_node_type("test", "test_node")
         assert 'test'in node_types.node_types.keys()
@@ -75,8 +73,6 @@ class TestNodeTypes:
 
     def test_remove_node_type(self, tmpdir):
         node_types = NodeTypes.from_csv()
-        # change the path, so the original config file does not get overridden
-        node_types.path = tmpdir
         node_types.add_node_type("test", "test")
         node_types.remove_node_type("test", ["test"])
         assert 0 == len(node_types.node_types.get('test'))
@@ -91,8 +87,6 @@ class TestNodeTypes:
 
     def test_update_node_type(self, tmpdir):
         node_types = NodeTypes.from_csv()
-        # change the path, so the original config file does not get overridden
-        node_types.path = tmpdir
         # update a node type where the category does not exist
         node_types.update_node_type("test", "test", ['test', "a"])
         assert 'test' not in node_types.node_types.keys()
@@ -110,8 +104,6 @@ class TestNodeTypes:
 
     def test_add_category(self, tmpdir):
         node_types = NodeTypes.from_csv()
-        # change the path, so the original config file does not get overridden
-        node_types.path = tmpdir
         # add a new category that already exists
         assert 'conditions' in node_types.node_types.keys()
         conditions = node_types.node_types.get('conditions')
@@ -125,8 +117,6 @@ class TestNodeTypes:
 
     def test_remove_category(self, tmpdir):
         node_types = NodeTypes.from_csv()
-        # change the path, so the original config file does not get overridden
-        node_types.path = tmpdir
         # test removing existing category
         assert 'conditions' in node_types.node_types
         node_types.remove_category("conditions")

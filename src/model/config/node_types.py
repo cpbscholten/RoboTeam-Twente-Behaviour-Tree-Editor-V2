@@ -101,7 +101,7 @@ class NodeTypes:
 
     def add_node_type(self, category: str, name: str, attributes: List[str]=None):
         """
-        adds a new node type and stores it to the config file. Writes the file when finished
+        adds a new node type and stores it to the config file.
         :param category: the category of the node_type
         :param name: the name of the node type
         :param attributes: optional list of the required attributes
@@ -115,26 +115,22 @@ class NodeTypes:
             node_type.extend(attributes)
         # adds the node type to the requested category
         self.node_types.get(category).append(node_type)
-        self.write()
 
     def remove_node_type(self, category: str, node_type: List[str]):
         """
         Removes the requested node type object from the requested category
         Asks for the category and node_type object to be sure that the correct object gets removed
-        Finally writes the node_types files
         :param category: the category of the node_type
         :param node_type: a list containing the node_type
         """
         if category in self.node_types.keys() and node_type in self.node_types.get(category):
             self.node_types.get(category).remove(node_type)
-            self.write()
         NodeTypes.logger.warning("The requested node type {} in category {} "
                                  "could not be found and removed".format(node_type, category))
 
     def update_node_type(self, category: str, old: List[str], updated: List[str]):
         """
         Updates the old node type in the category to the new node type
-        then writes the node_types files
         :param category: the category the node type is in
         :param old: the node_type to be updated
         :param updated: the node_type that replaces the old entry
@@ -145,7 +141,6 @@ class NodeTypes:
         if category in self.node_types.keys() and old in self.node_types.get(category):
             index = self.node_types.get(category).index(old)
             self.node_types.get(category)[index] = updated
-            self.write()
 
     def add_category(self, category: str):
         """
@@ -154,18 +149,16 @@ class NodeTypes:
         """
         if category not in self.node_types.keys():
             self.node_types[category] = []
-            self.write()
 
     def remove_category(self, category: str):
         """
-        Removes a category with the node_types from the config file and write the file
+        Removes a category with the node_types from the config file
         :param category: the name of the category
         """
         if category not in self.node_types.keys():
             NodeTypes.logger.warning("Category {} does not exist and cannot be removed "
                                      "from node types".format(category))
         self.node_types.pop(category, None)
-        self.write()
 
     def get_node_type_by_name(self, name: str) -> List[Tuple[str, List[str]]]:
         """
