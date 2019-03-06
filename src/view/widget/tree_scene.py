@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import QGraphicsScene, QGraphicsPixmapItem
 from model.tree.node import Node as ModelNode
 from model.tree.tree import Tree
 from src.view.Node import Node as ViewNode
-from view.CollapseExpandButton import CollapseExpandButton
+from view.collapse_expand_button import CollapseExpandButton
 from view.Edge import Edge
 
 
@@ -34,18 +34,22 @@ class TreeScene(QGraphicsScene):
         self.tree = None
         self.root_ui_node = None
 
-    def add_tree(self, tree: Tree):
+    def add_tree(self, tree: Tree, x: int = None, y: int = 0):
         """
         Adds model tree recursively to the scene
+        :param x: The x position for the root node
+        :param y: The y position for the root node
         :param tree: Model tree
         """
+        if not x:
+            x = self.width()/2
         # remove old content
         self.clear()
         # store current tree inside scene
         self.tree = tree
         # start recursively drawing tree
         root_node = tree.nodes[tree.root]
-        self.root_ui_node = self.add_subtree(tree, root_node, self.width()/2, 0)[0]
+        self.root_ui_node = self.add_subtree(tree, root_node, x, y)[0]
         self.addItem(self.root_ui_node)
 
     def add_subtree(self, tree: Tree, subtree_root: ModelNode, x, y):
@@ -128,6 +132,12 @@ class TreeScene(QGraphicsScene):
             root_ui_node.add_child(child_ui_node)
         return root_ui_node, subtree_left_width, subtree_right_width, left_most_node, right_most_node
 
+    def align_tree(self):
+        """
+        Aligns the tree by readding the model tree to the scene
+        """
+        self.add_tree(self.tree, self.root_ui_node.xpos(), self.root_ui_node.ypos())
+
     def mousePressEvent(self, m_event):
         """
         Handles a mouse press on the scene
@@ -197,10 +207,18 @@ class TreeScene(QGraphicsScene):
             for g_item in [i for i in self.items() if not i.parentItem()]:
                 g_item.moveBy(dx, dy)
 
+    def zoom(self, zoom_x, zoom_y):
+        """
+        Zooms the view
+        :param zoom_x: Zoom percentage for the x-axis
+        :param zoom_y: Zoom percentage for the y-axis
+        """
+        self.view.scale(zoom_x, zoom_y)
+
     def wheelEvent(self, wheel_event):
         """
         Handles a mousewheel scroll in the scene
         :param wheel_event: The mousewheel event and its details
         """
-        scale_by = 1 + (self.ZOOM_SENSITIVITY * (wheel_event.delta() / 120))
-        self.view.scale(scale_by, scale_by)
+        zoom_value = 1 + (self.ZOOM_SENSITIVITY * (wheel_event.delta() / 120))
+        self.zoom(zoom_value, zoom_value)

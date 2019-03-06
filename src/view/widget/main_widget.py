@@ -3,7 +3,7 @@ import sys
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QApplication
 
-from view.widget.TreeViewWidget import TreeViewWidget
+from view.widget.tree_view_widget import TreeViewWidget
 
 
 class MainWidget(QWidget):

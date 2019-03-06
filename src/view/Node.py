@@ -5,7 +5,7 @@ from PyQt5.QtGui import QBrush, QColor, QFontMetrics
 from PyQt5.QtWidgets import QGraphicsEllipseItem, QGraphicsSimpleTextItem, QGraphicsItem
 
 from src.view.Edge import Edge
-from view.CollapseExpandButton import CollapseExpandButton
+from view.collapse_expand_button import CollapseExpandButton
 
 
 class Node(QGraphicsEllipseItem):
@@ -13,6 +13,7 @@ class Node(QGraphicsEllipseItem):
     NODE_MIN_WIDTH = 100
     NODE_MAX_WIDTH = 150
     NODE_HEIGHT = 50
+    NODE_COLOR = (152, 193, 217)
 
     def __init__(self, x: float, y: float, title: str = None, parent: QGraphicsItem = None):
         """
@@ -51,8 +52,8 @@ class Node(QGraphicsEllipseItem):
         self.setCursor(Qt.PointingHandCursor)
         self.setAcceptHoverEvents(True)
         # give node a random color
-        # TODO: Determine color scheme for nodes
-        self.setBrush(QBrush(QColor(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))))
+        # TODO: Determine color scheme for node types
+        self.setBrush(QBrush(QColor(*self.NODE_COLOR)))
         # create the collapse/expand button for this node
         self.collapse_expand_button = CollapseExpandButton(self)
         self.collapse_expand_button.setParentItem(self)
@@ -133,9 +134,6 @@ class Node(QGraphicsEllipseItem):
         :param m_event: The mouse press event and its details
         """
         super(Node, self).mousePressEvent(m_event)
-        if m_event.button() == Qt.RightButton:
-            # change color
-            self.setBrush(QBrush(QColor(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))))
 
     def mouseMoveEvent(self, m_event):
         """

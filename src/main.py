@@ -4,7 +4,7 @@ import sys
 from PyQt5.QtWidgets import QApplication
 
 from model.config.settings import Settings
-from view.widget.MainWidget import MainWidget
+from view.widget.main_widget import MainWidget
 
 logging.basicConfig(level=logging.ERROR,
                     format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
