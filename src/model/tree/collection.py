@@ -44,6 +44,9 @@ class Collection:
             path = Settings.default_json_folder()
         # clean the current collection
         collection = {}
+        # create default categories in collection
+        for category in Settings.default_collection_categories():
+            collection[category] = {}
         # find the current directories in the main json folder and create dict for each
         # skip branch checking in coverage as the loop will only be executed once
         for root, dirs, _ in os.walk(str(path)):     # pragma: no branch

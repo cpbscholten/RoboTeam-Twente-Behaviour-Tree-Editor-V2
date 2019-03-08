@@ -16,7 +16,8 @@ class TestCollection(object):
     collection: Dict[str, Dict[str, Tree]] = {
         "roles": {"Assister.json": assister_role},
         "strategies": {"AttackStrategy.json": attack_strategy},
-        "tactics": {"Attactic.json": attactic_tactic}
+        "tactics": {"Attactic.json": attactic_tactic},
+        "keeper": {}
     }
 
     def test_from_path(self):
@@ -89,7 +90,10 @@ class TestCollection(object):
         assert read == collection
 
     def test_write_collection_new_file_new_dir(self, tmpdir):
-        collection = Collection({"roles": {"Role.json": Tree("Role", "1", {"1": Node("1", "1")})}})
+        collection = Collection({"roles": {"Role.json": Tree("Role", "1", {"1": Node("1", "1")})},
+                                 "tactics": {},
+                                 "strategies": {},
+                                 "keeper": {}})
         collection.write_collection(tmpdir)
         collection.path = tmpdir
         assert collection == Collection.from_path(tmpdir)

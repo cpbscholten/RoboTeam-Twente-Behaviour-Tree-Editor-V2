@@ -90,3 +90,7 @@ class Settings:
         :param path: path object containing the location of the json directory
         """
         Settings.alter_setting("default_json_folder", PurePosixPath(path).as_posix(), "settings")
+
+    @staticmethod
+    def default_collection_categories():
+        return Settings.query_setting("default_collection_categories", "settings")

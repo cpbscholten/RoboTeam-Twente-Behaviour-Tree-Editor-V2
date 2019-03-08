@@ -2,5 +2,6 @@
   "default_id_size": 16,
   "default_json_folder": "jsons",
   "logfile_name": "log",
-  "default_node_types_folder": "config/node_types"
+  "default_node_types_folder": "config/node_types",
+  "default_collection_categories": ["keeper", "roles", "strategies", "tactics"]
 }

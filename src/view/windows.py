@@ -38,6 +38,7 @@ class MainWindow(QMainWindow):
 
         # create a menubar instance
         self.menubar = MenuBar(self)
+        self.menubar.build_menu_bar()
 
         # call to collection to create a collection from the default path
         # which initializes the menu bar
