@@ -1,0 +1,27 @@
+{
+  "data": {
+    "trees": [
+      {
+        "nodes": {
+          "bbb": {
+            "child": "ccc",
+            "id": "bbb",
+            "name": "UntilSuccess",
+            "properties": {
+              "limit": "0"
+            },
+            "title": "UntilSuccess"
+          },
+          "ccc": {
+            "id": "ccc",
+            "name": "grsimTestTactic",
+            "title": "Tactic"
+          }
+        },
+        "root": "bbb",
+        "title": "grsimTest"
+      }
+    ]
+  },
+  "name": "grsimTest"
+}

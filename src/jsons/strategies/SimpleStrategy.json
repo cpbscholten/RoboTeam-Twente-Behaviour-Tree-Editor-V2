@@ -1,0 +1,25 @@
+{
+  "data": {
+    "trees": [
+      {
+        "nodes": {
+          "0oqaxqrlvkf7hxr": {
+            "id": "0oqaxqrlvkf7hxr",
+            "name": "SimpleTactic",
+            "title": "Tactic"
+          },
+          "5zso41laje7z7o": {
+            "children": [
+              "0oqaxqrlvkf7hxr"
+            ],
+            "id": "5zso41laje7z7o",
+            "title": "UntilSuccess"
+          }
+        },
+        "root": "5zso41laje7z7o",
+        "title": "SimpleStrategy"
+      }
+    ]
+  },
+  "name": "SimpleStrategy"
+}

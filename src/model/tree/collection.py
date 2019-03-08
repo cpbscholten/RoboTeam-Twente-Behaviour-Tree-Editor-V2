@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 from model.exceptions.invalid_tree_json_format_exception import InvalidTreeJsonFormatException
 from model.tree.tree import Tree
@@ -14,11 +14,13 @@ import logging
 class Collection:
     logger = logging.getLogger("collection")
 
-    def __init__(self, collection: Dict[str, Dict[str, Tree]] = None):
+    def __init__(self, collection: Dict[str, Dict[str, Tree]]=None, path: Path=None):
         """
         Initializes a collection with a given dict
         :param collection: the collection of files
+        :param path: the path of the collection None if using custom path
         """
+        self.path = path
         self.collection: Dict[str, Dict[str, Tree]] = dict(collection) if collection is not None else {}
 
     @classmethod
@@ -28,11 +30,11 @@ class Collection:
         :param path: the path containing the directories with jsons
         :return: the generated collection object
         """
-        collection = cls()
+        collection = cls(None, path)
         collection.build_collection(path)
         return collection
 
-    def build_collection(self, path: Path = None):
+    def build_collection(self, path: Path=None):
         """
         Reads all the json files in the first subdirectories and creates Tree objects from them
         :param path: the path of the main JSON folder
@@ -46,6 +48,9 @@ class Collection:
         # skip branch checking in coverage as the loop will only be executed once
         for root, dirs, _ in os.walk(str(path)):     # pragma: no branch
             for directory in dirs:
+                # skip hidden directories
+                if directory[0] == '_' or directory[0] == ".":
+                    continue
                 collection[directory] = {}
                 # for each directory make a tree object of each json file inside the folder
                 # add the object to the dict of that folder
@@ -82,8 +87,10 @@ class Collection:
         :param path: the location to write to
         """
         # set the path to the path specified in settings if None
-        if path is None:
+        if path is None and self.path is None:
             path = Settings.default_json_folder()
+        elif path is None and self.path is not None:
+            path = self.path
         # make a copy of the current collection
         collection = dict(self.collection)
         # read each nested dictionary and write each file in that directory
@@ -94,7 +101,7 @@ class Collection:
                 os.makedirs(str(write_path))
             for filename, content in files.items():
                 # write collection
-                content.write(write_path, filename)
+                content.write(write_path / filename)
 
     def add_tree(self, directory: str, name: str, tree: Tree):
         """
@@ -132,6 +139,22 @@ class Collection:
                     self.remove_tree(directory, key)
                     return
         Collection.logger.warning("The requested tree {} to be removed could not be found".format(name))
+
+    def categories_and_filenames(self) -> Dict[str, List[str]]:
+        """
+        Helper method that create a dictionary of categories and filenames
+        :return: a dictionary containing categories with a list if filenames
+        """
+        result = {}
+        for category, items in self.collection.items():
+            result[category] = sorted(list(items.keys()))
+        return result
+
+    def jsons_path(self):
+        if self.path is None:
+            return Settings.default_json_folder()
+        else:
+            return self.path
 
     def __eq__(self, other):
         return (isinstance(other, self.__class__)

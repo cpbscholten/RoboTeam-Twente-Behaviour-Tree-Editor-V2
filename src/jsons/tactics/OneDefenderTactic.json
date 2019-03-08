@@ -1,0 +1,180 @@
+{
+  "data": {
+    "trees": [
+      {
+        "nodes": {
+          "5m68612ofnzvvlg": {
+            "id": "5m68612ofnzvvlg",
+            "properties": {
+              "ROLE": "defender"
+            },
+            "title": "TheyHaveBall"
+          },
+          "9fzmpw1337irf": {
+            "id": "9fzmpw1337irf",
+            "properties": {
+              "ROLE": "defender",
+              "secondsAhead": "1"
+            },
+            "title": "IsRobotClosestToBall"
+          },
+          "9uw0952krc421": {
+            "children": [
+              "eu5vg4rsr7axbl7w",
+              "xc6dl1bioa2rjh974",
+              "svg3ed9gzop6k",
+              "or017uv6pddd6j1z"
+            ],
+            "id": "9uw0952krc421",
+            "properties": {
+              "ROLE": "defender"
+            },
+            "title": "Selector"
+          },
+          "cpa6t4ljdkdffpyk": {
+            "children": [
+              "9uw0952krc421"
+            ],
+            "id": "cpa6t4ljdkdffpyk",
+            "name": "defender",
+            "properties": {
+              "ROLE": "defender"
+            },
+            "role": "DefenderRole",
+            "title": "Role"
+          },
+          "eb2tfd886wdwq9": {
+            "children": [
+              "cpa6t4ljdkdffpyk"
+            ],
+            "id": "eb2tfd886wdwq9",
+            "title": "Repeater"
+          },
+          "eu5vg4rsr7axbl7w": {
+            "children": [
+              "yw5penrx0p4ijtauz",
+              "9fzmpw1337irf",
+              "qqge7j2qn9o3o5rr"
+            ],
+            "id": "eu5vg4rsr7axbl7w",
+            "properties": {
+              "ROLE": "defender"
+            },
+            "title": "MemSequence"
+          },
+          "iylbm4de70gehb13": {
+            "id": "iylbm4de70gehb13",
+            "properties": {
+              "ROLE": "defender"
+            },
+            "title": "Attack"
+          },
+          "mn5yiajswe0g9w3u": {
+            "id": "mn5yiajswe0g9w3u",
+            "properties": {
+              "ROLE": "defender"
+            },
+            "title": "IsRobotClosestToBall"
+          },
+          "or017uv6pddd6j1z": {
+            "id": "or017uv6pddd6j1z",
+            "properties": {
+              "ROLE": "defender"
+            },
+            "title": "Defend"
+          },
+          "qqge7j2qn9o3o5rr": {
+            "children": [
+              "tdlgrftl2xqk8f6g",
+              "iylbm4de70gehb13"
+            ],
+            "id": "qqge7j2qn9o3o5rr",
+            "properties": {
+              "ROLE": "defender"
+            },
+            "title": "MemSequence"
+          },
+          "qy8weww4j9xzuv": {
+            "id": "qy8weww4j9xzuv",
+            "properties": {
+              "ROLE": "defender"
+            },
+            "title": "InterceptBall"
+          },
+          "r8cm9bd93olwjxwe": {
+            "id": "r8cm9bd93olwjxwe",
+            "properties": {
+              "ROLE": "defender"
+            },
+            "title": "IsRobotClosestToBall"
+          },
+          "svg3ed9gzop6k": {
+            "children": [
+              "mn5yiajswe0g9w3u",
+              "yt0eul3c05mk5qz"
+            ],
+            "id": "svg3ed9gzop6k",
+            "properties": {
+              "ROLE": "defender"
+            },
+            "title": "MemSequence"
+          },
+          "tdlgrftl2xqk8f6g": {
+            "id": "tdlgrftl2xqk8f6g",
+            "properties": {
+              "ROLE": "defender"
+            },
+            "title": "InterceptBall"
+          },
+          "x470xvy80b3eq9": {
+            "id": "x470xvy80b3eq9",
+            "properties": {
+              "ROLE": "defender"
+            },
+            "title": "Attack"
+          },
+          "xc6dl1bioa2rjh974": {
+            "children": [
+              "r8cm9bd93olwjxwe",
+              "zznnggbdmxyr067wc",
+              "5m68612ofnzvvlg"
+            ],
+            "id": "xc6dl1bioa2rjh974",
+            "properties": {
+              "ROLE": "defender"
+            },
+            "title": "MemSequence"
+          },
+          "yt0eul3c05mk5qz": {
+            "children": [
+              "qy8weww4j9xzuv",
+              "x470xvy80b3eq9"
+            ],
+            "id": "yt0eul3c05mk5qz",
+            "properties": {
+              "ROLE": "defender"
+            },
+            "title": "MemSequence"
+          },
+          "yw5penrx0p4ijtauz": {
+            "id": "yw5penrx0p4ijtauz",
+            "properties": {
+              "ROLE": "defender"
+            },
+            "title": "BallKickedToOurGoal"
+          },
+          "zznnggbdmxyr067wc": {
+            "id": "zznnggbdmxyr067wc",
+            "properties": {
+              "ROLE": "defender"
+            },
+            "title": "DefendOnRobot"
+          }
+        },
+        "root": "eb2tfd886wdwq9",
+        "title": "OneDefenderTactic"
+      }
+    ]
+  },
+  "name": "OneDefenderTactic"
+}

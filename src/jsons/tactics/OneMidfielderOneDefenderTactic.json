@@ -1,0 +1,173 @@
+{
+  "data": {
+    "trees": [
+      {
+        "nodes": {
+          "25glc9qxxuosh": {
+            "id": "25glc9qxxuosh",
+            "properties": {
+              "ROLE": ""
+            },
+            "title": "Defend"
+          },
+          "2w0nmudopfahqokf": {
+            "children": [
+              "y45ou5a81bmdmrwmx",
+              "omcjs5zmftlbsqy"
+            ],
+            "id": "2w0nmudopfahqokf",
+            "title": "ParallelSequence"
+          },
+          "6f7xoy240j5msg1i1": {
+            "id": "6f7xoy240j5msg1i1",
+            "properties": {
+              "ROLE": ""
+            },
+            "title": "InterceptBall"
+          },
+          "6uag0eup3s0ips": {
+            "id": "6uag0eup3s0ips",
+            "properties": {
+              "ROLE": ""
+            },
+            "title": "DefendOnRobot"
+          },
+          "ac6c0ynt9sb2o": {
+            "children": [
+              "snbwg29nhq65e689k",
+              "goqgcvdur459c",
+              "25glc9qxxuosh"
+            ],
+            "id": "ac6c0ynt9sb2o",
+            "properties": {
+              "ROLE": ""
+            },
+            "title": "Selector"
+          },
+          "bmkodhzhkhp1huza": {
+            "children": [
+              "n1b0qphoevje89g",
+              "s724uly8lcq1whv1k"
+            ],
+            "id": "bmkodhzhkhp1huza",
+            "properties": {
+              "ROLE": ""
+            },
+            "title": "Selector"
+          },
+          "c4djkz86n1xcicw8": {
+            "id": "c4djkz86n1xcicw8",
+            "properties": {
+              "ROLE": ""
+            },
+            "title": "Defend"
+          },
+          "goqgcvdur459c": {
+            "children": [
+              "wu0evxei958j12ddy",
+              "6uag0eup3s0ips"
+            ],
+            "id": "goqgcvdur459c",
+            "properties": {
+              "ROLE": ""
+            },
+            "title": "MemSequence"
+          },
+          "n1b0qphoevje89g": {
+            "children": [
+              "ypuefbtfhifnwa",
+              "c4djkz86n1xcicw8"
+            ],
+            "id": "n1b0qphoevje89g",
+            "properties": {
+              "ROLE": ""
+            },
+            "title": "MemSequence"
+          },
+          "ok4hkt6902wvg": {
+            "id": "ok4hkt6902wvg",
+            "properties": {
+              "ROLE": ""
+            },
+            "title": "BallKickedToOurGoal"
+          },
+          "omcjs5zmftlbsqy": {
+            "children": [
+              "bmkodhzhkhp1huza"
+            ],
+            "id": "omcjs5zmftlbsqy",
+            "name": "",
+            "properties": {
+              "ROLE": ""
+            },
+            "role": "MidFielderRole",
+            "title": "Role"
+          },
+          "pcbgde8sfhtb7p": {
+            "id": "pcbgde8sfhtb7p",
+            "properties": {
+              "ROLE": "",
+              "secondsAhead": "1"
+            },
+            "title": "IsRobotClosestToBall"
+          },
+          "s724uly8lcq1whv1k": {
+            "id": "s724uly8lcq1whv1k",
+            "properties": {
+              "ROLE": ""
+            },
+            "title": "Attack"
+          },
+          "snbwg29nhq65e689k": {
+            "children": [
+              "ok4hkt6902wvg",
+              "pcbgde8sfhtb7p",
+              "6f7xoy240j5msg1i1"
+            ],
+            "id": "snbwg29nhq65e689k",
+            "properties": {
+              "ROLE": ""
+            },
+            "title": "MemSequence"
+          },
+          "wu0evxei958j12ddy": {
+            "id": "wu0evxei958j12ddy",
+            "properties": {
+              "ROLE": ""
+            },
+            "title": "IsRobotClosestToBall"
+          },
+          "y45ou5a81bmdmrwmx": {
+            "children": [
+              "ac6c0ynt9sb2o"
+            ],
+            "id": "y45ou5a81bmdmrwmx",
+            "name": "",
+            "properties": {
+              "ROLE": ""
+            },
+            "role": "DefenderRole",
+            "title": "Role"
+          },
+          "yaow5rdh2zzx87i7": {
+            "children": [
+              "2w0nmudopfahqokf"
+            ],
+            "id": "yaow5rdh2zzx87i7",
+            "title": "Repeater"
+          },
+          "ypuefbtfhifnwa": {
+            "id": "ypuefbtfhifnwa",
+            "properties": {
+              "ROLE": ""
+            },
+            "title": "IsBallOnOurSide"
+          }
+        },
+        "root": "yaow5rdh2zzx87i7",
+        "title": "OneMidfielderOneDefenderTactic"
+      }
+    ]
+  },
+  "name": "OneMidfielderOneDefenderTactic"
+}

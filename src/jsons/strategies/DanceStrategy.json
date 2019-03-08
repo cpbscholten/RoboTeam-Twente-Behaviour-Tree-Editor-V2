@@ -1,0 +1,31 @@
+{
+  "data": {
+    "trees": [
+      {
+        "nodes": {
+          "9vvwrm4wqni7f7nx": {
+            "id": "9vvwrm4wqni7f7nx",
+            "name": "DanceTactic",
+            "title": "Tactic"
+          },
+          "sftlsc94h3q1p": {
+            "id": "sftlsc94h3q1p",
+            "name": "DanceTactic2",
+            "title": "Tactic"
+          },
+          "tfbqmsn62cc9okkj": {
+            "children": [
+              "9vvwrm4wqni7f7nx",
+              "sftlsc94h3q1p"
+            ],
+            "id": "tfbqmsn62cc9okkj",
+            "title": "ParallelSequence"
+          }
+        },
+        "root": "tfbqmsn62cc9okkj",
+        "title": "DanceStrategy"
+      }
+    ]
+  },
+  "name": "DanceStrategy"
+}

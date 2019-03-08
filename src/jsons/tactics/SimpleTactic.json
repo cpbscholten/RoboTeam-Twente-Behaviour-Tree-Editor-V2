@@ -1,0 +1,66 @@
+{
+  "data": {
+    "trees": [
+      {
+        "nodes": {
+          "6d3fke44my0fhn3r2": {
+            "children": [
+              "s6xx3lzfgjtnbuirz"
+            ],
+            "id": "6d3fke44my0fhn3r2",
+            "isRole": false,
+            "title": "Repeater"
+          },
+          "8ooq5jgh46hte": {
+            "children": [
+              "z4kgtalx92ah4uw"
+            ],
+            "id": "8ooq5jgh46hte",
+            "title": "UntilSuccess"
+          },
+          "mbwjryus4cyn3y9v": {
+            "id": "mbwjryus4cyn3y9v",
+            "isRole": false,
+            "properties": {
+              "ROLE": "simpleStupidRobot",
+              "harassBallOwner": "kfgv"
+            },
+            "title": "GoToPos"
+          },
+          "pn4tuzpp7sxc8ihtg": {
+            "id": "pn4tuzpp7sxc8ihtg",
+            "isRole": false,
+            "properties": {
+              "Position": "{-1, -1}",
+              "ROLE": "simpleStupidRobot",
+              "goToBall": "false",
+              "random": "false"
+            },
+            "title": "GoToPos"
+          },
+          "s6xx3lzfgjtnbuirz": {
+            "id": "s6xx3lzfgjtnbuirz",
+            "isRole": false,
+            "properties": {
+              "ROLE": "simpleStupidRobot",
+              "RotateToTheirGoal": "true",
+              "maxVel": "0.1"
+            },
+            "title": "DribbleRotate"
+          },
+          "z4kgtalx92ah4uw": {
+            "children": [
+              "s6xx3lzfgjtnbuirz"
+            ],
+            "id": "z4kgtalx92ah4uw",
+            "name": "simpleStupidRobot",
+            "title": "Role"
+          }
+        },
+        "root": "8ooq5jgh46hte",
+        "title": "SimpleTactic"
+      }
+    ]
+  },
+  "name": "SimpleTactic"
+}

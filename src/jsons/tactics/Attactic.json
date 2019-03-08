@@ -1,0 +1,44 @@
+{
+  "data": {
+    "trees": [
+      {
+        "nodes": {
+          "57mrxn20qviax5qc": {
+            "children": [
+              "hawoks13kj9jfs"
+            ],
+            "id": "57mrxn20qviax5qc",
+            "title": "UntilSuccess"
+          },
+          "hawoks13kj9jfs": {
+            "children": [
+              "yeuvb1i7722s19d"
+            ],
+            "id": "hawoks13kj9jfs",
+            "name": "atak",
+            "title": "Role"
+          },
+          "yeuvb1i7722s19d": {
+            "children": [
+              "zcw39vx76dnm7k7s"
+            ],
+            "id": "yeuvb1i7722s19d",
+            "isRole": false,
+            "title": "UntilSuccess"
+          },
+          "zcw39vx76dnm7k7s": {
+            "id": "zcw39vx76dnm7k7s",
+            "isRole": false,
+            "properties": {
+              "ROLE": "atak"
+            },
+            "title": "Attack"
+          }
+        },
+        "root": "57mrxn20qviax5qc",
+        "title": "Attactic"
+      }
+    ]
+  },
+  "name": "Attactic"
+}

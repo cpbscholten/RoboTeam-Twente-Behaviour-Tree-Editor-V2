@@ -21,7 +21,7 @@ class TreeViewWidget(QWidget):
         self.graphics_view = QGraphicsView(self)
         self.graphics_view.setCursor(Qt.OpenHandCursor)
         self.graphics_view.setRenderHints(QPainter.Antialiasing)
-        self.graphics_scene = self.show_complex_tree(self.graphics_view)
+        self.graphics_scene = TreeScene(self.graphics_view, self)
         self.graphics_view.setScene(self.graphics_scene)
         self.graphics_view.setMinimumSize(500, 500)
         self.graphics_view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)

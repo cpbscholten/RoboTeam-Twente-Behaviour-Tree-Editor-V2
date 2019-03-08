@@ -22,6 +22,7 @@ class TestCollection(object):
     def test_from_path(self):
         collection = Collection.from_path(self.path)
         # collection should not contain the invalid roles/InvalidRole.json
+        collection.path = None
         assert 'InvalidRole' not in collection.collection.get('roles').keys()
         assert Collection(self.collection) == collection
 
@@ -38,6 +39,8 @@ class TestCollection(object):
         collection = Collection()
         collection.build_collection(self.path)
         # check if hidden file is not added to collection
+        assert '.hiddendir' not in collection.collection.keys()
+        assert '_categoryunderscore' not in collection.collection.keys()
         assert '.hiddenTree.json' not in collection.collection.get('roles')
         # check if file with wrong file extension is not added
         assert 'TreeWithoutJsonFileExtension' not in collection.collection.get('roles')
@@ -47,15 +50,31 @@ class TestCollection(object):
         collection = Collection.from_path(self.path)
         collection.write_collection(tmpdir)
         read = Collection.from_path(tmpdir)
+        # sets path equal, so objects are equal
+        collection.path = None
+        read.path = None
         assert read == collection
 
-    def test_write_collection_default_path(self, tmpdir):
+    def test_write_collection_default_path1(self, tmpdir):
         def_path = Settings.default_json_folder()
         Settings.alter_default_json_folder(tmpdir)
         collection = Collection.from_path()
         collection.write_collection()
         read = Collection.from_path(tmpdir)
         Settings.alter_default_json_folder(def_path)
+        # sets path equal, so objects are equal
+        collection.path = None
+        read.path = None
+        assert collection == read
+
+    def test_write_collection_default_path2(self, tmpdir):
+        collection = Collection.from_path()
+        collection.path = tmpdir
+        collection.write_collection()
+        read = Collection.from_path(tmpdir)
+        # sets path equal, so objects are equal
+        collection.path = None
+        read.path = None
         assert collection == read
 
     def test_write_collection_new_file(self, tmpdir):
@@ -64,11 +83,15 @@ class TestCollection(object):
         collection.add_tree("roles", "tree.json", Tree("name", "1", {"1": Node("1", "node")}))
         collection.write_collection(tmpdir)
         read = Collection.from_path(tmpdir)
+        # sets path equal, so objects are equal
+        collection.path = None
+        read.path = None
         assert read == collection
 
     def test_write_collection_new_file_new_dir(self, tmpdir):
         collection = Collection({"roles": {"Role.json": Tree("Role", "1", {"1": Node("1", "1")})}})
         collection.write_collection(tmpdir)
+        collection.path = tmpdir
         assert collection == Collection.from_path(tmpdir)
 
     def test_add_tree_folder_exists(self):
@@ -122,3 +145,14 @@ class TestCollection(object):
         assert "Assister.json" not in collection.collection.get('roles')
         collection.remove_tree_by_name('roles', "Assister")
         assert "Assister.json" not in collection.collection.get('roles')
+
+    def test_categories_and_filenames(self):
+        collection = Collection(self.collection)
+        collection.collection['keeper'] = {}
+        categories_and_filenames = {
+            'roles': ['Assister.json'],
+            'tactics': ['Attactic.json'],
+            'strategies': ['AttackStrategy.json'],
+            'keeper': []
+        }
+        assert categories_and_filenames == collection.categories_and_filenames()

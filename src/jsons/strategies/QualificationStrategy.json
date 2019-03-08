@@ -1,0 +1,18 @@
+{
+  "data": {
+    "trees": [
+      {
+        "nodes": {
+          "mq5lv39pec7wt3qj": {
+            "id": "mq5lv39pec7wt3qj",
+            "name": "QualificationTactic",
+            "title": "Tactic"
+          }
+        },
+        "root": "mq5lv39pec7wt3qj",
+        "title": "QualificationStrategy"
+      }
+    ]
+  },
+  "name": "QualificationStrategy"
+}

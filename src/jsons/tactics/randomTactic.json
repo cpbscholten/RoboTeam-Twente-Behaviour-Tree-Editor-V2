@@ -1,0 +1,215 @@
+{
+  "data": {
+    "trees": [
+      {
+        "nodes": {
+          "092a8wygpo5j203uy": {
+            "children": [
+              "3n6xu3bj2n1ycm"
+            ],
+            "id": "092a8wygpo5j203uy",
+            "name": "random4",
+            "title": "Role"
+          },
+          "2ppaa2s273mnc": {
+            "id": "2ppaa2s273mnc",
+            "isRole": false,
+            "properties": {
+              "Position": "{0,0}",
+              "ROLE": "random3",
+              "goToPos": "false",
+              "random": "true"
+            },
+            "title": "Defend"
+          },
+          "3fxg8xl8qialp4qjk": {
+            "children": [
+              "9me510ph9vo2i"
+            ],
+            "id": "3fxg8xl8qialp4qjk",
+            "name": "random5",
+            "title": "Role"
+          },
+          "3n6xu3bj2n1ycm": {
+            "children": [
+              "icl9cacrkujoge"
+            ],
+            "id": "3n6xu3bj2n1ycm",
+            "isRole": false,
+            "title": "Repeater"
+          },
+          "6mv52y86d9x05iuh1": {
+            "children": [
+              "6qq4x9siwtgkdal8s"
+            ],
+            "id": "6mv52y86d9x05iuh1",
+            "name": "random1",
+            "title": "Role"
+          },
+          "6qq4x9siwtgkdal8s": {
+            "children": [
+              "lp7com3s2gaocio"
+            ],
+            "id": "6qq4x9siwtgkdal8s",
+            "isRole": false,
+            "title": "Repeater"
+          },
+          "9g47c14iuatrbb1w": {
+            "children": [
+              "a5gl9qin6g61ev54y"
+            ],
+            "id": "9g47c14iuatrbb1w",
+            "isRole": false,
+            "title": "Repeater"
+          },
+          "9me510ph9vo2i": {
+            "children": [
+              "qeg3nchclut9rks0"
+            ],
+            "id": "9me510ph9vo2i",
+            "isRole": false,
+            "title": "Repeater"
+          },
+          "a5gl9qin6g61ev54y": {
+            "id": "a5gl9qin6g61ev54y",
+            "isRole": false,
+            "properties": {
+              "Position": "{0,0}",
+              "ROLE": "random6",
+              "goToPos": "false",
+              "random": "true"
+            },
+            "title": "Defend"
+          },
+          "dvselul5ysqqrvb": {
+            "children": [
+              "n2qn7t6um3brmzy6"
+            ],
+            "id": "dvselul5ysqqrvb",
+            "name": "random7",
+            "title": "Role"
+          },
+          "fhd61z548hnzh": {
+            "children": [
+              "2ppaa2s273mnc"
+            ],
+            "id": "fhd61z548hnzh",
+            "isRole": false,
+            "title": "Repeater"
+          },
+          "icl9cacrkujoge": {
+            "id": "icl9cacrkujoge",
+            "isRole": false,
+            "properties": {
+              "Position": "{0,0}",
+              "ROLE": "random4",
+              "goToPos": "false",
+              "random": "true"
+            },
+            "title": "Defend"
+          },
+          "lejnlu1npry9o": {
+            "children": [
+              "9g47c14iuatrbb1w"
+            ],
+            "id": "lejnlu1npry9o",
+            "name": "random6",
+            "title": "Role"
+          },
+          "lp7com3s2gaocio": {
+            "id": "lp7com3s2gaocio",
+            "isRole": false,
+            "properties": {
+              "Position": "{0,0}",
+              "ROLE": "random1",
+              "goToPos": "false",
+              "random": "true"
+            },
+            "title": "Defend"
+          },
+          "n2qn7t6um3brmzy6": {
+            "children": [
+              "qgrmqnwohwsf08"
+            ],
+            "id": "n2qn7t6um3brmzy6",
+            "isRole": false,
+            "title": "Repeater"
+          },
+          "pizlt5yolsq4c8": {
+            "children": [
+              "xkzlrop3e2bg2gp37"
+            ],
+            "id": "pizlt5yolsq4c8",
+            "name": "random2",
+            "title": "Role"
+          },
+          "q0bpm5pyw2shj16y3": {
+            "id": "q0bpm5pyw2shj16y3",
+            "isRole": false,
+            "properties": {
+              "Position": "{0,0}",
+              "ROLE": "random2",
+              "goToPos": "false",
+              "random": "true"
+            },
+            "title": "Defend"
+          },
+          "qeg3nchclut9rks0": {
+            "id": "qeg3nchclut9rks0",
+            "isRole": false,
+            "properties": {
+              "Position": "{0,0}",
+              "ROLE": "random5",
+              "goToPos": "false",
+              "random": "true"
+            },
+            "title": "Defend"
+          },
+          "qgrmqnwohwsf08": {
+            "id": "qgrmqnwohwsf08",
+            "isRole": false,
+            "properties": {
+              "Position": "{0,0}",
+              "ROLE": "random7",
+              "goToPos": "false",
+              "random": "true"
+            },
+            "title": "Defend"
+          },
+          "qncs746k4lbevc7": {
+            "children": [
+              "6mv52y86d9x05iuh1",
+              "pizlt5yolsq4c8",
+              "tc7mt1l0vxzi9jtc",
+              "092a8wygpo5j203uy",
+              "3fxg8xl8qialp4qjk",
+              "lejnlu1npry9o",
+              "dvselul5ysqqrvb"
+            ],
+            "id": "qncs746k4lbevc7",
+            "title": "ParallelSequence"
+          },
+          "tc7mt1l0vxzi9jtc": {
+            "children": [
+              "fhd61z548hnzh"
+            ],
+            "id": "tc7mt1l0vxzi9jtc",
+            "name": "random3",
+            "title": "Role"
+          },
+          "xkzlrop3e2bg2gp37": {
+            "children": [
+              "q0bpm5pyw2shj16y3"
+            ],
+            "id": "xkzlrop3e2bg2gp37",
+            "isRole": false,
+            "title": "Repeater"
+          }
+        },
+        "root": "qncs746k4lbevc7",
+        "title": "randomTactic"
+      }
+    ]
+  },
+  "name": "randomTactic"
+}

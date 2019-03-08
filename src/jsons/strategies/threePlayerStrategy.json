@@ -1,0 +1,31 @@
+{
+  "data": {
+    "trees": [
+      {
+        "nodes": {
+          "ge2yha100gt0m0": {
+            "children": [
+              "igznhnl8vp4fn8",
+              "xdxq74kem68mueqh"
+            ],
+            "id": "ge2yha100gt0m0",
+            "title": "ParallelSequence"
+          },
+          "igznhnl8vp4fn8": {
+            "id": "igznhnl8vp4fn8",
+            "name": "SingleKeeperTactic",
+            "title": "Tactic"
+          },
+          "xdxq74kem68mueqh": {
+            "id": "xdxq74kem68mueqh",
+            "name": "OneMidfielderOneDefenderTactic",
+            "title": "Tactic"
+          }
+        },
+        "root": "ge2yha100gt0m0",
+        "title": "threePlayerStrategy"
+      }
+    ]
+  },
+  "name": "threePlayerStrategy"
+}

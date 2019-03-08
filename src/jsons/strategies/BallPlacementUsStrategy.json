@@ -1,0 +1,31 @@
+{
+  "data": {
+    "trees": [
+      {
+        "nodes": {
+          "o2bywfn8y2yc4onyv": {
+            "id": "o2bywfn8y2yc4onyv",
+            "name": "BallPlacementUsTactic",
+            "title": "Tactic"
+          },
+          "tmtidfprewvcv345": {
+            "id": "tmtidfprewvcv345",
+            "name": "AvoidBallTactic",
+            "title": "Tactic"
+          },
+          "wusv1ovw3luyn7y4": {
+            "children": [
+              "o2bywfn8y2yc4onyv",
+              "tmtidfprewvcv345"
+            ],
+            "id": "wusv1ovw3luyn7y4",
+            "title": "ParallelSequence"
+          }
+        },
+        "root": "wusv1ovw3luyn7y4",
+        "title": "BallPlacementUsStrategy"
+      }
+    ]
+  },
+  "name": "BallPlacementUsStrategy"
+}

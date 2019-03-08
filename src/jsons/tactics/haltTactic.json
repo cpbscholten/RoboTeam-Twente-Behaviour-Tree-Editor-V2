@@ -1,0 +1,227 @@
+{
+  "data": {
+    "trees": [
+      {
+        "nodes": {
+          "1zw071jcsqsoio6pg": {
+            "children": [
+              "3g2l5suaaukg12f7"
+            ],
+            "id": "1zw071jcsqsoio6pg",
+            "isRole": false,
+            "title": "UntilSuccess"
+          },
+          "3g2l5suaaukg12f7": {
+            "id": "3g2l5suaaukg12f7",
+            "isRole": false,
+            "properties": {
+              "ROLE": "halt5"
+            },
+            "title": "Halt"
+          },
+          "5au3uo7vz3etqdcjo": {
+            "children": [
+              "zcrhopj7fh478skn0",
+              "jkymb18i2jf915",
+              "sikfq7mg1lpbhgyt",
+              "shhy3fdjhtwhz5v6",
+              "c8who5fcyxniqfz2",
+              "rqph64mxgmylohb",
+              "xhoblepykmi4esas",
+              "d33po25p6prfsg"
+            ],
+            "id": "5au3uo7vz3etqdcjo",
+            "title": "ParallelSequence"
+          },
+          "6sulnksvovxni8": {
+            "id": "6sulnksvovxni8",
+            "isRole": false,
+            "properties": {
+              "ROLE": "halt6"
+            },
+            "title": "Halt"
+          },
+          "a71dd9dteyaj1a": {
+            "id": "a71dd9dteyaj1a",
+            "isRole": false,
+            "properties": {
+              "ROLE": "halt3"
+            },
+            "title": "Halt"
+          },
+          "acoqi81eh2nsmtp7s": {
+            "children": [
+              "vs83e15d1us1n"
+            ],
+            "id": "acoqi81eh2nsmtp7s",
+            "isRole": false,
+            "title": "UntilSuccess"
+          },
+          "c8who5fcyxniqfz2": {
+            "children": [
+              "acoqi81eh2nsmtp7s"
+            ],
+            "id": "c8who5fcyxniqfz2",
+            "name": "halt4",
+            "role": "haltRole",
+            "title": "Role"
+          },
+          "ccesy7q1da3dif9": {
+            "children": [
+              "6sulnksvovxni8"
+            ],
+            "id": "ccesy7q1da3dif9",
+            "isRole": false,
+            "title": "UntilSuccess"
+          },
+          "d33po25p6prfsg": {
+            "children": [
+              "ccesy7q1da3dif9"
+            ],
+            "id": "d33po25p6prfsg",
+            "name": "halt6",
+            "role": "haltRole",
+            "title": "Role"
+          },
+          "giztftddywi7t1": {
+            "id": "giztftddywi7t1",
+            "isRole": false,
+            "properties": {
+              "ROLE": "halt7"
+            },
+            "title": "Halt"
+          },
+          "hcbpj1ratfies": {
+            "children": [
+              "a71dd9dteyaj1a"
+            ],
+            "id": "hcbpj1ratfies",
+            "isRole": false,
+            "title": "UntilSuccess"
+          },
+          "iyb7v4o13oz1h0": {
+            "children": [
+              "woiq1xef6ff05ja"
+            ],
+            "id": "iyb7v4o13oz1h0",
+            "isRole": false,
+            "title": "UntilSuccess"
+          },
+          "jkymb18i2jf915": {
+            "children": [
+              "tr9dnipl52dgtg5h"
+            ],
+            "id": "jkymb18i2jf915",
+            "name": "halt1",
+            "role": "haltRole",
+            "title": "Role"
+          },
+          "ney3zbkls1roh0m0": {
+            "id": "ney3zbkls1roh0m0",
+            "isRole": false,
+            "properties": {
+              "ROLE": "halt0"
+            },
+            "title": "Halt"
+          },
+          "pt7q4ritq044b": {
+            "children": [
+              "ney3zbkls1roh0m0"
+            ],
+            "id": "pt7q4ritq044b",
+            "isRole": false,
+            "title": "UntilSuccess"
+          },
+          "rqph64mxgmylohb": {
+            "children": [
+              "1zw071jcsqsoio6pg"
+            ],
+            "id": "rqph64mxgmylohb",
+            "name": "halt5",
+            "role": "haltRole",
+            "title": "Role"
+          },
+          "shhy3fdjhtwhz5v6": {
+            "children": [
+              "hcbpj1ratfies"
+            ],
+            "id": "shhy3fdjhtwhz5v6",
+            "name": "halt3",
+            "role": "haltRole",
+            "title": "Role"
+          },
+          "sikfq7mg1lpbhgyt": {
+            "children": [
+              "iyb7v4o13oz1h0"
+            ],
+            "id": "sikfq7mg1lpbhgyt",
+            "name": "halt2",
+            "role": "haltRole",
+            "title": "Role"
+          },
+          "t0umcms5t9a2a0": {
+            "children": [
+              "giztftddywi7t1"
+            ],
+            "id": "t0umcms5t9a2a0",
+            "isRole": false,
+            "title": "UntilSuccess"
+          },
+          "tr9dnipl52dgtg5h": {
+            "children": [
+              "ug0xiilk8std43s"
+            ],
+            "id": "tr9dnipl52dgtg5h",
+            "isRole": false,
+            "title": "UntilSuccess"
+          },
+          "ug0xiilk8std43s": {
+            "id": "ug0xiilk8std43s",
+            "isRole": false,
+            "properties": {
+              "ROLE": "halt1"
+            },
+            "title": "Halt"
+          },
+          "vs83e15d1us1n": {
+            "id": "vs83e15d1us1n",
+            "isRole": false,
+            "properties": {
+              "ROLE": "halt4"
+            },
+            "title": "Halt"
+          },
+          "woiq1xef6ff05ja": {
+            "id": "woiq1xef6ff05ja",
+            "isRole": false,
+            "properties": {
+              "ROLE": "halt2"
+            },
+            "title": "Halt"
+          },
+          "xhoblepykmi4esas": {
+            "children": [
+              "t0umcms5t9a2a0"
+            ],
+            "id": "xhoblepykmi4esas",
+            "name": "halt7",
+            "role": "haltRole",
+            "title": "Role"
+          },
+          "zcrhopj7fh478skn0": {
+            "children": [
+              "pt7q4ritq044b"
+            ],
+            "id": "zcrhopj7fh478skn0",
+            "name": "halt0",
+            "role": "haltRole",
+            "title": "Role"
+          }
+        },
+        "root": "5au3uo7vz3etqdcjo",
+        "title": "haltTactic"
+      }
+    ]
+  },
+  "name": "haltTactic"
+}

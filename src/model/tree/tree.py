@@ -55,10 +55,14 @@ class Tree:
                         return cls(file.get('name'), tree.get('root'), nodes)
         raise InvalidTreeJsonFormatException
 
-    def write(self, path: Path, filename: str):
+    def write(self, path: Path):
+        """
+        Writes a tree to a file specified in the path
+        :param path: the apth of the file to write to
+        """
         # todo fix verification coverage thing
         if Verification.verify(self):
-            write_json(path / filename, Tree.create_json(self))
+            write_json(path, Tree.create_json(self))
         else:
             Tree.logger.error('Tree {} is invalid and can not be written'.format(filename))
 

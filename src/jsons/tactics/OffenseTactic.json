@@ -1,0 +1,85 @@
+{
+  "data": {
+    "trees": [
+      {
+        "nodes": {
+          "4331qba55np2684": {
+            "id": "4331qba55np2684",
+            "properties": {
+              "ROLE": "assister"
+            },
+            "title": "Pass"
+          },
+          "44h0wcm2cg00or": {
+            "id": "44h0wcm2cg00or",
+            "properties": {
+              "ROLE": "striker"
+            },
+            "title": "IsBeingPassedTo"
+          },
+          "626pmsrjw1awc": {
+            "children": [
+              "44h0wcm2cg00or",
+              "er279burvo8rlbfpv",
+              "8z8talelfnlcdw6h"
+            ],
+            "id": "626pmsrjw1awc",
+            "properties": {
+              "ROLE": "striker"
+            },
+            "title": "MemSequence"
+          },
+          "8z8talelfnlcdw6h": {
+            "id": "8z8talelfnlcdw6h",
+            "properties": {
+              "ROLE": "striker"
+            },
+            "title": "Attack"
+          },
+          "er279burvo8rlbfpv": {
+            "id": "er279burvo8rlbfpv",
+            "properties": {
+              "ROLE": "striker"
+            },
+            "title": "Receive"
+          },
+          "ptwbt6k9ii1mokrx": {
+            "children": [
+              "626pmsrjw1awc"
+            ],
+            "id": "ptwbt6k9ii1mokrx",
+            "name": "striker",
+            "properties": {
+              "ROLE": "striker"
+            },
+            "role": "Striker",
+            "title": "Role"
+          },
+          "q1vhf0a09s2yvax": {
+            "children": [
+              "qphd33kk9z1dh913",
+              "ptwbt6k9ii1mokrx"
+            ],
+            "id": "q1vhf0a09s2yvax",
+            "title": "MemParallelSequence"
+          },
+          "qphd33kk9z1dh913": {
+            "children": [
+              "4331qba55np2684"
+            ],
+            "id": "qphd33kk9z1dh913",
+            "name": "assister",
+            "properties": {
+              "ROLE": "assister"
+            },
+            "role": "Assister",
+            "title": "Role"
+          }
+        },
+        "root": "q1vhf0a09s2yvax",
+        "title": "OffenseTactic"
+      }
+    ]
+  },
+  "name": "OffenseTactic"
+}

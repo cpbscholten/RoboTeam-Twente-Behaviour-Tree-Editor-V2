@@ -83,7 +83,7 @@ class TestTree(object):
     def test_write(self, tmpdir):
         # TODO add case when not valid
         tree = Tree.from_json(self.tree_dance_strategy)
-        tree.write(tmpdir, "test.json")
+        tree.write(tmpdir / "test.json")
         path = tmpdir / 'test.json'
         read = Tree.from_json(read_json(path))
         assert tree == read
