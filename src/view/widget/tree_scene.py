@@ -47,6 +47,9 @@ class TreeScene(QGraphicsScene):
         self.clear()
         # store current tree inside scene
         self.tree = tree
+        # check if there is a root, otherwise do not display the tree
+        if tree.root == '':
+            return
         # start recursively drawing tree
         root_node = tree.nodes[tree.root]
         self.root_ui_node = self.add_subtree(tree, root_node, x, y)[0]
@@ -136,7 +139,8 @@ class TreeScene(QGraphicsScene):
         """
         Aligns the tree by readding the model tree to the scene
         """
-        self.add_tree(self.tree, self.root_ui_node.xpos(), self.root_ui_node.ypos())
+        if self.tree.root != '':
+            self.add_tree(self.tree, self.root_ui_node.xpos(), self.root_ui_node.ypos())
 
     def mousePressEvent(self, m_event):
         """

@@ -24,8 +24,9 @@ class MainWorker(QObject):
     # return if writing succeeded or not TODO add details if there were errors?
     write_collection_finished_signal = pyqtSignal(bool)
     # write tree finished
-    # return if writing succeeded or not TODO add details if there were errors?
-    write_tree_finished_signal = pyqtSignal(bool)
+    # return tree and if writing succeeded or not TODO add details if there were errors?
+    write_tree_finished_signal = pyqtSignal(str, str, Tree, bool)
+    write_tree_custom_path_finished_signal = pyqtSignal(Path, Tree, bool)
 
     def __init__(self):
         super().__init__()
@@ -57,7 +58,7 @@ class MainWorker(QObject):
             with the category filename and tree
         :param category: the category of the file
         :param filename: the name of the file
-        :raises: FileNotFOundError if the file does not exist
+        :raises: FileNotFoundError if the file does not exist
         """
         tree = self.collection.collection.get(category).get(filename)
         if tree is None:
@@ -68,13 +69,13 @@ class MainWorker(QObject):
     @pyqtSlot(Path)
     def write_collection(self, path: Path=None):
         """
-        Pyqtslot for writing a collection
+        pyqtSlot for writing a collection
         Emits a write_collection_finished signal
             with a boolean if writing succeeded or not
         :param path: the path to write to, None if writing to path in collection or Settings
         """
-        self.collection.write_collection(path)
         try:
+            self.collection.write_collection(path)
             self.write_collection_finished_signal.emit(True)
         # todo catch more specific exceptions
         except:
@@ -84,34 +85,35 @@ class MainWorker(QObject):
     def write_tree(self, category: str, filename: str, tree: Tree):
         """
         Writes a tree to the current collection
-        Emits a write_tree_finished_signal whith a boolean
+        Emits a write_tree_finished_signal with a boolean
             if writing succeeded or not
         :param category: the category of the tree
         :param filename: the filename of the tree
         :param tree: the Tree to write
         """
         # todo error handling
-        tree.write(self.collection.jsons_path() / category / filename)
+        # todo add to collection if tree does not exist yet
+        # todo fix merge issues with write_tree method later
         try:
-            self.write_tree_finished_signal.emit(True)
+            tree.write(self.collection.jsons_path() / category / filename)
+            self.write_tree_finished_signal.emit(category, filename, tree, True)
         except:
             # todo catch more specific exceptions
-            self.write_tree_finished_signal.emit(False)
-
+            self.write_tree_finished_signal.emit(category, filename, tree, False)
 
     @pyqtSlot(Path, Tree)
     def write_tree_custom_path(self, path: Path, tree: Tree):
         """
         Writes a tree to a custom path
-        Emits a write_tree_finished_signal whith a boolean
+        Emits a write_tree_finished_signal with a boolean
             if writing succeeded or not
         :param path: the path to write the tree to
         :param tree: the Tree to write
         """
         # todo error handling
-        tree.write(path)
         try:
-            self.write_tree_finished_signal.emit(True)
+            tree.write(path)
+            self.write_tree_custom_path_finished_signal.emit(path, tree, True)
         except:
             # todo catch more specific exceptions
-            self.write_tree_finished_signal.emit(False)
+            self.write_tree_custom_path_finished_signal.emit(path, tree, False)

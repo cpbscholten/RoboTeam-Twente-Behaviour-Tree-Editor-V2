@@ -21,11 +21,11 @@ class MainListener(QObject):
 
     # signals for writing a collection
     # one with path the other without
-    # without path will write to the path in Settigns or collection
+    # without path will write to the path in Settings or collection
     write_collection_signal = pyqtSignal()
     write_collection_custom_path_signal = pyqtSignal(Path)
 
-    # opens a tree from collectoin
+    # opens a tree from collection
     # param: category and filename
     open_tree_from_collection_signal = pyqtSignal(str, str)
 
@@ -64,6 +64,7 @@ class MainListener(QObject):
         self.write_tree_signal.connect(self.worker.write_tree)
         self.write_tree_custom_path_signal.connect(self.worker.write_tree_custom_path)
         self.worker.write_tree_finished_signal.connect(self.write_tree_finished)
+        self.worker.write_tree_custom_path_finished_signal.connect(self.write_tree_custom_path_finished)
 
     # slots that handle the results of the worker
     @pyqtSlot(dict)
@@ -86,6 +87,8 @@ class MainListener(QObject):
         :param filename: filename of the tree
         :param tree: tree object from collection
         """
+        self.gui.check_unsaved_changes()
+        self.gui.load_tree = tree
         self.gui.show_tree(category, filename, tree)
 
     @pyqtSlot(bool)
@@ -104,12 +107,15 @@ class MainListener(QObject):
             view.windows.Dialogs.error_box("ERROR", 'There were errors while writing the collection, '
                                                     'for more details read the logs!')
 
-    @pyqtSlot(bool)
-    def write_tree_finished(self, success: bool):
+    @pyqtSlot(str, str, Tree, bool)
+    def write_tree_finished(self, category: str, filename: str, tree: Tree, success: bool):
         """
         Method that handles the result of writing a tree from the controller
         if it succeeded, update the collection again
         if it failed show an error message
+        :param category: the category writing to
+        :param filename: the filename writing
+        :param tree: tree we were trying to write
         :param success: if writing succeeded or not
         """
         # update the collection
@@ -117,8 +123,28 @@ class MainListener(QObject):
             view.windows.Dialogs.message_box("Success", 'Tree written successfully!')
             self.open_collection_signal.emit()
         else:
+            # show the failed tree on the screen
+            self.gui.show_tree(category, filename, tree)
             view.windows.Dialogs.error_box("ERROR", 'There were errors while writing the tree, '
                                                     'for more details read the logs!')
 
+    @pyqtSlot(Path, Tree, bool)
+    def write_tree_custom_path_finished(self, path: Path, tree: Tree, success: bool):
+        """
+        Method that handles the result of writing a tree from the controller
+        if it succeeded, update the collection again
+        if it failed show an error message
+        :param path: the path written to
+        :param tree: the tree we were trying to write
+        :param tree: tree we were trying to write
+        :param success: if writing succeeded or not
+        """
+        # update the collection
+        if success:
+            view.windows.Dialogs.message_box("Success", 'Tree written successfully!')
+            self.open_collection_signal.emit()
+        else:
+            view.windows.Dialogs.error_box("ERROR", 'There were errors while writing the tree to ' + path + ','
+                                                    ' for more details read the logs!')
 
 

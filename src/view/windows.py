@@ -1,10 +1,13 @@
+import re
+
 from functools import partial
 from pathlib import Path
 from typing import List, Dict, Union
 
-from PyQt5.QtWidgets import QAction, QMainWindow, QFileDialog, QMessageBox
+from PyQt5.QtWidgets import QAction, QMainWindow, QFileDialog, QMessageBox, QInputDialog, QLineEdit
 
 from model.config.settings import Settings
+from model.tree.tree import Tree
 from view.listeners import MainListener
 from view.widget.tree_view_widget import TreeViewWidget
 
@@ -30,6 +33,8 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.tree_view_widget)
         self.resize(1000, 800)
 
+        # tree that has been loaded from the collection. USed for checking for unsaved changes
+        self.load_tree = None
         # details about the tree currently shown
         # at start no tree is shown
         self.tree = None
@@ -46,7 +51,7 @@ class MainWindow(QMainWindow):
 
     def enable_tree_actions(self, enable: bool=True):
         """
-        these items are eneabled if a tree is shown
+        these items are enabled if a tree is shown
         otherwise disabled
         :param enable: enable or not
         """
@@ -59,6 +64,8 @@ class MainWindow(QMainWindow):
         """
         Closes the tree that currently is displayed
         """
+        self.check_unsaved_changes()
+        self.load_tree = None
         self.tree = None
         self.category = None
         self.filename = None
@@ -82,11 +89,18 @@ class MainWindow(QMainWindow):
         # set the window title to also show the path of the tree
         self.setWindowTitle(self.def_window_title + ' - ' + self.category + '/' + self.filename)
 
+    def check_unsaved_changes(self):
+        if self.load_tree != self.tree:
+            save = Dialogs.yes_no_message_box('Unsaved changes',
+                                              'There are some unsaved changes, do you want to save them?')
+            if save:
+                self.main_listener.write_tree_signal.emit(self.category, self.filename, self.tree)
+
 
 class MenuBar:
     """
     Class for initializing the menubar in the main window
-    In a seperate class for readability
+    In a separate class for readability
     """
     def __init__(self, main_window: MainWindow):
         self.main_window = main_window
@@ -167,21 +181,29 @@ class MenuBar:
         else:
             self.main_window.enable_tree_actions(False)
 
-        # initialzes the collection menus and trees
+        # initializes the collection menus and trees
         if not (collection_dict is None or len(collection_dict.keys()) == 0):
             for category, filenames in sorted(collection_dict.items()):
                 # create a menu for the category
                 # upper case first character of category
-                category_upper = category[0].upper() + category[1:]
+                category_upper: str = category[0].upper() + category[1:]
                 category_menu = menubar.addMenu('&' + category_upper)
 
-                # add an action to the menu for creating a new tree
-                add_tree_act = QAction('New ' + category_upper, self.main_window)
+                # create the correct singular of the category
+                category_singular = category_upper
+                if category_singular.endswith('ies'):
+                    category_singular = category_upper[:-3]
+                    category_singular += 'y'
+                elif category_upper.endswith('s'):
+                    category_singular = category_upper[:-1]
+
+                # add an action to the menu for creating a new tree with the singular of category
+                add_tree_act = QAction('New ' + category_singular, self.main_window)
                 add_tree_act.setStatusTip('Create a new ' + category_upper)
-                add_tree_act.setEnabled(False)
+                add_tree_act.triggered.connect(partial(self.create_tree, category))
+                # add_tree_act.setEnabled(False)
                 category_menu.addAction(add_tree_act)
                 # todo create action for making a new tree
-
                 # adds an action for each file in the category
                 for filename in filenames:
                     category_file_act = QAction(filename, self.main_window)
@@ -205,7 +227,7 @@ class MenuBar:
     def open_collection_custom_path(self):
         """
         Displays a folder selector
-        Calls the emit signal for openign a collection
+        Calls the emit signal for opening a collection
             if a folder is selected, otherwise nothing happens (cancel)
         """
         json_path = Settings.default_json_folder()
@@ -241,7 +263,7 @@ class MenuBar:
 
     def save_tree(self):
         """
-        Save the tree currently displayd to the collection
+        Save the tree currently displayed to the collection
         """
         self.main_window.main_listener.write_tree_signal.emit(self.main_window.category, self.main_window.filename,
                                                               self.main_window.tree)
@@ -258,6 +280,16 @@ class MenuBar:
         if path is not None:
             self.main_window.main_listener.write_tree_custom_path_signal.emit(path, self.main_window.tree)
 
+    def create_tree(self, category: str):
+        self.main_window.check_unsaved_changes()
+        name = Dialogs.text_input_dialog('Choose Tree name', 'Choose a name for the tree', "[A-Za-z0-9_+-]+")
+        if name is None:
+            return
+        else:
+            filename = name + '.json'
+            tree = Tree(name, '')
+            self.main_window.show_tree(category, filename, tree)
+
 
 class Dialogs:
     @staticmethod
@@ -270,14 +302,24 @@ class Dialogs:
         QMessageBox.question(None, title, text, QMessageBox.Ok, QMessageBox.Ok)
 
     @staticmethod
-    def error_box(title: str, text: str) -> bool:
+    def yes_no_message_box(title: str, text: str) -> bool:
+        """
+        Displays a message box with a title and message with yes no buttons
+        :param title: the title in the top bar
+        :param text: the text in the message box
+        :return true if yes is clicked else false
+        """
+        clicked = QMessageBox.question(None, title, text, QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+        return True if clicked == QMessageBox.Yes else False
+
+    @staticmethod
+    def error_box(title: str, text: str):
         """
         Displays an error box with a title and message and only an ok button
         :param title: title in top bar
         :param text: text in the error box
         """
         button_reply = QMessageBox.critical(None, title, text, QMessageBox.Ok, QMessageBox.Ok)
-        return True if button_reply == QMessageBox.Yes else False
 
     @staticmethod
     def select_folder(title: str, start_path: Path) -> Union[Path, None]:
@@ -300,8 +342,8 @@ class Dialogs:
         Opens a file save selector to select a save file location
         if cancel is pressed None will be returned otherwise a valid path
         :param title: the text in the top bar
+        :param name: filename that will be selected if it exists
         :param start_path: the path that the dialog will show when opened
-            including the file that will be selected by default
         :return: None if cancel is pressed or a valid path
         """
         path, _ = QFileDialog.getSaveFileName(None, title, str(start_path / name), "JSON files (*.json)")
@@ -309,3 +351,21 @@ class Dialogs:
         if path is None or path == '':
             return None
         return Path(path)
+
+    @staticmethod
+    def text_input_dialog(title: str, text: str, regex: str=None) -> Union[str, None]:
+        """
+        Creates an input dialog for a sting. Optional regex validation. If regex fails, keep asking for new input
+        :param title: title at top bar
+        :param text: text in message box
+        :param regex: the regex to match
+        :return: string if valid input is given, else None
+        """
+        string, ok_pressed = QInputDialog.getText(None, title, text, QLineEdit.Normal, "")
+        if ok_pressed and string != '':
+            if regex is not None:
+                if not re.match(regex, string):
+                    Dialogs.error_box("ERROR", "Invalid input given. Input should match pattern: " + regex)
+                    return Dialogs.text_input_dialog(title, text, regex)
+            return str(string)
+        return None
