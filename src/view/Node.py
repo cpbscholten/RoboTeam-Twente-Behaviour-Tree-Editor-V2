@@ -1,5 +1,3 @@
-import random
-
 from PyQt5.QtCore import QRectF, Qt
 from PyQt5.QtGui import QBrush, QColor, QFontMetrics
 from PyQt5.QtWidgets import QGraphicsEllipseItem, QGraphicsSimpleTextItem, QGraphicsItem
@@ -29,6 +27,8 @@ class Node(QGraphicsEllipseItem):
             # give node a unique title
             self.title = "node {}".format(Node.i)
         Node.i += 1
+        self.children = []
+        self.edges = []
         # add node name label centered in the eclipse, elide if title is too long
         self.node_text = QGraphicsSimpleTextItem()
         metrics = QFontMetrics(self.node_text.font())
@@ -74,9 +74,21 @@ class Node(QGraphicsEllipseItem):
         edge.setParentItem(self)
         # edge should stay behind the expand/collapse button
         edge.stackBefore(self.collapse_expand_button)
+        self.children.append(child)
+        self.edges.append(edge)
         # show the expand/collapse button when the first child is added
         if not self.collapse_expand_button.isVisible():
             self.collapse_expand_button.show()
+
+    def moveBy(self, x, y):
+        super(Node, self).moveBy(x, y)
+        if self.parentItem() and isinstance(self.parentItem(), Edge):
+            self.parentItem().change_position()
+
+    def setPos(self, x, y):
+        super(Node, self).setPos(x, y)
+        if self.parentItem() and isinstance(self.parentItem(), Edge):
+            self.parentItem().change_position()
 
     def xoffset(self):
         """

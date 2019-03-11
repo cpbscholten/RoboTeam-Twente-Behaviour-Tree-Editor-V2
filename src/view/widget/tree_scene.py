@@ -1,15 +1,12 @@
 import math
-from copy import deepcopy
 
 from PyQt5.QtCore import QRectF, Qt
-from PyQt5.QtGui import QPixmap
-from PyQt5.QtWidgets import QGraphicsScene, QGraphicsPixmapItem
+from PyQt5.QtWidgets import QGraphicsScene
 
 from model.tree.node import Node as ModelNode
 from model.tree.tree import Tree
 from src.view.Node import Node as ViewNode
 from view.collapse_expand_button import CollapseExpandButton
-from view.Edge import Edge
 
 
 class TreeScene(QGraphicsScene):
@@ -41,8 +38,11 @@ class TreeScene(QGraphicsScene):
         :param y: The y position for the root node
         :param tree: Model tree
         """
+        # use the top center as default tree position
         if not x:
-            x = self.width()/2
+            x = self.width() / 2
+        if not y:
+            y = - (self.view.viewport().height() / 2) + ViewNode.NODE_HEIGHT
         # remove old content
         self.clear()
         # store current tree inside scene
@@ -63,84 +63,148 @@ class TreeScene(QGraphicsScene):
         :param x: The x position for the root
         :param y: The y position for the root
         :return: The created root UI node,
-                 the width of both the left and right part of the subtree and the outermost nodes on both sides
+                 the width of both sides of the subtree
         """
-        root_ui_node = ViewNode(x, y, subtree_root.title)
+        root_view_node = ViewNode(x, y, subtree_root.title)
         y += self.NODE_Y_OFFSET
+        middle_index = (len(subtree_root.children) - 1) / 2
         # keep track of level width to prevent overlapping nodes
         subtree_left_width = subtree_right_width = 0
-        middle_index = (len(subtree_root.children) - 1) / 2
-        prev_subtree_width_left = prev_subtree_width_right = 0
-        prev_x = x
-        left_most_node = right_most_node = root_ui_node
-        # place the middle child of the root node
+        # store the left nodes so that they can be moved left during creation
+        left_nodes = []
+        # iterate over the left nodes
+        for i, child_id in enumerate(subtree_root.children[:math.ceil(middle_index)]):
+            child = tree.nodes[child_id]
+            # add the child and its own subtree,
+            # returned values are used to adjust the nodes position to prevent overlap
+            child_view_node, child_subtree_width_left, child_subtree_width_right = self.add_subtree(tree, child, x, y)
+            left_nodes.append(child_view_node)
+            # prevent double spacing when there is no middle node
+            if i == math.floor(middle_index) and not middle_index.is_integer():
+                # use half the offset because the other half is added later for the other part of the tree
+                move_x = - (child_subtree_width_right + (self.NODE_X_OFFSET / 2))
+                subtree_left_width += abs(move_x) + child_subtree_width_left
+            else:
+                # use the default node offset
+                move_x = - (child_subtree_width_left + child_subtree_width_right + self.NODE_X_OFFSET)
+                subtree_left_width += abs(move_x)
+            # move all previous nodes to the left to make room for the new node
+            for n in left_nodes:
+                n.moveBy(move_x, 0)
+            root_view_node.add_child(child_view_node)
+        # add middle node
         if middle_index.is_integer():
             child_id = subtree_root.children[int(middle_index)]
             child = tree.nodes[child_id]
             # add the child and its own subtree,
-            # returned values are used to adjust the nodes position based on the width of the subtree to prevent overlap
-            middle_child_ui_node, child_subtree_width_left, child_subtree_width_right, child_left_most, child_right_most = self.add_subtree(tree, child, x, y)
-            left_most_node = child_left_most
-            right_most_node = child_right_most
+            # returned values are used to adjust the nodes position to prevent overlap
+            child_view_node, child_subtree_width_left, child_subtree_width_right = self.add_subtree(tree, child, x, y)
+            # move all left nodes further to the left to make room for the middle node
+            if child_subtree_width_left > self.NODE_X_OFFSET:
+                for n in left_nodes:
+                    n.moveBy(- (child_subtree_width_left - self.NODE_X_OFFSET), 0)
             subtree_left_width += child_subtree_width_left
             subtree_right_width += child_subtree_width_right
-            prev_subtree_width_left = child_subtree_width_left
-            prev_subtree_width_right = child_subtree_width_right
-            root_ui_node.add_child(middle_child_ui_node)
-        # place the left part of the subtree from inside out
-        for i, child_id in enumerate(reversed(subtree_root.children[:math.ceil(middle_index)])):
-            child = tree.nodes[child_id]
-            # prevent double spacing when there is no middle node
-            if i == 0 and not middle_index.is_integer():
-                # use half the offset because the other half is added later for the other part of the tree
-                child_x = prev_x - (self.NODE_X_OFFSET / 2)
-            else:
-                child_x = prev_x - (left_most_node.rect().width() / 2) - self.NODE_X_OFFSET
-            subtree_left_width += prev_x - child_x
-            # add the child and its own subtree,
-            # returned values are used to adjust the nodes position based on the subtree width of its neighbour
-            child_ui_node, child_subtree_width_left, child_subtree_width_right, child_left_most, child_right_most = self.add_subtree(tree, child, child_x, y)
-            left_most_node = child_left_most
-            # calculate the offset for the node based on the width of its own subtree and its right neighbours subtree
-            move_x = - (child_subtree_width_right + prev_subtree_width_left + (child_right_most.rect().width() / 2))
-            child_ui_node.moveBy(move_x, 0)
-            # add the offset to the total subtree width
-            subtree_left_width += child_subtree_width_left + child_subtree_width_right + (child_right_most.rect().width() / 2)
-            prev_x = child_x + move_x
-            prev_subtree_width_left = child_subtree_width_left
-            root_ui_node.add_child(child_ui_node)
-        # reset the last x position to the location of the middle node
-        prev_x = x
-        # place the right part of the subtree from inside out
+            root_view_node.add_child(child_view_node)
+        # iterate over the right nodes
         for i, child_id in enumerate(subtree_root.children[math.floor(middle_index) + 1:]):
-            child: ModelNode = tree.nodes[child_id]
+            child = tree.nodes[child_id]
+            # add the child and its own subtree,
+            # returned values are used to adjust the nodes position to prevent overlap
+            child_view_node, child_subtree_width_left, child_subtree_width_right = self.add_subtree(tree, child, x, y)
+            move_x = subtree_right_width + child_subtree_width_left
             # prevent double spacing when there is no middle node
             if i == 0 and not middle_index.is_integer():
-                # half the offset because other half is added during the creation of the left part of the subtree
-                child_x = prev_x + (self.NODE_X_OFFSET / 2)
+                # use half the offset because the other half is added already
+                move_x += self.NODE_X_OFFSET / 2
+                subtree_right_width += child_subtree_width_left + child_subtree_width_right + (self.NODE_X_OFFSET / 2)
             else:
-                child_x = prev_x + (right_most_node.rect().width() / 2) + self.NODE_X_OFFSET
-            subtree_right_width += child_x - prev_x
-            # add the child and its own subtree,
-            # returned values are used to adjust the nodes position based on the subtree width of its neighbour
-            child_ui_node, child_subtree_width_left, child_subtree_width_right, child_left_most, child_right_most = self.add_subtree(tree, child, child_x, y)
-            right_most_node = child_right_most
-            # calculate the offset for the node based on the width of its own subtree and its left neighbours subtree
-            move_x = child_subtree_width_left + prev_subtree_width_right + (child_left_most.rect().width() / 2)
-            child_ui_node.moveBy(move_x, 0)
-            # add the offset to the total subtree width
-            subtree_right_width += child_subtree_width_left + child_subtree_width_right + (child_left_most.rect().width() / 2)
-            prev_x = child_x + move_x
-            prev_subtree_width_right = child_subtree_width_right
-            root_ui_node.add_child(child_ui_node)
-        return root_ui_node, subtree_left_width, subtree_right_width, left_most_node, right_most_node
+                # use the default node offset
+                move_x += self.NODE_X_OFFSET
+                subtree_right_width += child_subtree_width_left + child_subtree_width_right + self.NODE_X_OFFSET
+            # move node next to the previous node, all the way to the right
+            child_view_node.moveBy(move_x, 0)
+            root_view_node.add_child(child_view_node)
+        # set the widths of both subtree sides to a default value if no children or a smaller child node
+        if not subtree_root.children or subtree_left_width < root_view_node.rect().width() / 2 or \
+                subtree_right_width < root_view_node.rect().width() / 2:
+            subtree_left_width = subtree_right_width = root_view_node.rect().width() / 2
+        return root_view_node, subtree_left_width, subtree_right_width
 
     def align_tree(self):
         """
-        Aligns the tree by readding the model tree to the scene
+        Aligns the tree currently visible in the ui
         """
-        if self.tree.root != '':
-            self.add_tree(self.tree, self.root_ui_node.xpos(), self.root_ui_node.ypos())
+        if self.tree and self.root_ui_node:
+            self.align_from_node(self.root_ui_node)
+
+    def align_from_node(self, node: ViewNode):
+        """
+        Align all the children of a node
+        Works like add_subtree but repositions existing nodes instead of creating nodes
+        :param node: The root of the alignment
+        """
+        middle_index = (len(node.children) - 1) / 2
+        # keep track of level width to prevent overlapping nodes
+        subtree_left_width = subtree_right_width = 0
+        # store the left nodes so that they can be moved left during repositioning
+        left_nodes = []
+        # iterate over the left nodes
+        for i, child in enumerate(node.children[:math.ceil(middle_index)]):
+            # reset node to start position
+            child.setPos(0, 0)
+            # calculate values for position adjustment to prevent overlap
+            child_subtree_width_left, child_subtree_width_right = self.align_from_node(child)
+            left_nodes.append(child)
+            # prevent double spacing when there is no middle node
+            if i == math.floor(middle_index) and not middle_index.is_integer():
+                # use half the offset because the other half is added later for the other part of the tree
+                move_x = - (child_subtree_width_right + (self.NODE_X_OFFSET / 2))
+                subtree_left_width += abs(move_x) + child_subtree_width_left
+            else:
+                # use the default node offset
+                move_x = - (child_subtree_width_left + child_subtree_width_right + self.NODE_X_OFFSET)
+                subtree_left_width += abs(move_x)
+            # move all previous nodes to the left to make room for the current node
+            for n in left_nodes:
+                n.moveBy(move_x, 0)
+        # reposition middle node
+        if middle_index.is_integer():
+            child = node.children[int(middle_index)]
+            # reset node to start position
+            child.setPos(0, 0)
+            # calculate values for position adjustment to prevent overlap
+            child_subtree_width_left, child_subtree_width_right = self.align_from_node(child)
+            # move all left nodes further to the left to make room for the middle node
+            if child_subtree_width_left > self.NODE_X_OFFSET:
+                for n in left_nodes:
+                    n.moveBy(- (child_subtree_width_left - self.NODE_X_OFFSET), 0)
+            subtree_left_width += child_subtree_width_left
+            subtree_right_width += child_subtree_width_right
+        # iterate over the right nodes
+        for i, child in enumerate(node.children[math.floor(middle_index) + 1:]):
+            # reset node to start position
+            child.setPos(0, 0)
+            # calculate values for position adjustment to prevent overlap
+            child_subtree_width_left, child_subtree_width_right = self.align_from_node(
+                child)
+            move_x = subtree_right_width + child_subtree_width_left
+            # prevent double spacing when there is no middle node
+            if i == 0 and not middle_index.is_integer():
+                # use half the offset because the other half is added already
+                move_x += self.NODE_X_OFFSET / 2
+                subtree_right_width += child_subtree_width_left + child_subtree_width_right + (self.NODE_X_OFFSET / 2)
+            else:
+                # use the default node offset
+                move_x += self.NODE_X_OFFSET
+                subtree_right_width += child_subtree_width_left + child_subtree_width_right + self.NODE_X_OFFSET
+            # move node next to the previous node, all the way to the right
+            child.moveBy(move_x, 0)
+        # set the widths of both subtree sides to a default value if no children or a smaller child node
+        if not node.children or subtree_left_width < node.rect().width() / 2 or \
+                subtree_right_width < node.rect().width() / 2:
+            subtree_left_width = subtree_right_width = node.rect().width() / 2
+        return subtree_left_width, subtree_right_width
 
     def mousePressEvent(self, m_event):
         """

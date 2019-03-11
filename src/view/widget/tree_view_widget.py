@@ -37,13 +37,17 @@ class TreeViewWidget(QWidget):
         :return: The created scene
         """
         nodes = []
-        for i in range(30):
+        for i in range(40):
             if i % 4 == 0:
                 n = ModelNode(str(i), "node node node node node node {}".format(i))
             else:
                 n = ModelNode(str(i), "node {}".format(i))
             nodes.append(n)
         nodes[0].add_child(nodes[1].id)
+        nodes[0].add_child(nodes[30].id)
+        nodes[0].add_child(nodes[31].id)
+        nodes[0].add_child(nodes[32].id)
+        nodes[0].add_child(nodes[33].id)
         nodes[0].add_child(nodes[25].id)
         nodes[0].add_child(nodes[2].id)
         nodes[1].add_child(nodes[3].id)
