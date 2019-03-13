@@ -1,4 +1,5 @@
-from controller.utils.file_utils import *
+from controller.utils import *
+from model.config import Settings
 
 
 def test_read_json():
@@ -12,13 +13,13 @@ def test_write_json(tmpdir):
 
 
 def test_read_csv():
-    file = read_csv(Path('json/config/node_types/conditions.csv'))
+    file = read_csv(Settings.default_node_types_folder() / 'conditions.csv')
     assert csv_file == file
 
 
 def test_write_csv(tmpdir):
     write_csv(tmpdir / "conditions.csv", csv_file)
-    assert read_json(tmpdir / "conditions.csv") == csv_file
+    assert read_csv(tmpdir / "conditions.csv") == csv_file
 
 
 json_file = {

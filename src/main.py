@@ -3,7 +3,8 @@ import sys
 
 from PyQt5.QtWidgets import QApplication
 
-import model.config.settings
+import model.config
+
 import view.windows
 
 
@@ -11,7 +12,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.ERROR,
                         format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
                         datefmt='%m-%d %H:%M',
-                        filename=model.config.settings.Settings.query_setting("logfile_name", "main"),
+                        filename=model.config.Settings.query_setting("logfile_name", "main"),
                         filemode='w')
 
     # start UI

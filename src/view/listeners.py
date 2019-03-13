@@ -4,7 +4,7 @@ from typing import Dict, List
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
 
 from controller.workers import MainWorker
-from model.tree.tree import Tree
+from model.tree import Tree
 
 import view.windows
 

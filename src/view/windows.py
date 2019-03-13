@@ -7,8 +7,8 @@ from typing import List, Dict, Union
 from PyQt5.QtWidgets import QAction, QMainWindow, QFileDialog, QMessageBox, QInputDialog, QLineEdit, QWidget, \
     QHBoxLayout
 
-from model.config.settings import Settings
-from model.tree.tree import Tree
+from model.config import Settings
+from model.tree import Tree
 from view.listeners import MainListener
 from view.widget.tree_view_widget import TreeViewWidget
 from view.widgets import NodeTypesWidget

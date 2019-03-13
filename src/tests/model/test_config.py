@@ -1,11 +1,10 @@
-import os
 from pathlib import Path
 
 import pytest
 
-from controller.utils.file_utils import read_json, write_json
-from model.config.settings import Settings
-from model.exceptions.setting_not_found_exception import SettingNotFoundException
+from controller.utils import read_json, write_json
+from model.config import Settings
+from model.exceptions import SettingNotFoundException
 
 
 class TestSettings(object):
@@ -47,4 +46,4 @@ class TestSettings(object):
         assert Path('json/jsons') == Settings.default_json_folder()
 
     def test_default_node_types_folder(self):
-        assert Path('json/config/node_types') == Settings.default_node_types_folder()
+        assert Path('json/node_types') == Settings.default_node_types_folder()

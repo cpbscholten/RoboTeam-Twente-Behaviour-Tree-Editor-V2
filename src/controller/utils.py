@@ -1,8 +1,7 @@
 import json
 import csv
+from pathlib import Path
 from typing import Any, Dict, List
-
-from py._log.log import Path
 
 
 def read_json(src: Path) -> Dict[str, Any]:

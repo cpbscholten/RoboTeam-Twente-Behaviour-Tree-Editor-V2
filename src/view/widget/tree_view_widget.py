@@ -1,10 +1,9 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPainter
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QGraphicsView, QLabel
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QGraphicsView
 
-from controller.utils.file_utils import read_json
-from model.tree.node import Node as ModelNode
-from model.tree.tree import Tree
+from controller.utils import read_json
+from model.tree import Tree, Node as ModelNode
 from view.widget.tree_scene import TreeScene
 from view.widget.tree_view_toolbar import TreeViewToolbar
 

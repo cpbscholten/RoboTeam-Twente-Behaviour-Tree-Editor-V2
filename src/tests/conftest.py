@@ -1,6 +1,6 @@
 import pytest
 
-from model.config.settings import Settings
+from model.config import Settings
 
 
 @pytest.fixture(autouse=True, scope="session")

@@ -3,8 +3,8 @@ from typing import Dict, List
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QTreeWidget, QTreeWidgetItem, QWidget, QVBoxLayout, QPushButton
 
-from model.config.node_types import NodeTypes
-from model.config.settings import Settings
+from model.tree import NodeTypes
+from model.config import Settings
 
 
 class NodeTypesWidget(QWidget):

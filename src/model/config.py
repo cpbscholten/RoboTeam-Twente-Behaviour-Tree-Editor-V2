@@ -1,10 +1,9 @@
+import logging
 from pathlib import Path, PurePosixPath
 from typing import Any, Dict
 
-from controller.utils.file_utils import read_json, write_json
-import logging
-
-from model.exceptions.setting_not_found_exception import SettingNotFoundException
+from controller.utils import read_json, write_json
+from model.exceptions import SettingNotFoundException
 
 
 class Settings:
