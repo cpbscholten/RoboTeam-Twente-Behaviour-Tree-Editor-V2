@@ -1,0 +1,157 @@
+{
+  "data": {
+    "trees": [
+      {
+        "nodes": {
+          "0dgoaxh3jwczcdii": {
+            "children": [
+              "dntd9o0k5n70k1h6z",
+              "ox5in2byn18i0t4"
+            ],
+            "id": "0dgoaxh3jwczcdii",
+            "title": "ParallelSequence"
+          },
+          "0wcxscf9wdkb6": {
+            "id": "0wcxscf9wdkb6",
+            "isRole": false,
+            "properties": {
+              "ROLE": "letf"
+            },
+            "title": "HasBall"
+          },
+          "1kp8kg5l65444y": {
+            "id": "1kp8kg5l65444y",
+            "isRole": false,
+            "properties": {
+              "ROLE": "right"
+            },
+            "title": "HasBall"
+          },
+          "48lut6csyg8hk98": {
+            "children": [
+              "nd08yhtft7fpoq0y",
+              "iyu2m4zp749erg",
+              "1kp8kg5l65444y",
+              "rcy4xtq36m43he2l"
+            ],
+            "id": "48lut6csyg8hk98",
+            "isRole": false,
+            "title": "MemSequence"
+          },
+          "4v8ilnaoxb0lhg": {
+            "id": "4v8ilnaoxb0lhg",
+            "isRole": false,
+            "properties": {
+              "Position": "{1,1}",
+              "ROLE": "letf",
+              "goToBall": "false",
+              "random": "true"
+            },
+            "title": "GoToPos"
+          },
+          "94u7r92xsuezh0": {
+            "children": [
+              "quwa9zp4e2lh08487"
+            ],
+            "id": "94u7r92xsuezh0",
+            "isRole": false,
+            "title": "Repeater"
+          },
+          "dntd9o0k5n70k1h6z": {
+            "children": [
+              "xuoipazsmzjt4"
+            ],
+            "id": "dntd9o0k5n70k1h6z",
+            "name": "right",
+            "title": "Role"
+          },
+          "ehyz9hdhjtljnf82": {
+            "id": "ehyz9hdhjtljnf82",
+            "isRole": false,
+            "properties": {
+              "Position": "{-6, 4.5}",
+              "ROLE": "letf",
+              "goToBall": "false",
+              "random": "false"
+            },
+            "title": "GoToPos"
+          },
+          "iyu2m4zp749erg": {
+            "id": "iyu2m4zp749erg",
+            "isRole": false,
+            "properties": {
+              "Position": "{1,1}",
+              "ROLE": "right",
+              "goToBall": "true",
+              "random": "false"
+            },
+            "title": "GoToPos"
+          },
+          "nd08yhtft7fpoq0y": {
+            "id": "nd08yhtft7fpoq0y",
+            "isRole": false,
+            "properties": {
+              "Position": "{6, 4.5}",
+              "ROLE": "right",
+              "goToBall": "false",
+              "random": "false"
+            },
+            "title": "GoToPos"
+          },
+          "ox5in2byn18i0t4": {
+            "children": [
+              "94u7r92xsuezh0"
+            ],
+            "id": "ox5in2byn18i0t4",
+            "name": "letf",
+            "title": "Role"
+          },
+          "quwa9zp4e2lh08487": {
+            "children": [
+              "ehyz9hdhjtljnf82",
+              "spbk2om0c1oakiahv",
+              "0wcxscf9wdkb6",
+              "4v8ilnaoxb0lhg"
+            ],
+            "id": "quwa9zp4e2lh08487",
+            "isRole": false,
+            "title": "MemSequence"
+          },
+          "rcy4xtq36m43he2l": {
+            "id": "rcy4xtq36m43he2l",
+            "isRole": false,
+            "properties": {
+              "Position": "{1,1}",
+              "ROLE": "right",
+              "goToBall": "false",
+              "random": "true"
+            },
+            "title": "GoToPos"
+          },
+          "spbk2om0c1oakiahv": {
+            "id": "spbk2om0c1oakiahv",
+            "isRole": false,
+            "properties": {
+              "Position": "{1,1}",
+              "ROLE": "letf",
+              "goToBall": "true",
+              "random": "false"
+            },
+            "title": "GoToPos"
+          },
+          "xuoipazsmzjt4": {
+            "children": [
+              "48lut6csyg8hk98"
+            ],
+            "id": "xuoipazsmzjt4",
+            "isRole": false,
+            "title": "Repeater"
+          }
+        },
+        "root": "0dgoaxh3jwczcdii",
+        "title": "DanceTactic"
+      }
+    ]
+  },
+  "name": "DanceTactic"
+}

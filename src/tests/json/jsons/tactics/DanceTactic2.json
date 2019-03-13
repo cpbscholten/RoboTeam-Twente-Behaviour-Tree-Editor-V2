@@ -1,0 +1,122 @@
+{
+  "data": {
+    "trees": [
+      {
+        "nodes": {
+          "1965zgri576puzl": {
+            "children": [
+              "b72n10w62sifwjbr"
+            ],
+            "id": "1965zgri576puzl",
+            "name": "retarded",
+            "title": "Role"
+          },
+          "b72n10w62sifwjbr": {
+            "children": [
+              "ojjs0ibdlfyezfoww"
+            ],
+            "id": "b72n10w62sifwjbr",
+            "isRole": false,
+            "title": "Repeater"
+          },
+          "dn83glofvu629wh": {
+            "children": [
+              "vqi8gtyanb03p"
+            ],
+            "id": "dn83glofvu629wh",
+            "title": "Repeater"
+          },
+          "eztukmqv4ynnk": {
+            "id": "eztukmqv4ynnk",
+            "isRole": false,
+            "properties": {
+              "Position": "{-0.5, -3}",
+              "ROLE": "retarded",
+              "goToBall": "false",
+              "random": "false"
+            },
+            "title": "GoToPos"
+          },
+          "l1gclbu2hny6o": {
+            "children": [
+              "t3bfqymzy02mq"
+            ],
+            "id": "l1gclbu2hny6o",
+            "name": "Vright",
+            "title": "Role"
+          },
+          "ojjs0ibdlfyezfoww": {
+            "children": [
+              "sazplvbgxtw1l78",
+              "eztukmqv4ynnk"
+            ],
+            "id": "ojjs0ibdlfyezfoww",
+            "isRole": false,
+            "title": "MemSequence"
+          },
+          "sazplvbgxtw1l78": {
+            "id": "sazplvbgxtw1l78",
+            "isRole": false,
+            "properties": {
+              "Position": "{-0.5, 0}",
+              "ROLE": "retarded",
+              "goToBall": "false",
+              "random": "false"
+            },
+            "title": "GoToPos"
+          },
+          "t3bfqymzy02mq": {
+            "children": [
+              "t4rug7nddwjcst"
+            ],
+            "id": "t3bfqymzy02mq",
+            "isRole": false,
+            "title": "Repeater"
+          },
+          "t4rug7nddwjcst": {
+            "children": [
+              "x2y5d945xeo6r9k",
+              "zp7h1vtxl1un29scf"
+            ],
+            "id": "t4rug7nddwjcst",
+            "isRole": false,
+            "title": "MemSequence"
+          },
+          "vqi8gtyanb03p": {
+            "children": [
+              "l1gclbu2hny6o",
+              "1965zgri576puzl"
+            ],
+            "id": "vqi8gtyanb03p",
+            "title": "ParallelSequence"
+          },
+          "x2y5d945xeo6r9k": {
+            "id": "x2y5d945xeo6r9k",
+            "isRole": false,
+            "properties": {
+              "Position": "{0.5, 0}",
+              "ROLE": "Vright",
+              "goToBall": "false",
+              "random": "false"
+            },
+            "title": "GoToPos"
+          },
+          "zp7h1vtxl1un29scf": {
+            "id": "zp7h1vtxl1un29scf",
+            "isRole": false,
+            "properties": {
+              "Position": "{0.5, -3}",
+              "ROLE": "Vright",
+              "goToBall": "false",
+              "random": "false"
+            },
+            "title": "GoToPos"
+          }
+        },
+        "root": "dn83glofvu629wh",
+        "title": "DanceTactic2"
+      }
+    ]
+  },
+  "name": "DanceTactic2"
+}

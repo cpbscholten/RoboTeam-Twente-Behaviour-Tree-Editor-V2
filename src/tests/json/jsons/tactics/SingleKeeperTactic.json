@@ -1,0 +1,198 @@
+{
+  "data": {
+    "trees": [
+      {
+        "nodes": {
+          "08cmpd7yndhneziny": {
+            "id": "08cmpd7yndhneziny",
+            "properties": {
+              "ROLE": "Keeper",
+              "theirDefenceArea": "false"
+            },
+            "title": "BallInDefenseAreaAndStill"
+          },
+          "1tu6offlz3fn9h3": {
+            "children": [
+              "9yvifbt3f7w5ul",
+              "3nq3nw7f4zlbmq",
+              "uvigj3s0qqpkkzp7l",
+              "sgkf684ba9rwnv8b"
+            ],
+            "id": "1tu6offlz3fn9h3",
+            "properties": {
+              "ROLE": "Keeper"
+            },
+            "title": "MemSequence"
+          },
+          "210zx0xl0f4jh9d": {
+            "children": [
+              "rer14tdzkuy3uh2z8",
+              "3drt4zhzs1muc"
+            ],
+            "id": "210zx0xl0f4jh9d",
+            "properties": {
+              "ROLE": "Keeper"
+            },
+            "title": "Sequence"
+          },
+          "2hhhwfiimry0rpb8": {
+            "id": "2hhhwfiimry0rpb8",
+            "properties": {
+              "ROLE": "Keeper"
+            },
+            "title": "HasBall"
+          },
+          "3drt4zhzs1muc": {
+            "children": [
+              "2hhhwfiimry0rpb8"
+            ],
+            "id": "3drt4zhzs1muc",
+            "properties": {
+              "ROLE": "Keeper"
+            },
+            "title": "Inverter"
+          },
+          "3nq3nw7f4zlbmq": {
+            "id": "3nq3nw7f4zlbmq",
+            "properties": {
+              "ROLE": "Keeper",
+              "maxTime": "5.0"
+            },
+            "title": "GetBall"
+          },
+          "57x61mf4nzy4lhvt": {
+            "children": [
+              "g3rxpviippdty8"
+            ],
+            "id": "57x61mf4nzy4lhvt",
+            "name": "Keeper",
+            "properties": {
+              "ROLE": "Keeper"
+            },
+            "role": "Keeper",
+            "title": "Role"
+          },
+          "9yvifbt3f7w5ul": {
+            "id": "9yvifbt3f7w5ul",
+            "properties": {
+              "Position": "{-1.6,0}",
+              "ROLE": "Keeper",
+              "distanceBehindBall": "0.01",
+              "goBehindBall": "true",
+              "maxVel": "0.8"
+            },
+            "title": "GoToPos"
+          },
+          "g3rxpviippdty8": {
+            "children": [
+              "r3xsech2ota4ydx"
+            ],
+            "id": "g3rxpviippdty8",
+            "properties": {
+              "ROLE": "Keeper"
+            },
+            "title": "Repeater"
+          },
+          "i3qqjkbf5apjg9rl": {
+            "id": "i3qqjkbf5apjg9rl",
+            "properties": {
+              "ROLE": "Keeper"
+            },
+            "title": "Keeper"
+          },
+          "j7nvj8wwczstu": {
+            "id": "j7nvj8wwczstu",
+            "properties": {
+              "Keeper": "true",
+              "ROLE": "Keeper"
+            },
+            "title": "InterceptBall"
+          },
+          "n64k0uwh7mv6e": {
+            "children": [
+              "210zx0xl0f4jh9d",
+              "j7nvj8wwczstu"
+            ],
+            "id": "n64k0uwh7mv6e",
+            "properties": {
+              "ROLE": "Keeper"
+            },
+            "title": "MemSequence"
+          },
+          "r3xsech2ota4ydx": {
+            "children": [
+              "n64k0uwh7mv6e",
+              "rdyttcpzib9h9cao",
+              "i3qqjkbf5apjg9rl"
+            ],
+            "id": "r3xsech2ota4ydx",
+            "properties": {
+              "ROLE": "Keeper"
+            },
+            "title": "Selector"
+          },
+          "rdyttcpzib9h9cao": {
+            "children": [
+              "08cmpd7yndhneziny",
+              "yehpphc6ierc0"
+            ],
+            "id": "rdyttcpzib9h9cao",
+            "properties": {
+              "ROLE": "Keeper"
+            },
+            "title": "MemSequence"
+          },
+          "rer14tdzkuy3uh2z8": {
+            "id": "rer14tdzkuy3uh2z8",
+            "properties": {
+              "ROLE": "Keeper"
+            },
+            "title": "BallKickedToOurGoal"
+          },
+          "sgkf684ba9rwnv8b": {
+            "id": "sgkf684ba9rwnv8b",
+            "properties": {
+              "ROLE": "Keeper"
+            },
+            "title": "Kick"
+          },
+          "uvigj3s0qqpkkzp7l": {
+            "id": "uvigj3s0qqpkkzp7l",
+            "properties": {
+              "Angle": "0",
+              "BallPlacement": "false",
+              "ROLE": "Keeper",
+              "RotateToTheirGoal": "true",
+              "maxVel": "0.5"
+            },
+            "title": "DribbleRotate"
+          },
+          "vl1n9asfepct54eo": {
+            "id": "vl1n9asfepct54eo",
+            "properties": {
+              "ROLE": "Keeper",
+              "margin": "0.1",
+              "ourDefenseArea": "true",
+              "useRobot": "false"
+            },
+            "title": "IsInDefenseArea"
+          },
+          "yehpphc6ierc0": {
+            "children": [
+              "vl1n9asfepct54eo",
+              "1tu6offlz3fn9h3"
+            ],
+            "id": "yehpphc6ierc0",
+            "properties": {
+              "ROLE": "Keeper"
+            },
+            "title": "Sequence"
+          }
+        },
+        "root": "57x61mf4nzy4lhvt",
+        "title": "SingleKeeperTactic"
+      }
+    ]
+  },
+  "name": "SingleKeeperTactic"
+}

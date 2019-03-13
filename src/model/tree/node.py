@@ -15,13 +15,14 @@ class Node:
         """
         Constructor for a Node object
         :param node_id: a unique identification string
-        :param title: The name of the node
+        :param title: The title of the node
         :param attributes: other attributes with values the nodes has in a dict
         :param children: The id's of the node as children
         """
         self.id: str = node_id
         self.title: str = title
         # if statements and list/dict copies because because of mutability
+        # A node will always have a title but not always a name, if it has a name it will be saved in attributes
         self.attributes: Dict[str, Any] = dict(attributes) if attributes is not None else {}
         self.children: List[str] = list(children) if children is not None else []
 
@@ -40,6 +41,7 @@ class Node:
                 and 'title' in attributes and type(attributes.get('title')) == str) \
                 or ('children' in attributes and not type(attributes.get('children')) == list):
             # TODO: check if children are string?
+            # TODO: provide more elaborate error logging (why is it invalid?)
             Node.logger.error("Attempted to process invalid tree.")
             raise InvalidTreeJsonFormatException
         attributes.pop('id')
@@ -70,11 +72,13 @@ class Node:
         """
         Removes a child from the node
         :param node_id: the id of the child
+        :returns True if success, False if node could not be found
         """
         if node_id not in self.children:
             Node.logger.warning("Attempted to remove non-existent child {} from node {}".format(node_id, self.id))
-            return
+            return False
         self.children.remove(node_id)
+        return True
 
     def add_attribute(self, key: str, value: Any):
         """
@@ -88,11 +92,13 @@ class Node:
         """
         Removes an attribute from a node
         :param key: the key of the attribute to remove
+        :returns True if success, False if node could not be found
         """
         if key not in self.attributes.keys():
             Node.logger.warning("Attempted to remove non-existent attribute {} from node {}".format(key, self.id))
-            return
+            return False
         self.attributes.pop(key)
+        return True
 
     def add_property(self, key: str, value: Any):
         """
@@ -140,3 +146,6 @@ class Node:
     def __eq__(self, other):
         return (isinstance(other, self.__class__)
                 and self.__dict__ == other.__dict__)
+
+    def __repr__(self):
+        return "{id: " + str(self.id) + ", title: " + str(self.title) + ", attributes: " + str(self.attributes) + ", children: " + str(self.children) + "}"

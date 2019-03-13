@@ -80,20 +80,13 @@ class TestTree(object):
         with pytest.raises(InvalidTreeJsonFormatException):
             Tree.from_json(self.tree_too_many_trees)
 
-    def test_write(self, tmpdir):
-        # TODO add case when not valid
-        tree = Tree.from_json(self.tree_dance_strategy)
-        tree.write(tmpdir / "test.json")
-        path = tmpdir / 'test.json'
-        read = Tree.from_json(read_json(path))
-        assert tree == read
-
     def test_add_node(self):
         tree = Tree.from_json(self.tree_dance_strategy)
         tree.add_node(Node("1", "title"))
         assert "1"in tree.nodes.keys()
 
     def test_remove_node(self):
+        # TODO add boolean checks for removes
         tree = Tree.from_json(self.tree_dance_strategy)
         tree.remove_node(tree.nodes.get("tfbqmsn62cc9okkj"))
         assert "tfbqmsn62cc9okkj" not in tree.nodes.keys()

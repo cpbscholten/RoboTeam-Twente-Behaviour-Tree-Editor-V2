@@ -1,0 +1,145 @@
+{
+  "data": {
+    "trees": [
+      {
+        "nodes": {
+          "3r3vdkvrq0qy2k8tq": {
+            "children": [
+              "442wnhvzcos5l6fgc",
+              "l3f41xsptc9v4mkp1"
+            ],
+            "id": "3r3vdkvrq0qy2k8tq",
+            "title": "Sequence"
+          },
+          "442wnhvzcos5l6fgc": {
+            "id": "442wnhvzcos5l6fgc",
+            "properties": {
+              "margin": "0.1",
+              "ourDefenseArea": "true",
+              "useRobot": "false"
+            },
+            "title": "IsInDefenseArea"
+          },
+          "5f53g1cyfsq6s": {
+            "id": "5f53g1cyfsq6s",
+            "properties": {
+              "Keeper": "true"
+            },
+            "title": "InterceptBall"
+          },
+          "8w7xp90rkscayqm": {
+            "children": [
+              "phgpzxou1ceze6ua"
+            ],
+            "id": "8w7xp90rkscayqm",
+            "title": "Inverter"
+          },
+          "a2c0bwakz850sit": {
+            "id": "a2c0bwakz850sit",
+            "properties": {
+              "maxTime": "5.0"
+            },
+            "title": "GetBall"
+          },
+          "bxxewub4lr2e16v": {
+            "children": [
+              "v97vjfarlmuf9bf5",
+              "8w7xp90rkscayqm"
+            ],
+            "id": "bxxewub4lr2e16v",
+            "title": "Sequence"
+          },
+          "dh25st3ndvyo3hgp": {
+            "children": [
+              "xgu1p295kw93qk8",
+              "h2xe4k2qeyxz98",
+              "ptrfhgkpge7qwc58o"
+            ],
+            "id": "dh25st3ndvyo3hgp",
+            "title": "Selector"
+          },
+          "exhsxbmfw5lchsb81": {
+            "id": "exhsxbmfw5lchsb81",
+            "properties": {
+              "Angle": "0",
+              "BallPlacement": "false",
+              "RotateToTheirGoal": "true",
+              "maxVel": "0.5"
+            },
+            "title": "DribbleRotate"
+          },
+          "gsh09zbfjy9lj1558": {
+            "id": "gsh09zbfjy9lj1558",
+            "properties": {},
+            "title": "Kick"
+          },
+          "h2xe4k2qeyxz98": {
+            "children": [
+              "vgze2gu8e6uovxjw9",
+              "3r3vdkvrq0qy2k8tq"
+            ],
+            "id": "h2xe4k2qeyxz98",
+            "title": "MemSequence"
+          },
+          "l3f41xsptc9v4mkp1": {
+            "children": [
+              "upe8dim19wwr9o5ts",
+              "a2c0bwakz850sit",
+              "exhsxbmfw5lchsb81",
+              "gsh09zbfjy9lj1558"
+            ],
+            "id": "l3f41xsptc9v4mkp1",
+            "title": "MemSequence"
+          },
+          "o3jcbqg12iz4ba9": {
+            "children": [
+              "dh25st3ndvyo3hgp"
+            ],
+            "id": "o3jcbqg12iz4ba9",
+            "title": "Repeater"
+          },
+          "phgpzxou1ceze6ua": {
+            "id": "phgpzxou1ceze6ua",
+            "title": "HasBall"
+          },
+          "ptrfhgkpge7qwc58o": {
+            "id": "ptrfhgkpge7qwc58o",
+            "title": "Keeper"
+          },
+          "upe8dim19wwr9o5ts": {
+            "id": "upe8dim19wwr9o5ts",
+            "properties": {
+              "Position": "{-1.6,0}",
+              "distanceBehindBall": "0.01",
+              "goBehindBall": "true",
+              "maxVel": "0.8"
+            },
+            "title": "GoToPos"
+          },
+          "v97vjfarlmuf9bf5": {
+            "id": "v97vjfarlmuf9bf5",
+            "title": "BallKickedToOurGoal"
+          },
+          "vgze2gu8e6uovxjw9": {
+            "id": "vgze2gu8e6uovxjw9",
+            "properties": {
+              "theirDefenceArea": "false"
+            },
+            "title": "BallInDefenseAreaAndStill"
+          },
+          "xgu1p295kw93qk8": {
+            "children": [
+              "bxxewub4lr2e16v",
+              "5f53g1cyfsq6s"
+            ],
+            "id": "xgu1p295kw93qk8",
+            "title": "MemSequence"
+          }
+        },
+        "root": "o3jcbqg12iz4ba9",
+        "title": "Keeper"
+      }
+    ]
+  },
+  "name": "Keeper"
+}

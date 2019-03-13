@@ -1,0 +1,25 @@
+{
+  "data": {
+    "trees": [
+      {
+        "nodes": {
+          "20u6um9n30b0659iu": {
+            "id": "20u6um9n30b0659iu",
+            "name": "PassTactic",
+            "title": "Tactic"
+          },
+          "t51jlb18y0utk": {
+            "children": [
+              "20u6um9n30b0659iu"
+            ],
+            "id": "t51jlb18y0utk",
+            "title": "Repeater"
+          }
+        },
+        "root": "t51jlb18y0utk",
+        "title": "PassStrategy"
+      }
+    ]
+  },
+  "name": "PassStrategy"
+}

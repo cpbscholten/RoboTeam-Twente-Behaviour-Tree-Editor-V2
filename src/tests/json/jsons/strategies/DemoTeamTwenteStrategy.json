@@ -1,0 +1,58 @@
+{
+  "data": {
+    "trees": [
+      {
+        "nodes": {
+          "abcdefgh314": {
+            "children": [
+              "jnzwvf620oa6hp7c",
+              "jkx3g30rh8ovwfb"
+            ],
+            "id": "abcdefgh314",
+            "isRole": false,
+            "location": {
+              "x": 385.0,
+              "y": 213.0
+            },
+            "title": "ParallelSequence"
+          },
+          "jkx3g30rh8ovwfb": {
+            "id": "jkx3g30rh8ovwfb",
+            "isRole": false,
+            "location": {
+              "x": 540.0,
+              "y": 405.0
+            },
+            "name": "SingleKeeperTactic",
+            "title": "Tactic"
+          },
+          "jnzwvf620oa6hp7c": {
+            "id": "jnzwvf620oa6hp7c",
+            "isRole": false,
+            "location": {
+              "x": 255.0,
+              "y": 371.0
+            },
+            "name": "Attactic",
+            "title": "Tactic"
+          },
+          "ydjw9of7ndf88": {
+            "children": [
+              "abcdefgh314"
+            ],
+            "id": "ydjw9of7ndf88",
+            "isRole": false,
+            "location": {
+              "x": 385.0,
+              "y": 213.0
+            },
+            "title": "Repeater"
+          }
+        },
+        "root": "ydjw9of7ndf88",
+        "title": "DemoTeamTwenteStrategy"
+      }
+    ]
+  },
+  "name": "DemoTeamTwenteStrategy"
+}

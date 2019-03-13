@@ -1,0 +1,259 @@
+{
+  "data": {
+    "trees": [
+      {
+        "nodes": {
+          "0uhvayd6nbiq9": {
+            "children": [
+              "3op7eomgl0ayxqq"
+            ],
+            "id": "0uhvayd6nbiq9",
+            "name": "avoid3",
+            "properties": {
+              "ROLE": "avoid3"
+            },
+            "role": "AvoidBallRole",
+            "title": "Role"
+          },
+          "1dlcf801g24wc113": {
+            "children": [
+              "x1skkja0lp3lma"
+            ],
+            "id": "1dlcf801g24wc113",
+            "name": "avoid1",
+            "properties": {
+              "ROLE": "avoid1"
+            },
+            "role": "AvoidBallRole",
+            "title": "Role"
+          },
+          "26r822sjdvjdgtw": {
+            "children": [
+              "zan75tlxqui2aw"
+            ],
+            "id": "26r822sjdvjdgtw",
+            "name": "avoid8",
+            "properties": {
+              "ROLE": "avoid8"
+            },
+            "role": "AvoidBallRole",
+            "title": "Role"
+          },
+          "3op7eomgl0ayxqq": {
+            "children": [
+              "ky997e2vcr3api"
+            ],
+            "id": "3op7eomgl0ayxqq",
+            "properties": {
+              "ROLE": "avoid3"
+            },
+            "title": "UntilSuccess"
+          },
+          "3rtpa7359hdb2q": {
+            "id": "3rtpa7359hdb2q",
+            "properties": {
+              "ROLE": "avoid8"
+            },
+            "title": "AvoidBall"
+          },
+          "7h3oqx9imxp1k0sy": {
+            "children": [
+              "96eu0fqvbhzvbwba"
+            ],
+            "id": "7h3oqx9imxp1k0sy",
+            "properties": {
+              "ROLE": "avoid5"
+            },
+            "title": "UntilSuccess"
+          },
+          "96eu0fqvbhzvbwba": {
+            "id": "96eu0fqvbhzvbwba",
+            "properties": {
+              "ROLE": "avoid5"
+            },
+            "title": "AvoidBall"
+          },
+          "9xjvl9wwl9c0ff": {
+            "children": [
+              "rjbzeaw8kyjsd45"
+            ],
+            "id": "9xjvl9wwl9c0ff",
+            "name": "avoid4",
+            "properties": {
+              "ROLE": "avoid4"
+            },
+            "role": "AvoidBallRole",
+            "title": "Role"
+          },
+          "b8wx79jv2o1ij2aq": {
+            "id": "b8wx79jv2o1ij2aq",
+            "properties": {
+              "ROLE": "avoid7"
+            },
+            "title": "AvoidBall"
+          },
+          "bmso94viaz0y9f8p": {
+            "children": [
+              "b8wx79jv2o1ij2aq"
+            ],
+            "id": "bmso94viaz0y9f8p",
+            "properties": {
+              "ROLE": "avoid7"
+            },
+            "title": "UntilSuccess"
+          },
+          "ia2lf6lc8sdgwy67": {
+            "children": [
+              "z6zatkqxkv2dr27i4"
+            ],
+            "id": "ia2lf6lc8sdgwy67",
+            "name": "avoid8",
+            "properties": {
+              "ROLE": "avoid8"
+            },
+            "role": "AvoidBallRole",
+            "title": "Role"
+          },
+          "jfq7561xq8vbqebt9": {
+            "id": "jfq7561xq8vbqebt9",
+            "properties": {
+              "ROLE": "avoid8"
+            },
+            "title": "AvoidBall"
+          },
+          "ky997e2vcr3api": {
+            "id": "ky997e2vcr3api",
+            "properties": {
+              "ROLE": "avoid3"
+            },
+            "title": "AvoidBall"
+          },
+          "mr65fgs5lwjvfzo": {
+            "children": [
+              "7h3oqx9imxp1k0sy"
+            ],
+            "id": "mr65fgs5lwjvfzo",
+            "name": "avoid5",
+            "properties": {
+              "ROLE": "avoid5"
+            },
+            "role": "AvoidBallRole",
+            "title": "Role"
+          },
+          "mueq8c9u3inreal": {
+            "children": [
+              "unm7igi7p8t2yu1c"
+            ],
+            "id": "mueq8c9u3inreal",
+            "properties": {
+              "ROLE": "avoid2"
+            },
+            "title": "UntilSuccess"
+          },
+          "n2060u0tqy34pkc": {
+            "children": [
+              "1dlcf801g24wc113",
+              "wmnc2gbkd957x",
+              "0uhvayd6nbiq9",
+              "9xjvl9wwl9c0ff",
+              "mr65fgs5lwjvfzo",
+              "26r822sjdvjdgtw",
+              "oaejyeajxfrw9n2w",
+              "ia2lf6lc8sdgwy67"
+            ],
+            "id": "n2060u0tqy34pkc",
+            "title": "ParallelSequence"
+          },
+          "oaejyeajxfrw9n2w": {
+            "children": [
+              "bmso94viaz0y9f8p"
+            ],
+            "id": "oaejyeajxfrw9n2w",
+            "name": "avoid7",
+            "properties": {
+              "ROLE": "avoid7"
+            },
+            "role": "AvoidBallRole",
+            "title": "Role"
+          },
+          "rjbzeaw8kyjsd45": {
+            "children": [
+              "ug3l8nodyud5tmf9m"
+            ],
+            "id": "rjbzeaw8kyjsd45",
+            "properties": {
+              "ROLE": "avoid4"
+            },
+            "title": "UntilSuccess"
+          },
+          "ug3l8nodyud5tmf9m": {
+            "id": "ug3l8nodyud5tmf9m",
+            "properties": {
+              "ROLE": "avoid4"
+            },
+            "title": "AvoidBall"
+          },
+          "unm7igi7p8t2yu1c": {
+            "id": "unm7igi7p8t2yu1c",
+            "properties": {
+              "ROLE": "avoid2"
+            },
+            "title": "AvoidBall"
+          },
+          "wmnc2gbkd957x": {
+            "children": [
+              "mueq8c9u3inreal"
+            ],
+            "id": "wmnc2gbkd957x",
+            "name": "avoid2",
+            "properties": {
+              "ROLE": "avoid2"
+            },
+            "role": "AvoidBallRole",
+            "title": "Role"
+          },
+          "x1skkja0lp3lma": {
+            "children": [
+              "xo2avzapoyas9cl3m"
+            ],
+            "id": "x1skkja0lp3lma",
+            "properties": {
+              "ROLE": "avoid1"
+            },
+            "title": "UntilSuccess"
+          },
+          "xo2avzapoyas9cl3m": {
+            "id": "xo2avzapoyas9cl3m",
+            "properties": {
+              "ROLE": "avoid1"
+            },
+            "title": "AvoidBall"
+          },
+          "z6zatkqxkv2dr27i4": {
+            "children": [
+              "3rtpa7359hdb2q"
+            ],
+            "id": "z6zatkqxkv2dr27i4",
+            "properties": {
+              "ROLE": "avoid8"
+            },
+            "title": "UntilSuccess"
+          },
+          "zan75tlxqui2aw": {
+            "children": [
+              "jfq7561xq8vbqebt9"
+            ],
+            "id": "zan75tlxqui2aw",
+            "properties": {
+              "ROLE": "avoid8"
+            },
+            "title": "UntilSuccess"
+          }
+        },
+        "root": "n2060u0tqy34pkc",
+        "title": "AvoidBallTactic"
+      }
+    ]
+  },
+  "name": "AvoidBallTactic"
+}

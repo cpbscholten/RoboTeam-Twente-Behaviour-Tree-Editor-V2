@@ -1,0 +1,156 @@
+{
+  "data": {
+    "trees": [
+      {
+        "nodes": {
+          "07n08wts3hfr1z7eu": {
+            "id": "07n08wts3hfr1z7eu",
+            "isRole": false,
+            "properties": {
+              "ROLE": "FAKOFF"
+            },
+            "title": "HasBall"
+          },
+          "27ihl9et4u6jj": {
+            "children": [
+              "rek60qzwfyt6b"
+            ],
+            "id": "27ihl9et4u6jj",
+            "title": "Inverter"
+          },
+          "ct7clwftgg39b": {
+            "id": "ct7clwftgg39b",
+            "isRole": false,
+            "properties": {
+              "Position": "{0,0}",
+              "ROLE": "FAKOFF",
+              "goToBall": "false",
+              "random": "true"
+            },
+            "title": "GoToPosLuTh"
+          },
+          "e7e4yan3g5egxk": {
+            "id": "e7e4yan3g5egxk",
+            "isRole": false,
+            "properties": {
+              "ROLE": "FAKOFF"
+            },
+            "title": "HasBall"
+          },
+          "gowv3nvwy2ppg": {
+            "id": "gowv3nvwy2ppg",
+            "isRole": false,
+            "properties": {
+              "Position": "{1,1}",
+              "ROLE": "FAKOFF",
+              "goToBall": "false",
+              "random": "true"
+            },
+            "title": "GoToPosLuTh"
+          },
+          "je28knmabxxvtp": {
+            "children": [
+              "zo79490ankbazpnd"
+            ],
+            "id": "je28knmabxxvtp",
+            "isRole": false,
+            "title": "Repeater"
+          },
+          "kh8kjw7lqtmrey8x": {
+            "children": [
+              "ohcm3v4194l0lup0"
+            ],
+            "id": "kh8kjw7lqtmrey8x",
+            "isRole": false,
+            "title": "Inverter"
+          },
+          "kyivbsoi0s7p7a": {
+            "children": [
+              "w4el40ol1up2ymf"
+            ],
+            "id": "kyivbsoi0s7p7a",
+            "name": "FAKOFF",
+            "title": "Role"
+          },
+          "m4gl77s9dcc4dn": {
+            "id": "m4gl77s9dcc4dn",
+            "isRole": false,
+            "properties": {
+              "Position": "{0,0}",
+              "ROLE": "FAKOFF",
+              "goToBall": "true",
+              "random": "false"
+            },
+            "title": "GoToPosLuTh"
+          },
+          "ohcm3v4194l0lup0": {
+            "children": [
+              "07n08wts3hfr1z7eu",
+              "u73l6cue261bax"
+            ],
+            "id": "ohcm3v4194l0lup0",
+            "isRole": false,
+            "title": "Selector"
+          },
+          "rek60qzwfyt6b": {
+            "children": [
+              "zhj8zr5tp0ntli",
+              "kyivbsoi0s7p7a"
+            ],
+            "id": "rek60qzwfyt6b",
+            "title": "Inverter"
+          },
+          "u73l6cue261bax": {
+            "id": "u73l6cue261bax",
+            "isRole": false,
+            "properties": {
+              "Position": "{0,0}",
+              "ROLE": "FAKOFF",
+              "goToBall": "true",
+              "random": "false"
+            },
+            "title": "GoToPosLuTh"
+          },
+          "w4el40ol1up2ymf": {
+            "children": [
+              "zj0gmwcmh7ob8e"
+            ],
+            "id": "w4el40ol1up2ymf",
+            "isRole": false,
+            "title": "Repeater"
+          },
+          "zhj8zr5tp0ntli": {
+            "children": [
+              "je28knmabxxvtp"
+            ],
+            "id": "zhj8zr5tp0ntli",
+            "name": "FAKOFF",
+            "title": "Role"
+          },
+          "zj0gmwcmh7ob8e": {
+            "children": [
+              "kh8kjw7lqtmrey8x",
+              "gowv3nvwy2ppg"
+            ],
+            "id": "zj0gmwcmh7ob8e",
+            "isRole": false,
+            "title": "MemSelector"
+          },
+          "zo79490ankbazpnd": {
+            "children": [
+              "m4gl77s9dcc4dn",
+              "e7e4yan3g5egxk",
+              "ct7clwftgg39b"
+            ],
+            "id": "zo79490ankbazpnd",
+            "isRole": false,
+            "title": "MemSequence"
+          }
+        },
+        "root": "27ihl9et4u6jj",
+        "title": "GetBallTestTactic"
+      }
+    ]
+  },
+  "name": "GetBallTestTactic"
+}

@@ -1,0 +1,25 @@
+{
+  "data": {
+    "trees": [
+      {
+        "nodes": {
+          "71yhkksgb2btq817": {
+            "id": "71yhkksgb2btq817",
+            "name": "randomTactic",
+            "title": "Tactic"
+          },
+          "rj6k9a7iu2kl03i": {
+            "children": [
+              "71yhkksgb2btq817"
+            ],
+            "id": "rj6k9a7iu2kl03i",
+            "title": "Repeater"
+          }
+        },
+        "root": "rj6k9a7iu2kl03i",
+        "title": "randomStrategy"
+      }
+    ]
+  },
+  "name": "randomStrategy"
+}

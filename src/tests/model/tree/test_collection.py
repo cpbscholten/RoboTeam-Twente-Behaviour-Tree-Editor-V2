@@ -59,7 +59,7 @@ class TestCollection(object):
     def test_write_collection_default_path1(self, tmpdir):
         def_path = Settings.default_json_folder()
         Settings.alter_default_json_folder(tmpdir)
-        collection = Collection.from_path()
+        collection = Collection.from_path(verify=False)
         collection.write_collection()
         read = Collection.from_path(tmpdir)
         Settings.alter_default_json_folder(def_path)
@@ -69,10 +69,10 @@ class TestCollection(object):
         assert collection == read
 
     def test_write_collection_default_path2(self, tmpdir):
-        collection = Collection.from_path()
+        collection = Collection.from_path(verify=False)
         collection.path = tmpdir
         collection.write_collection()
-        read = Collection.from_path(tmpdir)
+        read = Collection.from_path(tmpdir, verify=False)
         # sets path equal, so objects are equal
         collection.path = None
         read.path = None
@@ -160,3 +160,45 @@ class TestCollection(object):
             'keeper': []
         }
         assert categories_and_filenames == collection.categories_and_filenames()
+
+    def test_get_root_nodes_by_category(self):
+        collection = Collection.from_path(self.path)
+        result = collection.get_root_nodes_by_category("strategies")
+        assert "ydjw9of7ndf88" == result[0][0]
+        assert "AttackStrategy" == result[0][1]
+        result = collection.get_root_nodes_by_category("tactics")
+        assert "57mrxn20qviax5qc" == result[0][0]
+        assert "Attactic" == result[0][1]
+        result = collection.get_root_nodes_by_category("roles")
+        assert "sx6fvrxlaoudhmmq9" == result[0][0]
+        assert "Assister" == result[0][1]
+        result = collection.get_root_nodes_by_category("invalid_category")
+        assert len(result) == 0
+
+    def test_get_category_from_node(self):
+        collection = Collection.from_path(self.path)
+        result = collection.get_category_from_node("ydjw9of7ndf88")
+        assert result == "strategies"
+        result = collection.get_category_from_node("57mrxn20qviax5qc")
+        assert result == "tactics"
+        result = collection.get_category_from_node("sx6fvrxlaoudhmmq9")
+        assert result == "roles"
+        result = collection.get_category_from_node("invalid_category")
+        assert result is None
+
+    def test_verify_trees(self):
+        collection = Collection.from_path(Settings.default_json_folder(), verify=False)
+        for category in collection.collection:
+            for file in collection.collection[category]:
+                # TODO: Remove this if else after we figure out what to do with 2 children under decorator
+                if not (file == "GetBallTestTactic.json" or file == "GetBallTestStrategy.json"):
+                    assert collection.verify_tree(collection.collection[category][file], category) is True
+
+    def test_write_tree(self, tmpdir):
+        # TODO add case when not valid
+        collection = Collection.from_path(self.path)
+        tree = self.attack_strategy
+        collection.write_tree(tree, Path(tmpdir) / "test.json")
+        path = tmpdir / 'test.json'
+        read = Tree.from_json(read_json(path))
+        assert tree == read

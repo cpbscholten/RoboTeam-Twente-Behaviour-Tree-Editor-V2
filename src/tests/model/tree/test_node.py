@@ -63,6 +63,7 @@ class TestNode(object):
         node.add_child("4")
         assert ["2", "3", "4"] == node.children
 
+        # TODO add boolean checks for removes
     def test_remove_child_existent(self):
         node = Node.from_json(self.node_attributes_children_json)
         node.remove_child("2")
@@ -77,6 +78,22 @@ class TestNode(object):
         node = Node.from_json(self.node_attributes_children_json)
         node.add_attribute("b", False)
         assert {"a": True, "b": False} == node.attributes
+
+    def test_remove_attribute_existent(self):
+        node = Node.from_json(self.node_attributes_children_json)
+        node.remove_attribute("a")
+        assert {} == node.attributes
+
+    def test_remove_attribute_not_existent(self):
+        node = Node.from_json(self.node_no_attributes_children_json)
+        node.remove_attribute("a")
+        assert {} == node.attributes
+
+    def test_create_json(self):
+        assert self.node_attributes_children_json == self.node_attributes_children.create_json()
+        assert self.node_attributes_no_children_json == self.node_attributes_no_children.create_json()
+        assert self.node_children_no_attributes_json == self.node_children_no_attributes.create_json()
+        assert self.node_no_attributes_children_json == self.node_no_attributes_children.create_json()
 
     def test_add_property(self):
         node = Node.from_json(self.node_attributes_children_json)
@@ -102,18 +119,3 @@ class TestNode(object):
         node.add_property("a", "b")
         assert {"a": "b"} == node.properties()
 
-    def test_remove_attribute_existent(self):
-        node = Node.from_json(self.node_attributes_children_json)
-        node.remove_attribute("a")
-        assert {} == node.attributes
-
-    def test_remove_attribute_not_existent(self):
-        node = Node.from_json(self.node_no_attributes_children_json)
-        node.remove_attribute("a")
-        assert {} == node.attributes
-
-    def test_create_json(self):
-        assert self.node_attributes_children_json == self.node_attributes_children.create_json()
-        assert self.node_attributes_no_children_json == self.node_attributes_no_children.create_json()
-        assert self.node_children_no_attributes_json == self.node_children_no_attributes.create_json()
-        assert self.node_no_attributes_children_json == self.node_no_attributes_children.create_json()

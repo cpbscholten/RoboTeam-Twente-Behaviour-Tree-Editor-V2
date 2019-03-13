@@ -1,0 +1,355 @@
+{
+  "data": {
+    "trees": [
+      {
+        "nodes": {
+          "1tp9koxr03k8r6": {
+            "children": [
+              "pzvyfxfxo018u68"
+            ],
+            "id": "1tp9koxr03k8r6",
+            "title": "Repeater"
+          },
+          "3jvu5arldoepmasz": {
+            "id": "3jvu5arldoepmasz",
+            "isRole": false,
+            "properties": {
+              "ROLE": "simpleDefender2",
+              "secondsAhead": "1"
+            },
+            "title": "IsRobotClosestToBall"
+          },
+          "3w7x3qci3r18u": {
+            "children": [
+              "qpnyel9tnw0gde",
+              "fysfj4wikz4gt0h0f"
+            ],
+            "id": "3w7x3qci3r18u",
+            "isRole": false,
+            "properties": {
+              "ROLE": "simpleDefender3"
+            },
+            "title": "Selector"
+          },
+          "6ks2uyiiqu7w56": {
+            "id": "6ks2uyiiqu7w56",
+            "isRole": false,
+            "properties": {
+              "Position": "{0, 0}",
+              "ROLE": "simpleDefender2",
+              "goToBall": "true",
+              "passiveDefend": "false",
+              "random": "false"
+            },
+            "title": "GoToPosLuTh"
+          },
+          "705c07vos3cc0lltt": {
+            "id": "705c07vos3cc0lltt",
+            "isRole": false,
+            "properties": {
+              "ROLE": "simpleDefender2"
+            },
+            "title": "TheyHaveBall"
+          },
+          "80cg85ckikik7r": {
+            "children": [
+              "705c07vos3cc0lltt",
+              "x5uxwuwktoz9g1"
+            ],
+            "id": "80cg85ckikik7r",
+            "isRole": false,
+            "properties": {
+              "ROLE": "simpleDefender2"
+            },
+            "title": "Sequence"
+          },
+          "a7ew20mqn6ff6": {
+            "children": [
+              "dabd8hugya4e01h",
+              "dp27gcb1qjjboe"
+            ],
+            "id": "a7ew20mqn6ff6",
+            "isRole": false,
+            "properties": {
+              "ROLE": "simpleDefender1"
+            },
+            "title": "Selector"
+          },
+          "c905a6t18uo075": {
+            "children": [
+              "rdjg114xc5kbj9g"
+            ],
+            "id": "c905a6t18uo075",
+            "name": "simpleDefender2",
+            "properties": {
+              "ROLE": "simpleDefender2"
+            },
+            "title": "Role"
+          },
+          "cuo4wim9fnatol7": {
+            "id": "cuo4wim9fnatol7",
+            "isRole": false,
+            "properties": {
+              "ROLE": "simpleDefender3"
+            },
+            "title": "TheyHaveBall"
+          },
+          "dabd8hugya4e01h": {
+            "children": [
+              "v4kuk5rcspgvt2j71",
+              "w9y94kzo2da37b"
+            ],
+            "id": "dabd8hugya4e01h",
+            "isRole": false,
+            "properties": {
+              "ROLE": "simpleDefender1"
+            },
+            "title": "Sequence"
+          },
+          "dp27gcb1qjjboe": {
+            "children": [
+              "m48ckjuljdavh",
+              "ue5vh4jhfklvrg1j"
+            ],
+            "id": "dp27gcb1qjjboe",
+            "isRole": false,
+            "properties": {
+              "ROLE": "simpleDefender1"
+            },
+            "title": "Sequence"
+          },
+          "dr1uax5kda5p6": {
+            "children": [
+              "c905a6t18uo075"
+            ],
+            "id": "dr1uax5kda5p6",
+            "title": "Repeater"
+          },
+          "fysfj4wikz4gt0h0f": {
+            "id": "fysfj4wikz4gt0h0f",
+            "isRole": false,
+            "properties": {
+              "Position": "{0, 0}",
+              "ROLE": "simpleDefender3",
+              "goToBall": "true",
+              "passiveDefend": "false",
+              "random": "false"
+            },
+            "title": "GoToPosLuTh"
+          },
+          "g2tra0bxw3dfz": {
+            "children": [
+              "owxnhz5g42fewj",
+              "6ks2uyiiqu7w56"
+            ],
+            "id": "g2tra0bxw3dfz",
+            "isRole": false,
+            "properties": {
+              "ROLE": "simpleDefender2"
+            },
+            "title": "Selector"
+          },
+          "j6supvq8m9ako1c": {
+            "id": "j6supvq8m9ako1c",
+            "isRole": false,
+            "properties": {
+              "ROLE": "simpleDefender3",
+              "secondsAhead": "1"
+            },
+            "title": "IsRobotClosestToBall"
+          },
+          "k30wh6vmw0i571uq": {
+            "children": [
+              "t6tyj94tuafdcke7",
+              "dr1uax5kda5p6",
+              "1tp9koxr03k8r6"
+            ],
+            "id": "k30wh6vmw0i571uq",
+            "title": "ParallelSequence"
+          },
+          "k9iewk764120u5": {
+            "children": [
+              "3jvu5arldoepmasz",
+              "g2tra0bxw3dfz"
+            ],
+            "id": "k9iewk764120u5",
+            "isRole": false,
+            "properties": {
+              "ROLE": "simpleDefender2"
+            },
+            "title": "Sequence"
+          },
+          "m48ckjuljdavh": {
+            "id": "m48ckjuljdavh",
+            "isRole": false,
+            "properties": {
+              "ROLE": "simpleDefender1",
+              "secondsAhead": "1"
+            },
+            "title": "IsRobotClosestToBall"
+          },
+          "mrraoa5b1h8awf3oh": {
+            "children": [
+              "a7ew20mqn6ff6"
+            ],
+            "id": "mrraoa5b1h8awf3oh",
+            "name": "simpleDefender1",
+            "properties": {
+              "ROLE": "simpleDefender1"
+            },
+            "title": "Role"
+          },
+          "mskunq2jrxm3atsyh": {
+            "id": "mskunq2jrxm3atsyh",
+            "isRole": false,
+            "properties": {
+              "Position": "{0, 0}",
+              "ROLE": "simpleDefender1",
+              "goToBall": "true",
+              "passiveDefend": "false",
+              "random": "false"
+            },
+            "title": "GoToPosLuTh"
+          },
+          "owxnhz5g42fewj": {
+            "id": "owxnhz5g42fewj",
+            "isRole": false,
+            "properties": {
+              "ROLE": "simpleDefender2"
+            },
+            "title": "GetBall"
+          },
+          "pzvyfxfxo018u68": {
+            "children": [
+              "yw5867v3xlh6t19r5"
+            ],
+            "id": "pzvyfxfxo018u68",
+            "name": "simpleDefender3",
+            "properties": {
+              "ROLE": "simpleDefender3"
+            },
+            "title": "Role"
+          },
+          "qpnyel9tnw0gde": {
+            "id": "qpnyel9tnw0gde",
+            "isRole": false,
+            "properties": {
+              "ROLE": "simpleDefender3"
+            },
+            "title": "GetBall"
+          },
+          "qu9ku1jwwryj1dzg5": {
+            "children": [
+              "j6supvq8m9ako1c",
+              "3w7x3qci3r18u"
+            ],
+            "id": "qu9ku1jwwryj1dzg5",
+            "isRole": false,
+            "properties": {
+              "ROLE": "simpleDefender3"
+            },
+            "title": "Sequence"
+          },
+          "rdjg114xc5kbj9g": {
+            "children": [
+              "80cg85ckikik7r",
+              "k9iewk764120u5"
+            ],
+            "id": "rdjg114xc5kbj9g",
+            "isRole": false,
+            "properties": {
+              "ROLE": "simpleDefender2"
+            },
+            "title": "Selector"
+          },
+          "rokux7lbvvf3y8iv0": {
+            "id": "rokux7lbvvf3y8iv0",
+            "isRole": false,
+            "properties": {
+              "ROLE": "simpleDefender3"
+            },
+            "title": "DefendOnRobot"
+          },
+          "t6tyj94tuafdcke7": {
+            "children": [
+              "mrraoa5b1h8awf3oh"
+            ],
+            "id": "t6tyj94tuafdcke7",
+            "title": "Repeater"
+          },
+          "ue5vh4jhfklvrg1j": {
+            "children": [
+              "w4kighym3fvnl",
+              "mskunq2jrxm3atsyh"
+            ],
+            "id": "ue5vh4jhfklvrg1j",
+            "isRole": false,
+            "properties": {
+              "ROLE": "simpleDefender1"
+            },
+            "title": "Selector"
+          },
+          "ugve44zoa4i972p0f": {
+            "children": [
+              "cuo4wim9fnatol7",
+              "rokux7lbvvf3y8iv0"
+            ],
+            "id": "ugve44zoa4i972p0f",
+            "isRole": false,
+            "properties": {
+              "ROLE": "simpleDefender3"
+            },
+            "title": "Sequence"
+          },
+          "v4kuk5rcspgvt2j71": {
+            "id": "v4kuk5rcspgvt2j71",
+            "isRole": false,
+            "properties": {
+              "ROLE": "simpleDefender1"
+            },
+            "title": "TheyHaveBall"
+          },
+          "w4kighym3fvnl": {
+            "id": "w4kighym3fvnl",
+            "isRole": false,
+            "properties": {
+              "ROLE": "simpleDefender1"
+            },
+            "title": "GetBall"
+          },
+          "w9y94kzo2da37b": {
+            "id": "w9y94kzo2da37b",
+            "isRole": false,
+            "properties": {
+              "ROLE": "simpleDefender1"
+            },
+            "title": "DefendOnRobot"
+          },
+          "x5uxwuwktoz9g1": {
+            "id": "x5uxwuwktoz9g1",
+            "isRole": false,
+            "properties": {
+              "ROLE": "simpleDefender2"
+            },
+            "title": "DefendOnRobot"
+          },
+          "yw5867v3xlh6t19r5": {
+            "children": [
+              "ugve44zoa4i972p0f",
+              "qu9ku1jwwryj1dzg5"
+            ],
+            "id": "yw5867v3xlh6t19r5",
+            "isRole": false,
+            "properties": {
+              "ROLE": "simpleDefender3"
+            },
+            "title": "Selector"
+          }
+        },
+        "root": "k30wh6vmw0i571uq",
+        "title": "SimpleDefendTactic"
+      }
+    ]
+  },
+  "name": "SimpleDefendTactic"
+}

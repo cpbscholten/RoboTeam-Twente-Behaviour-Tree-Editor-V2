@@ -1,0 +1,116 @@
+{
+  "data": {
+    "trees": [
+      {
+        "nodes": {
+          "1nd1gyzv20tdg": {
+            "children": [
+              "u8v8agmva3lgq6w"
+            ],
+            "id": "1nd1gyzv20tdg",
+            "isRole": false,
+            "title": "Repeater"
+          },
+          "6p0tmy6rl5t2apojv": {
+            "children": [
+              "1nd1gyzv20tdg"
+            ],
+            "id": "6p0tmy6rl5t2apojv",
+            "name": "qualRole",
+            "title": "Role"
+          },
+          "gototheposition2121": {
+            "id": "gototheposition2121",
+            "isRole": false,
+            "properties": {
+              "ROLE": "eloRlauq",
+              "avoidBall": "true",
+              "canGoOutsideField": "true",
+              "target": "{-1.4,-0.85}"
+            },
+            "title": "BasicGoToPos"
+          },
+          "gtp2121": {
+            "id": "gtp2121",
+            "isRole": false,
+            "properties": {
+              "ROLE": "eloRlauq",
+              "avoidBall": "true",
+              "canGoOutsideField": "true",
+              "target": "{1.4,0.85}"
+            },
+            "title": "BasicGoToPos"
+          },
+          "memseq2": {
+            "children": [
+              "gtp2121",
+              "gototheposition2121"
+            ],
+            "id": "memseq2",
+            "isRole": false,
+            "title": "MemSequence"
+          },
+          "parseqrootthingy": {
+            "children": [
+              "6p0tmy6rl5t2apojv",
+              "role2"
+            ],
+            "id": "parseqrootthingy",
+            "isRole": false,
+            "title": "ParallelSequence"
+          },
+          "rep2": {
+            "children": [
+              "memseq2"
+            ],
+            "id": "rep2",
+            "isRole": false,
+            "title": "Repeater"
+          },
+          "role2": {
+            "children": [
+              "rep2"
+            ],
+            "id": "role2",
+            "name": "qualRole",
+            "title": "Role"
+          },
+          "u8v8agmva3lgq6w": {
+            "children": [
+              "wxz97tvxcyquj3nj",
+              "xm1dohkoqeoibxof1"
+            ],
+            "id": "u8v8agmva3lgq6w",
+            "isRole": false,
+            "title": "MemSequence"
+          },
+          "wxz97tvxcyquj3nj": {
+            "id": "wxz97tvxcyquj3nj",
+            "isRole": false,
+            "properties": {
+              "ROLE": "qualRole",
+              "avoidBall": "true",
+              "canGoOutsideField": "true",
+              "target": "{1.4,-0.85}"
+            },
+            "title": "BasicGoToPos"
+          },
+          "xm1dohkoqeoibxof1": {
+            "id": "xm1dohkoqeoibxof1",
+            "isRole": false,
+            "properties": {
+              "ROLE": "qualRole",
+              "avoidBall": "true",
+              "canGoOutsideField": "true",
+              "target": "{-1.4,0.85}"
+            },
+            "title": "BasicGoToPos"
+          }
+        },
+        "root": "parseqrootthingy",
+        "title": "QualificationTactic"
+      }
+    ]
+  },
+  "name": "QualificationTactic"
+}

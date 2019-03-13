@@ -6,7 +6,7 @@
     "tactics"
   ],
   "default_id_size": 16,
-  "default_json_folder": "jsons",
+  "default_json_folder": "json/jsons",
   "default_node_types_folder": "json/config/node_types",
   "logfile_name": "log"
 }

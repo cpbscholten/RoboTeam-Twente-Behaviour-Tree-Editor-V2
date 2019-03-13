@@ -1,0 +1,48 @@
+{
+  "name": "InvalidDecoratorTree",
+  "data": {
+    "trees": [
+      {
+        "title": "InvalidDecoratorTree",
+        "root": "1",
+        "nodes": {
+          "1": {
+            "id": "1",
+            "title": "Failer",
+            "children": [
+              "2", "3"
+            ]
+          },
+          "2": {
+            "id": "2",
+            "title": "Failer",
+            "children": [
+              "4"
+            ]
+          },
+          "3": {
+            "id": "3",
+            "title": "Failer",
+            "children": [
+              "5"
+            ]
+          },
+          "4": {
+            "id": "4",
+            "title": "SomeRole1",
+            "children": [
+
+            ]
+          },
+          "5": {
+            "id": "5",
+            "title": "SomeRole2",
+            "children": [
+
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

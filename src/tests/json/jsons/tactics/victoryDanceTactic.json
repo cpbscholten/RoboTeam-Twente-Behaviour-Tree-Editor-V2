@@ -1,0 +1,100 @@
+{
+  "data": {
+    "trees": [
+      {
+        "nodes": {
+          "2l2bvdnfqt3vg": {
+            "children": [
+              "zkl7lwhnxjxlmiay",
+              "qggd848t8b7kxxk0",
+              "ef4fg5gehb3r9ucvk",
+              "54gq9n20d9yoi7c"
+            ],
+            "id": "2l2bvdnfqt3vg",
+            "location": {
+              "x": 418.0,
+              "y": 133.0
+            },
+            "title": "MemSequence"
+          },
+          "54gq9n20d9yoi7c": {
+            "id": "54gq9n20d9yoi7c",
+            "location": {
+              "x": 742.0,
+              "y": 273.0
+            },
+            "properties": {
+              "Position": "{1, 1}",
+              "ROLE": "victor1"
+            },
+            "title": "GoToPos"
+          },
+          "bzjlygc2zeqjantvs": {
+            "children": [
+              "rges6sjlxmi99r"
+            ],
+            "id": "bzjlygc2zeqjantvs",
+            "location": {
+              "x": 469.0,
+              "y": 191.0
+            },
+            "title": "ParallelSequence"
+          },
+          "ef4fg5gehb3r9ucvk": {
+            "id": "ef4fg5gehb3r9ucvk",
+            "location": {
+              "x": 595.0,
+              "y": 274.0
+            },
+            "properties": {
+              "Position": "{0,-1}",
+              "ROLE": "victor1",
+              "forwardDirection": "false",
+              "maxTicks": "100"
+            },
+            "title": "Dribble"
+          },
+          "qggd848t8b7kxxk0": {
+            "id": "qggd848t8b7kxxk0",
+            "location": {
+              "x": 413.0,
+              "y": 262.0
+            },
+            "properties": {
+              "ROLE": "victor1"
+            },
+            "title": "GetBall"
+          },
+          "rges6sjlxmi99r": {
+            "children": [
+              "2l2bvdnfqt3vg"
+            ],
+            "id": "rges6sjlxmi99r",
+            "location": {
+              "x": 448.0,
+              "y": 287.0
+            },
+            "name": "victor1",
+            "title": "Role"
+          },
+          "zkl7lwhnxjxlmiay": {
+            "id": "zkl7lwhnxjxlmiay",
+            "location": {
+              "x": 271.0,
+              "y": 268.0
+            },
+            "properties": {
+              "Position": "{0,0}",
+              "ROLE": "victor1",
+              "goToBall": "true"
+            },
+            "title": "GoToPos"
+          }
+        },
+        "root": "bzjlygc2zeqjantvs",
+        "title": "victoryDanceTactic"
+      }
+    ]
+  },
+  "name": "victoryDanceTactic"
+}
