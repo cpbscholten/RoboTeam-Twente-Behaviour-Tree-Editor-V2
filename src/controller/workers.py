@@ -3,6 +3,7 @@ from pathlib import Path
 from PyQt5.QtCore import pyqtSignal, QObject, pyqtSlot
 
 from model.config.node_types import NodeTypes
+from model.config.settings import Settings
 from model.tree.collection import Collection
 from model.tree.tree import Tree
 
@@ -27,12 +28,15 @@ class MainWorker(QObject):
     # return tree and if writing succeeded or not TODO add details if there were errors?
     write_tree_finished_signal = pyqtSignal(str, str, Tree, bool)
     write_tree_custom_path_finished_signal = pyqtSignal(Path, Tree, bool)
+    # signal when opening node_types is finished
+    # returns the node types dictionary with list of lists for each type
+    open_node_types_finished_signal = pyqtSignal(dict)
 
     def __init__(self):
         super().__init__()
         # crete collection variable
         self.collection = None
-        # initialize node_types from the default path
+        # create node types variable and initialize from settings
         self.node_types = NodeTypes.from_csv()
 
     @pyqtSlot()
@@ -117,3 +121,11 @@ class MainWorker(QObject):
         except:
             # todo catch more specific exceptions
             self.write_tree_custom_path_finished_signal.emit(path, tree, False)
+
+    @pyqtSlot()
+    def open_node_types(self):
+        """
+        Reloads the node types and returns it to the listener as a dictionary
+        """
+        self.node_types = NodeTypes.from_csv()
+        self.open_node_types_finished_signal.emit(self.node_types.node_types)

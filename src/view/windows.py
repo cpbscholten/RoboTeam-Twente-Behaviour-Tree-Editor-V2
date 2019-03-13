@@ -4,12 +4,14 @@ from functools import partial
 from pathlib import Path
 from typing import List, Dict, Union
 
-from PyQt5.QtWidgets import QAction, QMainWindow, QFileDialog, QMessageBox, QInputDialog, QLineEdit
+from PyQt5.QtWidgets import QAction, QMainWindow, QFileDialog, QMessageBox, QInputDialog, QLineEdit, QWidget, \
+    QHBoxLayout
 
 from model.config.settings import Settings
 from model.tree.tree import Tree
 from view.listeners import MainListener
 from view.widget.tree_view_widget import TreeViewWidget
+from view.widgets import NodeTypesWidget
 
 
 class MainWindow(QMainWindow):
@@ -29,9 +31,25 @@ class MainWindow(QMainWindow):
         self.def_window_title = 'RoboTeam Behaviour Tree Editor V2'
         self.setWindowTitle(self.def_window_title)
 
-        self.tree_view_widget = TreeViewWidget()
-        self.setCentralWidget(self.tree_view_widget)
-        self.resize(1000, 800)
+        # create a main widget with a HBoxLayout for each widget
+        self.main_widget = QWidget()
+        self.setMinimumHeight(800)
+        self.setCentralWidget(self.main_widget)
+        self.main_layout = QHBoxLayout()
+        self.main_widget.setLayout(self.main_layout)
+
+        # widget with node types selector
+        self.node_types_widget: NodeTypesWidget = NodeTypesWidget(self)
+        # set margins of widget to 0, to prevent double margins
+        self.node_types_widget.layout.setContentsMargins(0, 0, 0, 0)
+        self.node_types_widget.setMinimumWidth(200)
+        self.main_layout.addWidget(self.node_types_widget)
+
+        # widget with the view of the tree
+        self.tree_view_widget: TreeViewWidget = TreeViewWidget()
+        self.tree_view_widget.layout.setContentsMargins(0, 0, 0, 0)
+        self.tree_view_widget.setMinimumWidth(1000)
+        self.main_layout.addWidget(self.tree_view_widget)
 
         # tree that has been loaded from the collection. USed for checking for unsaved changes
         self.load_tree = None

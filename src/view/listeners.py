@@ -5,6 +5,7 @@ from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
 
 from controller.workers import MainWorker
 from model.tree.tree import Tree
+
 import view.windows
 
 
@@ -35,6 +36,9 @@ class MainListener(QObject):
     write_tree_signal = pyqtSignal(str, str, Tree)
     write_tree_custom_path_signal = pyqtSignal(Path, Tree)
 
+    # reads the node types json files
+    open_node_types_signal = pyqtSignal()
+
     def __init__(self, gui):
         super().__init__()
         self.gui = gui
@@ -58,13 +62,17 @@ class MainListener(QObject):
         # signals for retrieving a tree from the collection
         self.open_tree_from_collection_signal.connect(self.worker.open_tree_from_collection)
         self.worker.open_tree_from_collection_finished_signal.connect(
-            self.open_tree_from_collection_finished)
+        self.open_tree_from_collection_finished)
 
         # signals for writing a tree
         self.write_tree_signal.connect(self.worker.write_tree)
         self.write_tree_custom_path_signal.connect(self.worker.write_tree_custom_path)
         self.worker.write_tree_finished_signal.connect(self.write_tree_finished)
         self.worker.write_tree_custom_path_finished_signal.connect(self.write_tree_custom_path_finished)
+
+        # signals for reading node types
+        self.open_node_types_signal.connect(self.worker.open_node_types)
+        self.worker.open_node_types_finished_signal.connect(self.open_node_types_finished)
 
     # slots that handle the results of the worker
     @pyqtSlot(dict)
@@ -147,4 +155,11 @@ class MainListener(QObject):
             view.windows.Dialogs.error_box("ERROR", 'There were errors while writing the tree to ' + path + ','
                                                     ' for more details read the logs!')
 
-
+    @pyqtSlot(dict)
+    def open_node_types_finished(self, node_types: Dict[str, List[List[str]]]):
+        """
+        Method that handles the result of opening node types
+        initializes the node types in the view
+        :param node_types: the returned dictionary
+        """
+        self.gui.node_types_widget.set_up_node_types(node_types)
