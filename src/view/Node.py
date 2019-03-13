@@ -1,6 +1,6 @@
 from PyQt5.QtCore import QRectF, Qt
 from PyQt5.QtGui import QBrush, QColor, QFontMetrics
-from PyQt5.QtWidgets import QGraphicsEllipseItem, QGraphicsSimpleTextItem, QGraphicsItem
+from PyQt5.QtWidgets import QGraphicsEllipseItem, QGraphicsSimpleTextItem, QGraphicsItem, QGraphicsScene
 
 from src.view.Edge import Edge
 from view.collapse_expand_button import CollapseExpandButton
@@ -13,7 +13,7 @@ class Node(QGraphicsEllipseItem):
     NODE_HEIGHT = 50
     NODE_COLOR = (152, 193, 217)
 
-    def __init__(self, x: float, y: float, title: str = None, parent: QGraphicsItem = None):
+    def __init__(self, x: float, y: float, scene: QGraphicsScene, title: str = None, parent: QGraphicsItem = None):
         """
         The constructor for a UI node
         :param x: x position for the center of the node
@@ -27,8 +27,15 @@ class Node(QGraphicsEllipseItem):
             # give node a unique title
             self.title = "node {}".format(Node.i)
         Node.i += 1
+        self.scene = scene
         self.children = []
         self.edges = []
+        self.children_collapsed = False
+        self.just_collapsed_upwards = False
+        # parent is set after initialisation
+        self.parent = None
+        # store node position when collapsing upwards
+        self.old_pos = None
         # add node name label centered in the eclipse, elide if title is too long
         self.node_text = QGraphicsSimpleTextItem()
         metrics = QFontMetrics(self.node_text.font())
@@ -54,15 +61,26 @@ class Node(QGraphicsEllipseItem):
         # give node a random color
         # TODO: Determine color scheme for node types
         self.setBrush(QBrush(QColor(*self.NODE_COLOR)))
-        # create the collapse/expand button for this node
-        self.collapse_expand_button = CollapseExpandButton(self)
-        self.collapse_expand_button.setParentItem(self)
-        # position the button at the bottom-middle of the node
-        x = self.xpos() - self.collapse_expand_button.boundingRect().width() / 2
-        y = self.ypos() + (self.NODE_HEIGHT / 2) - self.collapse_expand_button.boundingRect().height() / 2
-        self.collapse_expand_button.setPos(x, y)
+        # create the bottom collapse/expand button for this node
+        self.bottom_collapse_expand_button = CollapseExpandButton(self)
+        self.bottom_collapse_expand_button.setParentItem(self)
+        self.bottom_collapse_expand_button.collapse.connect(self.collapse_children)
+        self.bottom_collapse_expand_button.expand.connect(self.expand_children)
+        # position the bottom button at the bottom-center of the node
+        x = self.xpos() - self.bottom_collapse_expand_button.boundingRect().width() / 2
+        y = self.ypos() + (self.NODE_HEIGHT / 2) - self.bottom_collapse_expand_button.boundingRect().height() / 2
+        self.bottom_collapse_expand_button.setPos(x, y)
         # hidden by default, the button is only needed if the node has children
-        self.collapse_expand_button.hide()
+        self.bottom_collapse_expand_button.hide()
+        # create the top collapse/expand button for this node
+        self.top_collapse_expand_button = CollapseExpandButton(self)
+        self.top_collapse_expand_button.setParentItem(self)
+        self.top_collapse_expand_button.collapse.connect(self.collapse_upwards)
+        self.top_collapse_expand_button.expand.connect(self.expand_upwards)
+        # position the top button at the top-center of the node
+        x = self.xpos() - self.top_collapse_expand_button.boundingRect().width() / 2
+        y = self.ypos() - (self.NODE_HEIGHT / 2) - self.top_collapse_expand_button.boundingRect().height() / 2
+        self.top_collapse_expand_button.setPos(x, y)
 
     def add_child(self, child):
         """
@@ -73,20 +91,20 @@ class Node(QGraphicsEllipseItem):
         edge = Edge(self, child)
         edge.setParentItem(self)
         # edge should stay behind the expand/collapse button
-        edge.stackBefore(self.collapse_expand_button)
+        edge.stackBefore(self.bottom_collapse_expand_button)
         self.children.append(child)
         self.edges.append(edge)
         # show the expand/collapse button when the first child is added
-        if not self.collapse_expand_button.isVisible():
-            self.collapse_expand_button.show()
+        if not self.bottom_collapse_expand_button.isVisible():
+            self.bottom_collapse_expand_button.show()
 
     def moveBy(self, x, y):
         super(Node, self).moveBy(x, y)
         if self.parentItem() and isinstance(self.parentItem(), Edge):
             self.parentItem().change_position()
 
-    def setPos(self, x, y):
-        super(Node, self).setPos(x, y)
+    def setPos(self, *args):
+        super(Node, self).setPos(*args)
         if self.parentItem() and isinstance(self.parentItem(), Edge):
             self.parentItem().change_position()
 
@@ -124,21 +142,54 @@ class Node(QGraphicsEllipseItem):
         """
         return self.rect().y() + self.rect().height() / 2 + self.yoffset()
 
-    def collapse(self):
+    def collapse_upwards(self):
         """
-        Collapses this node by hiding all child edges (and therefore the whole subtree)
+        Collapses the tree upwards only displaying this node and its children
+        :return:
+        """
+        # store current absolute position to reposition node after disconnecting the parent
+        abs_pos = (self.xoffset(), self.yoffset())
+        # store relative position, this will be reset when node is expanded upwards.
+        self.old_pos = self.pos()
+        # store parent, this will be reset when node is expanded upwards.
+        self.parent = self.parentItem()
+        top_level_item = self.topLevelItem()
+        # disconnect parent this prevents the node from being hidden
+        self.setParentItem(None)
+        # set absolute position to retain correct position
+        self.setPos(*abs_pos)
+        # hide parent nodes
+        top_level_item.hide()
+
+    def expand_upwards(self):
+        """
+        Expands the tree upwards displaying all expanded parent nodes
+        :return:
+        """
+        # reset parent item
+        self.setParentItem(self.parent)
+        # reset relative position to parent
+        self.setPos(self.old_pos)
+        # show expanded parent nodes
+        self.topLevelItem().show()
+
+    def collapse_children(self):
+        """
+        Collapses this node's children by hiding all child edges (and therefore the whole subtree)
         """
         for c in self.childItems():
             if isinstance(c, Edge):
                 c.hide()
+        self.children_collapsed = True
 
-    def expand(self):
+    def expand_children(self):
         """
-        Expands this node by showing all child edges previously hidden by the collapse function
+        Expands this node's children by showing all child edges previously hidden by the collapse function
         """
         for c in self.childItems():
             if isinstance(c, Edge):
                 c.show()
+        self.children_collapsed = False
 
     def mousePressEvent(self, m_event):
         """
@@ -161,4 +212,3 @@ class Node(QGraphicsEllipseItem):
             # reposition incoming edge
             if isinstance(self.parentItem(), Edge):
                 self.parentItem().change_position()
-

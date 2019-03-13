@@ -53,6 +53,7 @@ class TreeScene(QGraphicsScene):
         # start recursively drawing tree
         root_node = tree.nodes[tree.root]
         self.root_ui_node = self.add_subtree(tree, root_node, x, y)[0]
+        self.root_ui_node.top_collapse_expand_button.hide()
         self.addItem(self.root_ui_node)
 
     def add_subtree(self, tree: Tree, subtree_root: ModelNode, x, y):
@@ -62,10 +63,10 @@ class TreeScene(QGraphicsScene):
         :param subtree_root: The root of this subtree/branch
         :param x: The x position for the root
         :param y: The y position for the root
-        :return: The created root UI node,
+        :return: The created subtree root node,
                  the width of both sides of the subtree
         """
-        root_view_node = ViewNode(x, y, subtree_root.title)
+        subtree_root_node = ViewNode(x, y, self, subtree_root.title)
         y += self.NODE_Y_OFFSET
         middle_index = (len(subtree_root.children) - 1) / 2
         # keep track of level width to prevent overlapping nodes
@@ -78,20 +79,23 @@ class TreeScene(QGraphicsScene):
             # add the child and its own subtree,
             # returned values are used to adjust the nodes position to prevent overlap
             child_view_node, child_subtree_width_left, child_subtree_width_right = self.add_subtree(tree, child, x, y)
-            left_nodes.append(child_view_node)
+            move_x = - (child_subtree_width_left + child_subtree_width_right)
             # prevent double spacing when there is no middle node
             if i == math.floor(middle_index) and not middle_index.is_integer():
                 # use half the offset because the other half is added later for the other part of the tree
-                move_x = - (child_subtree_width_right + (self.NODE_X_OFFSET / 2))
-                subtree_left_width += abs(move_x) + child_subtree_width_left
+                move_x -= self.NODE_X_OFFSET / 2
+                child_view_node.moveBy(- (child_subtree_width_right + (self.NODE_X_OFFSET / 2)), 0)
             else:
                 # use the default node offset
-                move_x = - (child_subtree_width_left + child_subtree_width_right + self.NODE_X_OFFSET)
-                subtree_left_width += abs(move_x)
+                move_x -= self.NODE_X_OFFSET
+                child_view_node.moveBy(- (child_subtree_width_right + self.NODE_X_OFFSET), 0)
+            # add width to total left subtree width
+            subtree_left_width += abs(move_x)
             # move all previous nodes to the left to make room for the new node
             for n in left_nodes:
                 n.moveBy(move_x, 0)
-            root_view_node.add_child(child_view_node)
+            left_nodes.append(child_view_node)
+            subtree_root_node.add_child(child_view_node)
         # add middle node
         if middle_index.is_integer():
             child_id = subtree_root.children[int(middle_index)]
@@ -100,12 +104,14 @@ class TreeScene(QGraphicsScene):
             # returned values are used to adjust the nodes position to prevent overlap
             child_view_node, child_subtree_width_left, child_subtree_width_right = self.add_subtree(tree, child, x, y)
             # move all left nodes further to the left to make room for the middle node
+            move_x = - self.NODE_X_OFFSET
             if child_subtree_width_left > self.NODE_X_OFFSET:
-                for n in left_nodes:
-                    n.moveBy(- (child_subtree_width_left - self.NODE_X_OFFSET), 0)
+                move_x = - child_subtree_width_left
+            for n in left_nodes:
+                n.moveBy(move_x, 0)
             subtree_left_width += child_subtree_width_left
             subtree_right_width += child_subtree_width_right
-            root_view_node.add_child(child_view_node)
+            subtree_root_node.add_child(child_view_node)
         # iterate over the right nodes
         for i, child_id in enumerate(subtree_root.children[math.floor(middle_index) + 1:]):
             child = tree.nodes[child_id]
@@ -113,23 +119,25 @@ class TreeScene(QGraphicsScene):
             # returned values are used to adjust the nodes position to prevent overlap
             child_view_node, child_subtree_width_left, child_subtree_width_right = self.add_subtree(tree, child, x, y)
             move_x = subtree_right_width + child_subtree_width_left
+            # add width to total right subtree width
+            subtree_right_width += child_subtree_width_left + child_subtree_width_right
             # prevent double spacing when there is no middle node
             if i == 0 and not middle_index.is_integer():
                 # use half the offset because the other half is added already
                 move_x += self.NODE_X_OFFSET / 2
-                subtree_right_width += child_subtree_width_left + child_subtree_width_right + (self.NODE_X_OFFSET / 2)
+                subtree_right_width += (self.NODE_X_OFFSET / 2)
             else:
                 # use the default node offset
                 move_x += self.NODE_X_OFFSET
-                subtree_right_width += child_subtree_width_left + child_subtree_width_right + self.NODE_X_OFFSET
+                subtree_right_width += self.NODE_X_OFFSET
             # move node next to the previous node, all the way to the right
             child_view_node.moveBy(move_x, 0)
-            root_view_node.add_child(child_view_node)
+            subtree_root_node.add_child(child_view_node)
         # set the widths of both subtree sides to a default value if no children or a smaller child node
-        if not subtree_root.children or subtree_left_width < root_view_node.rect().width() / 2 or \
-                subtree_right_width < root_view_node.rect().width() / 2:
-            subtree_left_width = subtree_right_width = root_view_node.rect().width() / 2
-        return root_view_node, subtree_left_width, subtree_right_width
+        if not subtree_root.children or subtree_left_width < subtree_root_node.rect().width() / 2 or \
+                subtree_right_width < subtree_root_node.rect().width() / 2:
+            subtree_left_width = subtree_right_width = subtree_root_node.rect().width() / 2
+        return subtree_root_node, subtree_left_width, subtree_right_width
 
     def align_tree(self):
         """
@@ -151,55 +159,67 @@ class TreeScene(QGraphicsScene):
         left_nodes = []
         # iterate over the left nodes
         for i, child in enumerate(node.children[:math.ceil(middle_index)]):
-            # reset node to start position
-            child.setPos(0, 0)
             # calculate values for position adjustment to prevent overlap
             child_subtree_width_left, child_subtree_width_right = self.align_from_node(child)
-            left_nodes.append(child)
-            # prevent double spacing when there is no middle node
-            if i == math.floor(middle_index) and not middle_index.is_integer():
-                # use half the offset because the other half is added later for the other part of the tree
-                move_x = - (child_subtree_width_right + (self.NODE_X_OFFSET / 2))
-                subtree_left_width += abs(move_x) + child_subtree_width_left
-            else:
-                # use the default node offset
-                move_x = - (child_subtree_width_left + child_subtree_width_right + self.NODE_X_OFFSET)
+            # only align visible nodes
+            if node.isVisible() and child.isVisible():
+                move_x = - (child_subtree_width_left + child_subtree_width_right)
+                # reset node to start position
+                child.setPos(0, 0)
+                # prevent double spacing when there is no middle node
+                if i == math.floor(middle_index) and not middle_index.is_integer():
+                    # use half the offset because the other half is added later for the other part of the tree
+                    move_x -= self.NODE_X_OFFSET / 2
+                    child.moveBy(- (child_subtree_width_right + (self.NODE_X_OFFSET / 2)), 0)
+                else:
+                    # use the default node offset
+                    move_x -= self.NODE_X_OFFSET
+                    child.moveBy(- (child_subtree_width_right + self.NODE_X_OFFSET), 0)
+                # add width to total left subtree width
                 subtree_left_width += abs(move_x)
-            # move all previous nodes to the left to make room for the current node
-            for n in left_nodes:
-                n.moveBy(move_x, 0)
+                # move all previous nodes to the left to make room for the current node
+                for n in left_nodes:
+                    n.moveBy(move_x, 0)
+                left_nodes.append(child)
         # reposition middle node
         if middle_index.is_integer():
             child = node.children[int(middle_index)]
-            # reset node to start position
-            child.setPos(0, 0)
             # calculate values for position adjustment to prevent overlap
             child_subtree_width_left, child_subtree_width_right = self.align_from_node(child)
-            # move all left nodes further to the left to make room for the middle node
-            if child_subtree_width_left > self.NODE_X_OFFSET:
+            # only align visible nodes
+            if node.isVisible() and child.isVisible():
+                # reset node to start position
+                child.setPos(0, 0)
+                # move all left nodes further to the left to make room for the middle node
+                move_x = - self.NODE_X_OFFSET
+                if child_subtree_width_left > self.NODE_X_OFFSET:
+                    move_x = - child_subtree_width_left
                 for n in left_nodes:
-                    n.moveBy(- (child_subtree_width_left - self.NODE_X_OFFSET), 0)
-            subtree_left_width += child_subtree_width_left
-            subtree_right_width += child_subtree_width_right
+                    n.moveBy(move_x, 0)
+                subtree_left_width += child_subtree_width_left
+                subtree_right_width += child_subtree_width_right
         # iterate over the right nodes
         for i, child in enumerate(node.children[math.floor(middle_index) + 1:]):
-            # reset node to start position
-            child.setPos(0, 0)
             # calculate values for position adjustment to prevent overlap
-            child_subtree_width_left, child_subtree_width_right = self.align_from_node(
-                child)
-            move_x = subtree_right_width + child_subtree_width_left
-            # prevent double spacing when there is no middle node
-            if i == 0 and not middle_index.is_integer():
-                # use half the offset because the other half is added already
-                move_x += self.NODE_X_OFFSET / 2
-                subtree_right_width += child_subtree_width_left + child_subtree_width_right + (self.NODE_X_OFFSET / 2)
-            else:
-                # use the default node offset
-                move_x += self.NODE_X_OFFSET
-                subtree_right_width += child_subtree_width_left + child_subtree_width_right + self.NODE_X_OFFSET
-            # move node next to the previous node, all the way to the right
-            child.moveBy(move_x, 0)
+            child_subtree_width_left, child_subtree_width_right = self.align_from_node(child)
+            # only align visible nodes
+            if node.isVisible() and child.isVisible():
+                move_x = subtree_right_width + child_subtree_width_left
+                # add width to total right subtree width
+                subtree_right_width += child_subtree_width_left + child_subtree_width_right
+                # prevent double spacing when there is no middle node
+                if i == 0 and not middle_index.is_integer():
+                    # use half the offset because the other half is added already
+                    move_x += self.NODE_X_OFFSET / 2
+                    subtree_right_width += (self.NODE_X_OFFSET / 2)
+                else:
+                    # use the default node offset
+                    move_x += self.NODE_X_OFFSET
+                    subtree_right_width += self.NODE_X_OFFSET
+                # reset node to start position
+                child.setPos(0, 0)
+                # move node next to the previous node, all the way to the right
+                child.moveBy(move_x, 0)
         # set the widths of both subtree sides to a default value if no children or a smaller child node
         if not node.children or subtree_left_width < node.rect().width() / 2 or \
                 subtree_right_width < node.rect().width() / 2:
