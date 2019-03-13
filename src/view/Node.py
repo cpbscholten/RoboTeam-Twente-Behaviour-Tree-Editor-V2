@@ -1,4 +1,4 @@
-from PyQt5.QtCore import QRectF, Qt
+from PyQt5.QtCore import QRectF, Qt, QPointF
 from PyQt5.QtGui import QBrush, QColor, QFontMetrics
 from PyQt5.QtWidgets import QGraphicsEllipseItem, QGraphicsSimpleTextItem, QGraphicsItem, QGraphicsScene
 
@@ -32,10 +32,8 @@ class Node(QGraphicsEllipseItem):
         self.edges = []
         self.children_collapsed = False
         self.just_collapsed_upwards = False
-        # parent is set after initialisation
-        self.parent = None
         # store node position when collapsing upwards
-        self.old_pos = None
+        self.collapse_data = None
         # add node name label centered in the eclipse, elide if title is too long
         self.node_text = QGraphicsSimpleTextItem()
         metrics = QFontMetrics(self.node_text.font())
@@ -147,29 +145,37 @@ class Node(QGraphicsEllipseItem):
         Collapses the tree upwards only displaying this node and its children
         :return:
         """
-        # store current absolute position to reposition node after disconnecting the parent
-        abs_pos = (self.xoffset(), self.yoffset())
-        # store relative position, this will be reset when node is expanded upwards.
-        self.old_pos = self.pos()
-        # store parent, this will be reset when node is expanded upwards.
-        self.parent = self.parentItem()
-        top_level_item = self.topLevelItem()
+        # store collapse data used to restore the state when expanding
+        self.collapse_data = {
+            "abs_pos": QPointF(self.xoffset(), self.yoffset()),
+            "rel_pos": self.pos(),
+            "abs_top_level_pos": QPointF(self.topLevelItem().xoffset(), self.topLevelItem().yoffset()),
+            "parent": self.parentItem(),
+            "top_level_item": self.topLevelItem()
+        }
         # disconnect parent this prevents the node from being hidden
         self.setParentItem(None)
         # set absolute position to retain correct position
-        self.setPos(*abs_pos)
+        self.setPos(self.collapse_data['abs_pos'])
         # hide parent nodes
-        top_level_item.hide()
+        self.collapse_data['top_level_item'].hide()
 
     def expand_upwards(self):
         """
         Expands the tree upwards displaying all expanded parent nodes
         :return:
         """
+        new_abs_pos = QPointF(self.xoffset(), self.yoffset())
+        top_level_item = self.collapse_data['top_level_item']
+        new_abs_top_level_pos = QPointF(top_level_item.xoffset(), top_level_item.yoffset())
         # reset parent item
-        self.setParentItem(self.parent)
+        self.setParentItem(self.collapse_data['parent'])
         # reset relative position to parent
-        self.setPos(self.old_pos)
+        self.setPos(self.collapse_data['rel_pos'] + (
+                (new_abs_pos - self.collapse_data['abs_pos']) -
+                (new_abs_top_level_pos - self.collapse_data['abs_top_level_pos'])
+            )
+        )
         # show expanded parent nodes
         self.topLevelItem().show()
 
