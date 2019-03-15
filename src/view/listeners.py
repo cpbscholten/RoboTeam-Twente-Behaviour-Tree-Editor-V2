@@ -4,7 +4,7 @@ from typing import Dict, List
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
 
 from controller.workers import MainWorker
-from model.tree import Tree
+from model.tree import Tree, Collection, NodeTypes
 
 import view.windows
 
@@ -23,8 +23,8 @@ class MainListener(QObject):
     # signals for writing a collection
     # one with path the other without
     # without path will write to the path in Settings or collection
-    write_collection_signal = pyqtSignal()
-    write_collection_custom_path_signal = pyqtSignal(Path)
+    write_collection_signal = pyqtSignal(Collection)
+    write_collection_custom_path_signal = pyqtSignal(Collection, Path)
 
     # opens a tree from collection
     # param: category and filename
@@ -41,7 +41,7 @@ class MainListener(QObject):
 
     def __init__(self, gui):
         super().__init__()
-        self.gui = gui
+        self.gui: view.windows.MainWindow = gui
 
         # create worker thread and pass it the worker
         self.thread = QThread()
@@ -59,11 +59,6 @@ class MainListener(QObject):
         self.write_collection_custom_path_signal.connect(self.worker.write_collection)
         self.worker.write_collection_finished_signal.connect(self.write_collection_finished)
 
-        # signals for retrieving a tree from the collection
-        self.open_tree_from_collection_signal.connect(self.worker.open_tree_from_collection)
-        self.worker.open_tree_from_collection_finished_signal.connect(
-        self.open_tree_from_collection_finished)
-
         # signals for writing a tree
         self.write_tree_signal.connect(self.worker.write_tree)
         self.write_tree_custom_path_signal.connect(self.worker.write_tree_custom_path)
@@ -76,28 +71,16 @@ class MainListener(QObject):
 
     # slots that handle the results of the worker
     @pyqtSlot(dict)
-    def open_collection_finished(self, categories_and_filenames: Dict[str, List[str]]):
+    def open_collection_finished(self, collection: Collection):
         """
         Method that handles the result from controller
         when opening a collection is finished
         Redraws the menu bar
-        :param categories_and_filenames: dict of categories containing a list of filenames
+        :param collection: the collection object
         """
         # todo error handling
-        self.gui.menubar.build_menu_bar(categories_and_filenames)
-
-    @pyqtSlot(str, str, Tree)
-    def open_tree_from_collection_finished(self, category: str, filename: str, tree: Tree):
-        """
-        Method that handles the result of opening a tree from the collection
-        Shows it in the main window
-        :param category: category of the tree
-        :param filename: filename of the tree
-        :param tree: tree object from collection
-        """
-        self.gui.check_unsaved_changes()
-        self.gui.load_tree = tree
-        self.gui.show_tree(category, filename, tree)
+        self.gui.load_collection = collection
+        self.gui.menubar.build_menu_bar(collection)
 
     @pyqtSlot(bool)
     def write_collection_finished(self, success: bool):
@@ -144,7 +127,6 @@ class MainListener(QObject):
         if it failed show an error message
         :param path: the path written to
         :param tree: the tree we were trying to write
-        :param tree: tree we were trying to write
         :param success: if writing succeeded or not
         """
         # update the collection
@@ -152,14 +134,15 @@ class MainListener(QObject):
             view.windows.Dialogs.message_box("Success", 'Tree written successfully!')
             self.open_collection_signal.emit()
         else:
-            view.windows.Dialogs.error_box("ERROR", 'There were errors while writing the tree to ' + path + ','
+            view.windows.Dialogs.error_box("ERROR", 'There were errors while writing the tree to ' + str(path) + ','
                                                     ' for more details read the logs!')
 
     @pyqtSlot(dict)
-    def open_node_types_finished(self, node_types: Dict[str, List[List[str]]]):
+    def open_node_types_finished(self, node_types: NodeTypes):
         """
         Method that handles the result of opening node types
         initializes the node types in the view
         :param node_types: the returned dictionary
         """
+        self.gui.load_node_types = node_types
         self.gui.node_types_widget.set_up_node_types(node_types)

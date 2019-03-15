@@ -22,6 +22,18 @@ def test_write_csv(tmpdir):
     assert read_csv(tmpdir / "conditions.csv") == csv_file
 
 
+def test_singularize():
+    assert "Keeper" == singularize("Keeper")
+    assert "Role" == singularize("Roles")
+    assert "Strategy" == singularize("Strategies")
+
+
+def test_capitalize():
+    assert "Keeper" == capitalize("keeper")
+    assert "Role" == capitalize("Role")
+    assert "_" == capitalize("_")
+
+
 json_file = {
   "name": "SimpleTree",
   "data": {

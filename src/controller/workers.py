@@ -15,7 +15,7 @@ class MainWorker(QObject):
     # signals
     # signal when opening a collection is finished:
     # return a Dictionary of categories with a lost of filenames
-    open_collection_finished_signal = pyqtSignal(dict)
+    open_collection_finished_signal = pyqtSignal(Collection)
     # signal when opening tree from collection is finished
     # returns category filename and the tree object
     open_tree_from_collection_finished_signal = pyqtSignal(str, str, Tree)
@@ -28,12 +28,12 @@ class MainWorker(QObject):
     write_tree_custom_path_finished_signal = pyqtSignal(Path, Tree, bool)
     # signal when opening node_types is finished
     # returns the node types dictionary with list of lists for each type
-    open_node_types_finished_signal = pyqtSignal(dict)
+    open_node_types_finished_signal = pyqtSignal(NodeTypes)
 
     def __init__(self):
         super().__init__()
-        # crete collection variable
-        self.collection = None
+        # crete collection variable and initialize from settings
+        self.collection = Collection.from_path()
         # create node types variable and initialize from settings
         self.node_types = NodeTypes.from_csv()
 
@@ -49,34 +49,20 @@ class MainWorker(QObject):
         """
         # todo error handling when reading
         self.collection = Collection.from_path(path)
-        categories_and_filenames = self.collection.categories_and_filenames()
-        self.open_collection_finished_signal.emit(categories_and_filenames)
+        self.open_collection_finished_signal.emit(self.collection)
 
-    @pyqtSlot(str, str)
-    def open_tree_from_collection(self, category: str, filename: str):
-        """
-        Pyqtslot for opening a tree from the collection
-        Emits a open_tree_from_collection_finished_signal when finished
-            with the category filename and tree
-        :param category: the category of the file
-        :param filename: the name of the file
-        :raises: FileNotFoundError if the file does not exist
-        """
-        tree = self.collection.collection.get(category).get(filename)
-        if tree is None:
-            raise FileNotFoundError
-        self.open_tree_from_collection_finished_signal.emit(category, filename, tree)
-
-    @pyqtSlot()
-    @pyqtSlot(Path)
-    def write_collection(self, path: Path=None):
+    @pyqtSlot(Collection)
+    @pyqtSlot(Collection, Path)
+    def write_collection(self, collection: Collection, path: Path=None):
         """
         pyqtSlot for writing a collection
         Emits a write_collection_finished signal
             with a boolean if writing succeeded or not
+        :param collection: the collection to write
         :param path: the path to write to, None if writing to path in collection or Settings
         """
         try:
+            self.collection = collection
             self.collection.write_collection(path)
             self.write_collection_finished_signal.emit(True)
         # todo catch more specific exceptions
@@ -97,7 +83,7 @@ class MainWorker(QObject):
         # todo add to collection if tree does not exist yet
         # todo fix merge issues with write_tree method later
         try:
-            tree.write(self.collection.jsons_path() / category / filename)
+            self.collection.write_tree(tree, self.collection.jsons_path() / category / filename)
             self.write_tree_finished_signal.emit(category, filename, tree, True)
         except:
             # todo catch more specific exceptions
@@ -114,7 +100,7 @@ class MainWorker(QObject):
         """
         # todo error handling
         try:
-            tree.write(path)
+            self.collection.write_tree(tree, path)
             self.write_tree_custom_path_finished_signal.emit(path, tree, True)
         except:
             # todo catch more specific exceptions
@@ -123,7 +109,7 @@ class MainWorker(QObject):
     @pyqtSlot()
     def open_node_types(self):
         """
-        Reloads the node types and returns it to the listener as a dictionary
+        Reloads the node types and returns it to the listener as NodeTypes object
         """
         self.node_types = NodeTypes.from_csv()
-        self.open_node_types_finished_signal.emit(self.node_types.node_types)
+        self.open_node_types_finished_signal.emit(self.node_types)

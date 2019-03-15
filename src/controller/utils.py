@@ -46,3 +46,28 @@ def write_csv(dest: Path, content: List[List[str]]):
     with open(str(dest), 'w') as f:
         writer = csv.writer(f)
         writer.writerows(content)
+
+
+def singularize(word: str) -> str:
+    """
+    Helper method for singularizing words
+    :param word: the word to singularize
+    :return: the singularized word
+    """
+    # create the correct singular of the category
+    word_singular = word
+    if word_singular.endswith('ies'):
+        word_singular = word[:-3]
+        word_singular += 'y'
+    elif word.endswith('s'):
+        word_singular = word[:-1]
+    return word_singular
+
+
+def capitalize(word: str) -> str:
+    """
+    Helper method to capitalize the word
+    :param word: the word to capitalize
+    :return: the capitalized word
+    """
+    return word[0].upper() + word[1:]

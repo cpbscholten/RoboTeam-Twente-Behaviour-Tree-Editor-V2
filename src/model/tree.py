@@ -13,7 +13,7 @@ from model.exceptions import *
 class Node:
     logger = logging.getLogger("node")
 
-    def __init__(self, node_id: str, title: str, attributes: Dict[str, Any] = None, children: List[str] = None):
+    def __init__(self, title: str, node_id: str=None, attributes: Dict[str, Any]=None, children: List[str]=None):
         """
         Constructor for a Node object
         :param node_id: a unique identification string
@@ -21,8 +21,9 @@ class Node:
         :param attributes: other attributes with values the nodes has in a dict
         :param children: The id's of the node as children
         """
-        self.id: str = node_id
         self.title: str = title
+        # generate ID if not provided
+        self.id: str = node_id if not None else Node.generate_id()
         # if statements and list/dict copies because because of mutability
         # A node will always have a title but not always a name, if it has a name it will be saved in attributes
         self.attributes: Dict[str, Any] = dict(attributes) if attributes is not None else {}
@@ -48,7 +49,7 @@ class Node:
             raise InvalidTreeJsonFormatException
         attributes.pop('id')
         attributes.pop('title')
-        return cls(node.get('id'), node.get('title'), attributes, node.get('children'))
+        return cls(node.get('title'), node.get('id'), attributes, node.get('children'))
 
     @staticmethod
     def generate_id(size: int = None, chars=string.ascii_lowercase + string.digits) -> str:
@@ -732,7 +733,7 @@ class Collection:
     def categories_and_filenames(self) -> Dict[str, List[str]]:
         """
         Helper method that create a dictionary of categories and filenames
-        :return: a dictionary containing categories with a list if filenames
+        :return: a dictionary containing categories with a list of tuples with filenames
         """
         result = {}
         for category, items in self.collection.items():
@@ -838,7 +839,7 @@ class NodeTypes:
         # iterate over the node type, except the name
         for attribute in node_type[1:]:
             properties[attribute] = ""
-        return Node(Node.generate_id(), node_type[0], attributes)
+        return Node(node_type[0], attributes=attributes)
 
     def add_node_type(self, category: str, name: str, attributes: List[str]=None):
         """

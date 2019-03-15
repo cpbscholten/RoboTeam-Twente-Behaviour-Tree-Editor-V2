@@ -2,13 +2,14 @@ import re
 
 from functools import partial
 from pathlib import Path
-from typing import List, Dict, Union
+from typing import Union
 
 from PyQt5.QtWidgets import QAction, QMainWindow, QFileDialog, QMessageBox, QInputDialog, QLineEdit, QWidget, \
-    QHBoxLayout
+    QHBoxLayout, QDialog, QFormLayout, QLabel, QComboBox, QPushButton, QVBoxLayout
 
+from controller.utils import singularize, capitalize
 from model.config import Settings
-from model.tree import Tree
+from model.tree import Tree, Collection, NodeTypes
 from view.listeners import MainListener
 from view.widget.tree_view_widget import TreeViewWidget
 from view.widgets import NodeTypesWidget
@@ -51,7 +52,9 @@ class MainWindow(QMainWindow):
         self.tree_view_widget.setMinimumWidth(1000)
         self.main_layout.addWidget(self.tree_view_widget)
 
-        # tree that has been loaded from the collection. USed for checking for unsaved changes
+        # collection and NodeTypes that has been loaded, used for checking for unsaved changes
+        self.load_collection: Collection = None
+        self.load_node_types: NodeTypes = None
         self.load_tree = None
         # details about the tree currently shown
         # at start no tree is shown
@@ -82,8 +85,11 @@ class MainWindow(QMainWindow):
         """
         Closes the tree that currently is displayed
         """
+        # ask if there are changes that need to be saved
         self.check_unsaved_changes()
+        # reset the changes in the loaded tree
         self.load_tree = None
+        # close the currently displayed collection
         self.tree = None
         self.category = None
         self.filename = None
@@ -122,9 +128,6 @@ class MenuBar:
     """
     def __init__(self, main_window: MainWindow):
         self.main_window = main_window
-
-        # the current collection dict with categories and filenames displayed in the menubar
-        self.collection_dict = None
 
         # actions that are displayed in the menubar
         # editor actions
@@ -166,12 +169,12 @@ class MenuBar:
         self.save_tree_as_act.setStatusTip('Save the current tree as')
         self.save_tree_as_act.triggered.connect(self.save_tree_as)
 
-    def build_menu_bar(self, collection_dict: Dict[str, List[str]]=None):
+    def build_menu_bar(self, collection: Collection=None):
         """
         Reinitialized the menubar with a collection dict containing categories and filenames
-        :param collection_dict: collection dict containing categories and filenames
+        :param collection: collection object loaded
         """
-        self.collection_dict = collection_dict
+        collection_dict = collection.categories_and_filenames() if collection is not None else None
 
         # clears the current menubar
         menubar = self.main_window.menuBar()
@@ -204,16 +207,11 @@ class MenuBar:
             for category, filenames in sorted(collection_dict.items()):
                 # create a menu for the category
                 # upper case first character of category
-                category_upper: str = category[0].upper() + category[1:]
+                category_upper: str = capitalize(category)
                 category_menu = menubar.addMenu('&' + category_upper)
 
                 # create the correct singular of the category
-                category_singular = category_upper
-                if category_singular.endswith('ies'):
-                    category_singular = category_upper[:-3]
-                    category_singular += 'y'
-                elif category_upper.endswith('s'):
-                    category_singular = category_upper[:-1]
+                category_singular = singularize(category_upper)
 
                 # add an action to the menu for creating a new tree with the singular of category
                 add_tree_act = QAction('New ' + category_singular, self.main_window)
@@ -227,8 +225,8 @@ class MenuBar:
                     category_file_act = QAction(filename, self.main_window)
                     category_file_act.setStatusTip('Open ' + filename + ' in editor')
                     # displays a tree in main menu when selected
-                    category_file_act.triggered.connect(partial(
-                        self.open_tree_from_collection, category, filename))
+                    category_file_act.triggered.connect(partial(self.open_tree,
+                                                                category, filename))
                     category_menu.addAction(category_file_act)
         else:
             # if no collection was given,  display a disabled menu
@@ -241,6 +239,13 @@ class MenuBar:
         :return:
         """
         self.main_window.main_listener.open_collection_signal.emit()
+
+    def open_tree(self, category: str, filename: str):
+        """
+        opens a tree from the collection and show it on screen
+        """
+        tree = self.main_window.load_collection.collection.get(category).get(filename)
+        self.main_window.show_tree(category, filename, tree)
 
     def open_collection_custom_path(self):
         """
@@ -387,3 +392,108 @@ class Dialogs:
                     return Dialogs.text_input_dialog(title, text, regex)
             return str(string)
         return None
+
+
+class TreeSelectDialog(QDialog):
+    """
+    Dialog for selecting a tree from the collection
+    """
+
+    def __init__(self, collection: Collection):
+        super(TreeSelectDialog, self).__init__()
+        # set the default return values to None
+        self.return_category_val = None
+        self.return_tree_val = None
+
+        self.collection_dict = collection.categories_and_filenames()
+        self.categories = list(self.collection_dict.keys())
+        self.setWindowTitle("Select Tree")
+
+        # initialize the main layouts
+        self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
+
+        # widget and layout for the iput form
+        self.form_widget = QWidget()
+        self.form_layout = QFormLayout()
+        self.form_layout.setContentsMargins(0, 0, 0, 0)
+        self.form_widget.setLayout(self.form_layout)
+        self.layout.addWidget(self.form_widget)
+
+        # selection for the category
+        self.category_label = QLabel("Category:")
+        self.category_select = QComboBox()
+        self.category_select.addItems(self.categories)
+        self.category_select.currentTextChanged.connect(self.change_tree_category)
+        self.form_layout.addRow(self.category_label, self.category_select)
+
+        # selection for the tree in the category
+        self.tree_label = QLabel("Tree:")
+        self.tree_select = QComboBox()
+        self.tree_select.setMinimumWidth(200)
+        self.tree_select.addItems(self.collection_dict.get(self.categories[0]))
+        self.form_layout.addRow(self.tree_label, self.tree_select)
+
+        # widget and layout for the ok and cancel button
+        self.buttons_widget = QWidget()
+        self.buttons_layout = QHBoxLayout()
+        self.buttons_layout.setContentsMargins(0, 0, 0, 0)
+        self.buttons_widget.setLayout(self.buttons_layout)
+        self.layout.addWidget(self.buttons_widget)
+
+        # ok and cancel button
+        self.ok_button = QPushButton("Ok")
+        self.ok_button.clicked.connect(self.ok_clicked)
+        self.cancel_button = QPushButton("Cancel")
+        self.cancel_button.clicked.connect(self.cancel_clicked)
+        self.buttons_layout.addStretch(1)
+        self.buttons_layout.addWidget(self.ok_button)
+        self.buttons_layout.addWidget(self.cancel_button)
+
+        # check if the curently displayed item has trees and enable the ok and tree selection
+        self.enable_buttons(self.categories[0])
+
+    def change_tree_category(self, text):
+        """
+        pyqtSlot for changing the tree selection items when the category changes
+        :param text: the currently selected category
+        """
+        self.tree_select.clear()
+        self.enable_buttons(text)
+        self.tree_select.addItems(self.collection_dict.get(text))
+
+    def cancel_clicked(self):
+        """
+        pyqtSlot for when cancel is clicked. returns non, none
+        """
+        self.return_category_val = None
+        self.return_tree_val = None
+        self.reject()
+
+    def ok_clicked(self):
+        """
+        pyqtSlot for when the ok button is clicked, returns category and filename
+        """
+        self.return_category_val = self.category_select.currentText()
+        self.return_tree_val = self.tree_select.currentText()
+
+    def show(self):
+        """
+        show the dialog
+        :return: category and filename of the chosen tree, none if canceled
+        """
+        self.exec()
+        return self.return_category_val, self.return_tree_val
+
+    def enable_buttons(self, category):
+        """
+        Cheks if the category has trees and enables or disables the ok button and tree selection
+        :param category:
+        :return:
+        """
+        if len(self.collection_dict.get(category)) == 0:
+            self.ok_button.setEnabled(False)
+            self.tree_select.setEnabled(False)
+        else:
+            self.ok_button.setEnabled(True)
+            self.tree_select.setEnabled(True)

@@ -12,13 +12,13 @@ from model.tree import Node, Tree, Collection, NodeTypes
 
 class TestNode(object):
     # valid node files and objects
-    node_attributes_children = Node("1", "node", {"a": True}, ["2", "3"])
+    node_attributes_children = Node("node", "1", {"a": True}, ["2", "3"])
     node_attributes_children_json = read_json(Path('json/nodes/valid/NodeAttributesChildren.json'))
-    node_children_no_attributes = Node("1", "node", {}, ["2", "3"])
+    node_children_no_attributes = Node("node", "1", {}, ["2", "3"])
     node_children_no_attributes_json = read_json(Path('json/nodes/valid/NodeChildrenNoAttributes.json'))
-    node_attributes_no_children = Node("1", "node", {"a": True})
+    node_attributes_no_children = Node("node", "1", {"a": True})
     node_attributes_no_children_json = read_json(Path('json/nodes/valid/NodeAttributesNoChildren.json'))
-    node_no_attributes_children = Node("1", "node")
+    node_no_attributes_children = Node("node", "1")
     node_no_attributes_children_json = read_json(Path('json/nodes/valid/NodeNoAttributesChildren.json'))
 
     # invalid node files
@@ -159,7 +159,7 @@ class TestTree(object):
         assert len(tree.nodes) == 4
 
     def test_from_json_valid3(self):
-        tree = Tree("SimpleTree", "1", {"1": Node("1", "Sequence")})
+        tree = Tree("SimpleTree", "1", {"1": Node("Sequence", "1")})
         assert tree == Tree.from_json(self.tree_simple_tree)
 
     def test_from_json_invalid_wrong_attribute_types(self):
@@ -196,7 +196,7 @@ class TestTree(object):
 
     def test_add_node(self):
         tree = Tree.from_json(self.tree_dance_strategy)
-        tree.add_node(Node("1", "title"))
+        tree.add_node(Node("title", "1"))
         assert "1"in tree.nodes.keys()
 
     def test_remove_node(self):
@@ -207,7 +207,7 @@ class TestTree(object):
 
     def test_remove_node_not_existent(self):
         tree = Tree.from_json(self.tree_dance_strategy)
-        tree.remove_node(Node("non existent node", "title"))
+        tree.remove_node(Node("title", "non existent node"))
         assert "non existent node" not in tree.nodes.keys()
 
     def test_remove_node_by_id(self):
@@ -306,7 +306,7 @@ class TestCollection(object):
     def test_write_collection_new_file(self, tmpdir):
         collection = Collection.from_path(self.path)
         collection.write_collection(tmpdir)
-        collection.add_tree("roles", "tree.json", Tree("name", "1", {"1": Node("1", "node")}))
+        collection.add_tree("roles", "tree.json", Tree("name", "1", {"1": Node("node", "1")}))
         collection.write_collection(tmpdir)
         read = Collection.from_path(tmpdir)
         # sets path equal, so objects are equal
@@ -325,13 +325,13 @@ class TestCollection(object):
 
     def test_add_tree_folder_exists(self):
         collection = Collection.from_path(self.path)
-        tree = Tree("name", "1", {"1": Node("1", "node")})
+        tree = Tree("name", "1", {"1": Node("node", "1")})
         collection.add_tree("keeper", "tree.json", tree)
         assert "tree.json" in collection.collection.get('keeper')
 
     def test_add_tree_folder_not_exists(self):
         collection = Collection.from_path(self.path)
-        tree = Tree("name", "1", {"1": Node("1", "node")})
+        tree = Tree("name", "1", {"1": Node("node", "1")})
         collection.add_tree("test", "tree.json", tree)
         assert "tree.json" in collection.collection.get('test')
 
@@ -635,6 +635,6 @@ class TestNodeTypes:
         for category, types in node_types.node_types.items():
             for node_type in types:
                 assert node_type[0] != "test"
-        assert [] == node_types.get_node_type_by_node(Node("a", "test"))
+        assert [] == node_types.get_node_type_by_node(Node("test", "a"))
         # check for a existing node
-        assert [('composites', ["Sequence"])] == node_types.get_node_type_by_node(Node('a', 'Sequence'))
+        assert [('composites', ["Sequence"])] == node_types.get_node_type_by_node(Node('Sequence', 'a'))
