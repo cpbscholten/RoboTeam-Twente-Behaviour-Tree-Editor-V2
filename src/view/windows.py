@@ -1,18 +1,17 @@
 import re
-
 from functools import partial
 from pathlib import Path
 from typing import Union
 
-from PyQt5.QtWidgets import QAction, QMainWindow, QFileDialog, QMessageBox, QInputDialog, QLineEdit, QWidget, \
-    QHBoxLayout, QDialog, QFormLayout, QLabel, QComboBox, QPushButton, QVBoxLayout
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QAction, QMessageBox, QFileDialog, QInputDialog, \
+    QLineEdit, QDialog, QVBoxLayout, QFormLayout, QLabel, QComboBox, QPushButton
 
-from controller.utils import singularize, capitalize
+from controller.utils import capitalize, singularize
 from model.config import Settings
-from model.tree import Tree, Collection, NodeTypes
+from model.tree import Collection, NodeTypes, Tree
 from view.listeners import MainListener
-from view.widget.tree_view_widget import TreeViewWidget
-from view.widgets import NodeTypesWidget
+from view.widgets import NodeTypesWidget, TreeViewWidget
 
 
 class MainWindow(QMainWindow):
@@ -20,11 +19,11 @@ class MainWindow(QMainWindow):
     Class to draw the main window of the editor
     """
 
-    def __init__(self):
+    def __init__(self, parent=None):
         """
         Constructor for the main widget
         """
-        super().__init__()
+        super().__init__(parent, Qt.Window)
 
         # create listener that interacts with the controller workers
         self.main_listener = MainListener(self)
@@ -44,13 +43,13 @@ class MainWindow(QMainWindow):
         # set margins of widget to 0, to prevent double margins
         self.node_types_widget.layout.setContentsMargins(0, 0, 0, 0)
         self.node_types_widget.setMinimumWidth(200)
-        self.main_layout.addWidget(self.node_types_widget)
+        self.main_layout.addWidget(self.node_types_widget, Qt.AlignLeft)
 
         # widget with the view of the tree
         self.tree_view_widget: TreeViewWidget = TreeViewWidget()
         self.tree_view_widget.layout.setContentsMargins(0, 0, 0, 0)
         self.tree_view_widget.setMinimumWidth(1000)
-        self.main_layout.addWidget(self.tree_view_widget)
+        self.main_layout.addWidget(self.tree_view_widget, Qt.AlignJustify)
 
         # collection and NodeTypes that has been loaded, used for checking for unsaved changes
         self.load_collection: Collection = None
@@ -413,7 +412,7 @@ class TreeSelectDialog(QDialog):
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
 
-        # widget and layout for the iput form
+        # widget and layout for the input form
         self.form_widget = QWidget()
         self.form_layout = QFormLayout()
         self.form_layout.setContentsMargins(0, 0, 0, 0)

@@ -2,8 +2,7 @@ from pathlib import Path
 
 from PyQt5.QtCore import pyqtSignal, QObject, pyqtSlot
 
-from model.config import Settings
-from model.tree import Collection, Tree, NodeTypes
+from model.tree import NodeTypes, Tree, Collection
 
 
 class MainWorker(QObject):

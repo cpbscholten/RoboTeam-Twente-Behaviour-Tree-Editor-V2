@@ -3,9 +3,9 @@ import math
 from PyQt5.QtCore import QRectF, Qt
 from PyQt5.QtWidgets import QGraphicsScene
 
-from model.tree import Tree, Node as ModelNode
-from src.view.Node import Node as ViewNode
-from view.collapse_expand_button import CollapseExpandButton
+from model.tree import Tree
+from model.tree import Node as ModelNode
+from view.elements import Node as ViewNode, CollapseExpandButton
 
 
 class TreeScene(QGraphicsScene):

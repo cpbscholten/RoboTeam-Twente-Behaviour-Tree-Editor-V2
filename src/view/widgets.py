@@ -1,13 +1,13 @@
-from typing import Dict, List
-
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QTreeWidget, QTreeWidgetItem, QWidget, QVBoxLayout, QPushButton, QDialog, QFormLayout, \
-    QLabel, QComboBox
+from PyQt5.QtGui import QIcon, QPainter
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QTreeWidget, QPushButton, QTreeWidgetItem, QGraphicsView
 
+import view
 from controller.utils import singularize, capitalize
-from model.tree import NodeTypes, Node
 from model.config import Settings
-import view.windows
+from model.tree import NodeTypes, Node
+from view.elements import ToolbarButton
+from view.scenes import TreeScene
 
 
 class NodeTypesWidget(QWidget):
@@ -121,5 +121,55 @@ class NodeTypesWidget(QWidget):
             return
         tree = self.gui.load_collection.collection.get(category).get(filename)
         category_singular = singularize(capitalize(category))
-        node = Node(tree.title, attributes={"name": category_singular})
+        node = Node(category_singular, attributes={"name": tree.title})
         # todo add node to view
+
+
+class TreeViewToolbar(QWidget):
+
+    def __init__(self, scene: TreeScene, parent=None):
+        """
+        The constructor for a tree view toolbar
+        :param scene: The tree scene for this toolbar
+        :param parent: The parent widget
+        """
+        super(TreeViewToolbar, self).__init__(parent, Qt.Widget)
+        self.scene = scene
+        self.layout = QVBoxLayout(self)
+        self.zoom_in_button = ToolbarButton(QIcon("view/icon/zoom_in.svg"))
+        self.zoom_in_button.clicked.connect(lambda: self.scene.zoom(1.25, 1.25))
+        self.zoom_out_button = ToolbarButton(QIcon("view/icon/zoom_out.svg"))
+        self.zoom_out_button.clicked.connect(lambda: self.scene.zoom(0.75, 0.75))
+        self.filter_button = ToolbarButton(QIcon("view/icon/filter.svg"))
+        # TODO filter implementation
+        self.reset_button = ToolbarButton(QIcon("view/icon/reset.svg"))
+        self.reset_button.clicked.connect(self.scene.align_tree)
+        self.layout.addWidget(self.zoom_in_button)
+        self.layout.addWidget(self.zoom_out_button)
+        self.layout.addWidget(self.filter_button)
+        self.layout.addWidget(self.reset_button)
+        self.setLayout(self.layout)
+        self.setGeometry(10, 10, self.layout.sizeHint().width(), self.layout.sizeHint().height())
+
+
+class TreeViewWidget(QWidget):
+
+    def __init__(self, parent: QWidget = None):
+        """
+        The constructor for a tree view widget
+        :param parent: The parent widget
+        """
+        super(TreeViewWidget, self).__init__(parent, Qt.Widget)
+        self.layout = QVBoxLayout(self)
+        self.graphics_view = QGraphicsView(self)
+        self.graphics_view.setCursor(Qt.OpenHandCursor)
+        self.graphics_view.setRenderHints(QPainter.Antialiasing)
+        self.graphics_scene = TreeScene(self.graphics_view, self)
+        self.graphics_view.setScene(self.graphics_scene)
+        self.graphics_view.setMinimumSize(500, 500)
+        self.graphics_view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.graphics_view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.toolbar = TreeViewToolbar(self.graphics_scene, self)
+        self.layout.addWidget(self.graphics_view)
+        self.setLayout(self.layout)
+

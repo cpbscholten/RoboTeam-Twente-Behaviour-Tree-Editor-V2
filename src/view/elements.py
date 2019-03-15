@@ -1,9 +1,7 @@
-from PyQt5.QtCore import QRectF, Qt, QPointF
-from PyQt5.QtGui import QBrush, QColor, QFontMetrics
-from PyQt5.QtWidgets import QGraphicsEllipseItem, QGraphicsSimpleTextItem, QGraphicsItem, QGraphicsScene
-
-from src.view.Edge import Edge
-from view.collapse_expand_button import CollapseExpandButton
+from PyQt5.QtCore import pyqtSignal, Qt, QRectF, QPointF
+from PyQt5.QtGui import QPixmap, QFontMetrics, QBrush, QColor, QIcon
+from PyQt5.QtWidgets import QGraphicsObject, QGraphicsEllipseItem, QGraphicsScene, QGraphicsItem, \
+    QGraphicsSimpleTextItem, QGraphicsLineItem, QPushButton
 
 
 class Node(QGraphicsEllipseItem):
@@ -218,3 +216,113 @@ class Node(QGraphicsEllipseItem):
             # reposition incoming edge
             if isinstance(self.parentItem(), Edge):
                 self.parentItem().change_position()
+
+
+class Edge(QGraphicsLineItem):
+
+    def __init__(self, start_node, end_node):
+        """
+        The constructor for an ui edge
+        :param start_node: Node on the start of the edge
+        :param end_node: Node on the end of the edge
+        """
+        self.start_node = start_node
+        self.end_node = end_node
+        super(Edge, self).__init__(*self.get_position())
+        end_node.setParentItem(self)
+
+    def get_position(self):
+        """
+        Calculates the correct positions for both edge ends (keeps them connected to the nodes)
+        :return: the start positions and end positions of the edge
+        """
+        # Position edge correctly, connecting the nodes
+        start_x = self.start_node.rect().x() + (self.start_node.rect().width() / 2)
+        start_y = self.start_node.rect().y() + self.start_node.rect().height()
+        end_x = self.end_node.rect().x() + (self.end_node.rect().width() / 2) + self.end_node.pos().x()
+        end_y = self.end_node.rect().y() + self.end_node.pos().y()
+        return start_x, start_y, end_x, end_y
+
+    def change_position(self):
+        """
+        Sets the edge to its correct position
+        """
+        self.setLine(*self.get_position())
+
+    def xoffset(self):
+        """
+        Function is recursively called by a connected node, passes call on to parent.
+        :return: the x offset of the parent
+        """
+        return self.parentItem().xoffset()
+
+    def yoffset(self):
+        """
+        Function is recursively called by a connected node, passes call on to parent.
+        :return: the y offset of the parent
+        """
+        return self.parentItem().yoffset()
+
+    def xpos(self):
+        """
+        Function is recursively called by a connected node, passes call on to parent.
+        :return: the x position of the parent
+        """
+        return self.parentItem().xpos()
+
+    def ypos(self):
+        """
+        Function is recursively called by a connected node, passes call on to parent.
+        :return: the y position of the parent
+        """
+        return self.parentItem().ypos()
+
+
+class CollapseExpandButton(QGraphicsObject):
+
+    collapse = pyqtSignal()
+    expand = pyqtSignal()
+
+    def __init__(self, parent):
+        """
+        The constructor of a collapse/expand button
+        :param parent: The parent node where the button belongs to
+        """
+        self.node = parent
+        # TODO: Use a global resource directory
+        self.expand_icon = QPixmap("view/icon/expand.png")
+        self.collapse_icon = QPixmap("view/icon/collapse.png")
+        super(CollapseExpandButton, self).__init__(parent)
+        self.setCursor(Qt.PointingHandCursor)
+        self.isCollapsed = False
+
+    def paint(self, painter, option, widget=None):
+        if self.isCollapsed:
+            painter.drawPixmap(0, 0, self.expand_icon)
+        else:
+            painter.drawPixmap(0, 0, self.collapse_icon)
+
+    def boundingRect(self):
+        return QRectF(0, 0, 9, 9)
+
+    def mousePressEvent(self, m_event):
+        """
+        Handles a mouse press on the button: Change button icon and expand/collapse the node's children
+        :param m_event: The mouse press event and its details
+        """
+        if self.isCollapsed:
+            self.expand.emit()
+            self.isCollapsed = False
+        else:
+            self.collapse.emit()
+            self.isCollapsed = True
+
+class ToolbarButton(QPushButton):
+
+    def __init__(self, icon: QIcon):
+        """
+        The constructor for a toolbar button
+        :param icon: The icon for this button
+        """
+        super(ToolbarButton, self).__init__(icon, "")
+        self.setFixedSize(30, 30)
