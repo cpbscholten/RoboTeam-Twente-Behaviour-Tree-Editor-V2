@@ -1,8 +1,8 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon, QPainter
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QTreeWidget, QPushButton, QTreeWidgetItem, QGraphicsView
+from PyQt5.QtWidgets import QGraphicsView, QTreeWidget, QTreeWidgetItem, QWidget, QVBoxLayout, QPushButton
 
-import view
+import view.windows
 from controller.utils import singularize, capitalize
 from model.config import Settings
 from model.tree import NodeTypes, Node

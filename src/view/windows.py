@@ -4,12 +4,12 @@ from pathlib import Path
 from typing import Union
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QAction, QMessageBox, QFileDialog, QInputDialog, \
-    QLineEdit, QDialog, QVBoxLayout, QFormLayout, QLabel, QComboBox, QPushButton
+from PyQt5.QtWidgets import QAction, QMainWindow, QFileDialog, QMessageBox, QInputDialog, QLineEdit, QWidget, \
+    QHBoxLayout, QDialog, QFormLayout, QLabel, QComboBox, QPushButton, QVBoxLayout
 
-from controller.utils import capitalize, singularize
+from controller.utils import singularize, capitalize
 from model.config import Settings
-from model.tree import Collection, NodeTypes, Tree
+from model.tree import Tree, Collection, NodeTypes
 from view.listeners import MainListener
 from view.widgets import NodeTypesWidget, TreeViewWidget
 
@@ -104,6 +104,7 @@ class MainWindow(QMainWindow):
         :param filename: filename
         :param tree: tree object to display
         """
+        self.check_unsaved_changes()
         self.category = category
         self.tree = tree
         self.filename = filename
@@ -245,6 +246,7 @@ class MenuBar:
         """
         tree = self.main_window.load_collection.collection.get(category).get(filename)
         self.main_window.show_tree(category, filename, tree)
+        self.main_window.load_tree = tree
 
     def open_collection_custom_path(self):
         """
