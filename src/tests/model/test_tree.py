@@ -202,23 +202,46 @@ class TestTree(object):
     def test_remove_node(self):
         # TODO add boolean checks for removes
         tree = Tree.from_json(self.tree_dance_strategy)
-        tree.remove_node(tree.nodes.get("tfbqmsn62cc9okkj"))
-        assert "tfbqmsn62cc9okkj" not in tree.nodes.keys()
+        assert True is tree.remove_node(tree.nodes.get("sftlsc94h3q1p"))
+        assert "sftlsc94h3q1p" not in tree.nodes.keys()
+        # remove the root and check if all root is set to ''
+        tree = Tree.from_json(self.tree_dance_strategy)
+        assert True is tree.remove_node(tree.nodes.get(tree.root))
+        assert tree.root == ''
 
     def test_remove_node_not_existent(self):
         tree = Tree.from_json(self.tree_dance_strategy)
-        tree.remove_node(Node("title", "non existent node"))
+        assert False is tree.remove_node(Node("title", "non existent node"))
         assert "non existent node" not in tree.nodes.keys()
 
     def test_remove_node_by_id(self):
         tree = Tree.from_json(self.tree_dance_strategy)
-        tree.remove_node_by_id("tfbqmsn62cc9okkj")
-        assert "tfbqmsn62cc9okkj" not in tree.nodes.keys()
+        assert True is tree.remove_node_by_id("sftlsc94h3q1p")
+        assert "sftlsc94h3q1p" not in tree.nodes.keys()
+        # remove the root and check if all root is set to ''
+        tree = Tree.from_json(self.tree_dance_strategy)
+        assert True is tree.remove_node_by_id(tree.root)
+        assert tree.root == ''
 
     def test_remove_node_by_id_not_existent(self):
         tree = Tree.from_json(self.tree_dance_strategy)
         tree.remove_node_by_id("non existent node")
         assert "non existent node" not in tree.nodes.keys()
+
+    def test_remove_node_and_children_by_id(self):
+        # test removing a node that does not exist
+        tree = Tree.from_json(self.tree_dance_strategy)
+        assert False is tree.remove_node_and_children_by_id("non_existing_id")
+        # test removing a node without children
+        tree.add_node(Node("test_node", "test_node"))
+        assert True is tree.remove_node_and_children_by_id("test_node")
+        # test removing a node  with non existing children
+        tree.add_node(Node("test_node", "test_node", children=['non_existing_node']))
+        assert False is tree.remove_node_and_children_by_id("test_node")
+        # remove the root and check if all nodes are removed
+        assert True is tree.remove_node_and_children_by_id(tree.root)
+        assert tree.root == ''
+        assert len(tree.nodes) == 0
 
     def test_create_json1(self):
         tree = Tree.from_json(self.tree_dance_strategy)

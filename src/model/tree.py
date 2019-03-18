@@ -287,6 +287,9 @@ class Tree:
         if node not in self.nodes.values():
             Tree.logger.warning("Attempted to remove non-existent node {} from tree {}".format(node.id, self.name))
             return False
+        # remove root node if trying to remove root
+        if self.root == node.id:
+            self.root = ''
         self.nodes.pop(node.id)
         return True
 
@@ -299,8 +302,31 @@ class Tree:
         if node_id not in self.nodes.keys():
             Tree.logger.warning("Attempted to remove non-existent node {} from tree {}".format(node_id, self.name))
             return False
+        # remove root node if trying to remove root
+        if self.root == node_id:
+            self.root = ''
         self.nodes.pop(node_id)
         return True
+
+    def remove_node_and_children_by_id(self, node_id: str) -> bool:
+        """
+        Removes a node and all of its children recursively
+        :param node_id: the id of the node to remvoe
+        :return success: if the node and the children were removed successfully
+        """
+        if node_id not in self.nodes.keys():
+            Tree.logger.warning("Attempted to remove non-existent node {} from tree {}".format(node_id, self.name))
+            return False
+        # remove root node if trying to remove root
+        if self.root == node_id:
+            self.root = ''
+        children = self.nodes.get(node_id).children
+        success = True
+        if len(children) >= 0:
+            for child_id in children:
+                success &= self.remove_node_and_children_by_id(child_id)
+        self.nodes.pop(node_id, None)
+        return success
 
     def create_json(self) -> Dict[str, Any]:
         """
