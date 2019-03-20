@@ -1,4 +1,3 @@
-import logging
 import sys
 
 from PyQt5.QtWidgets import QApplication
@@ -9,11 +8,8 @@ import view.windows
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.ERROR,
-                        format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
-                        datefmt='%m-%d %H:%M',
-                        filename=model.config.Settings.query_setting("logfile_name", "main"),
-                        filemode='w')
+    # set up logging
+    model.config.Settings.set_up_logging()
 
     # start UI
     app = QApplication(sys.argv)

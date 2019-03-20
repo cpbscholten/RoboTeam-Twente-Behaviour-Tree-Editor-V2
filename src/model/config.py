@@ -92,4 +92,54 @@ class Settings:
 
     @staticmethod
     def default_collection_categories():
+        """
+        Queries the default collection categories
+        """
         return Settings.query_setting("default_collection_categories", "settings")
+
+    @staticmethod
+    def default_id_size():
+        """
+        Queries the default id size
+        """
+        return Settings.query_setting("default_id_size", "settings")
+
+    @staticmethod
+    def alter_default_id_size(int_size: int):
+        """
+        Updates the int size used for creating id's of nodes
+        :param int_size: the size of the id's of the nodes
+        """
+        Settings.alter_setting("default_id_size", int_size, "settings")
+
+    @staticmethod
+    def default_logfile_name():
+        """
+        Queries the location logfile in the settings
+        """
+        return Settings.query_setting("logfile_name", "settings")
+
+    @staticmethod
+    def alter_default_logfile_name(path: Path):
+        """
+        Alters the location of the logfile
+        :param path: the path + filename of the logfile
+        """
+        Settings.alter_setting('logfile_name', PurePosixPath(path).as_posix(), 'settings')
+        Settings.set_up_logging()
+
+    @staticmethod
+    def set_up_logging():
+        """
+        Method that loads the logging settings and set up logging to the specified file
+        """
+        # Remove all handlers associated with the root logger object.
+        for handler in logging.root.handlers[:]:
+            logging.root.removeHandler(handler)
+
+        # set up the logging
+        logging.basicConfig(level=logging.WARNING,
+                            format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
+                            datefmt='%m-%d %H:%M',
+                            filename=Settings.default_logfile_name(),
+                            filemode='a')

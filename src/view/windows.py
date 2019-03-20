@@ -5,7 +5,7 @@ from typing import Union
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QAction, QMainWindow, QFileDialog, QMessageBox, QInputDialog, QLineEdit, QWidget, \
-    QHBoxLayout, QDialog, QFormLayout, QLabel, QComboBox, QPushButton, QVBoxLayout
+    QHBoxLayout, QDialog, QFormLayout, QLabel, QComboBox, QPushButton, QVBoxLayout, QGridLayout, QSpinBox
 
 from controller.utils import singularize, capitalize
 from model.config import Settings
@@ -133,7 +133,7 @@ class MenuBar:
         # editor actions
         self.settings_act = QAction('Settings', self.main_window)
         self.settings_act.setStatusTip('Change settings')
-        self.settings_act.setEnabled(False)
+        self.settings_act.triggered.connect(self.open_settings)
         # todo shortcut and action
         # settings_act.setShortcut()
 
@@ -233,6 +233,12 @@ class MenuBar:
             category_menu = menubar.addMenu('&No trees or directories were found')
             category_menu.setEnabled(False)
 
+    def open_settings(self):
+        """
+        Opens the settings window
+        """
+        SettingsDialog(self.main_window).show()
+
     def open_collection(self):
         """
         calls the emit signal for opening a collection
@@ -255,7 +261,7 @@ class MenuBar:
             if a folder is selected, otherwise nothing happens (cancel)
         """
         json_path = Settings.default_json_folder()
-        path = Dialogs.select_folder('Open collection folder', json_path)
+        path = Dialogs.open_folder_dialog('Open collection folder', json_path)
         # do a call to the controller to open the collection
         if path is not None:
             self.main_window.main_listener.open_collection_custom_path_signal.emit(path)
@@ -272,7 +278,7 @@ class MenuBar:
         Custom path selected from folder selector
         """
         json_path = Settings.default_json_folder()
-        path = Dialogs.select_folder('Save collection folder', json_path)
+        path = Dialogs.open_folder_dialog('Save collection folder', json_path)
         # do a call to the controller to write the collection
         if path is not None:
             self.main_window.main_listener.write_collection_custom_path_signal.emit(path)
@@ -299,7 +305,7 @@ class MenuBar:
         nothing happens when cancel is pressed
         """
         json_path = Settings.default_json_folder() / self.main_window.category
-        path = Dialogs.save_file_dialog('Save tree as', self.main_window.filename, json_path)
+        path = Dialogs.save_file_dialog('Save tree as', json_path / self.main_window.filename, )
         # do a call to the controller to write the collection
         if path is not None:
             self.main_window.main_listener.write_tree_custom_path_signal.emit(path, self.main_window.tree)
@@ -343,10 +349,10 @@ class Dialogs:
         :param title: title in top bar
         :param text: text in the error box
         """
-        button_reply = QMessageBox.critical(None, title, text, QMessageBox.Ok, QMessageBox.Ok)
+        QMessageBox.critical(None, title, text, QMessageBox.Ok, QMessageBox.Ok)
 
     @staticmethod
-    def select_folder(title: str, start_path: Path) -> Union[Path, None]:
+    def open_folder_dialog(title: str, start_path: Path) -> Union[Path, None]:
         """
         Opens a folder selector to select a folder
         if cancel is pressed None will be returned otherwise a valid path
@@ -361,16 +367,40 @@ class Dialogs:
         return Path(path)
 
     @staticmethod
-    def save_file_dialog(title: str, name: str, start_path: Path) -> Union[Path, None]:
+    def save_file_dialog(title: str, start_path: Path, json_only: bool=True) -> Union[Path, None]:
         """
         Opens a file save selector to select a save file location
         if cancel is pressed None will be returned otherwise a valid path
         :param title: the text in the top bar
-        :param name: filename that will be selected if it exists
-        :param start_path: the path that the dialog will show when opened
+        :param start_path: the path that the dialog will show when opened.
+                            if it includes a filename, it will be selected
+        :param json_only: if only json files are accepted. Defaults at True
         :return: None if cancel is pressed or a valid path
         """
-        path, _ = QFileDialog.getSaveFileName(None, title, str(start_path / name), "JSON files (*.json)")
+        if json_only:
+            path, _ = QFileDialog.getSaveFileName(None, title, str(start_path), "JSON files (*.json)")
+        else:
+            path, _ = QFileDialog.getSaveFileName(None, title, str(start_path))
+        # do nothing if cancel has been pressed
+        if path is None or path == '':
+            return None
+        return Path(path)
+
+    @staticmethod
+    def open_file_dialog(title: str, start_path: Path, json_only: bool=True) -> Union[Path, None]:
+        """
+        Opens a file selector to select a file location
+        if cancel is pressed None will be returned otherwise a valid path
+        :param title: the text in the top bar
+        :param start_path: the path that the dialog will show when opened
+                            if it has a filename, it will be selected
+        :param json_only: if only json files are accepted. Defaults at True
+        :return: None if cancel is pressed or a valid path
+        """
+        if json_only:
+            path, _ = QFileDialog.getOpenFileName(None, title, str(start_path), "JSON files (*.json)")
+        else:
+            path, _ = QFileDialog.getOpenFileName(None, title, str(start_path))
         # do nothing if cancel has been pressed
         if path is None or path == '':
             return None
@@ -451,7 +481,7 @@ class TreeSelectDialog(QDialog):
         self.buttons_layout.addWidget(self.ok_button)
         self.buttons_layout.addWidget(self.cancel_button)
 
-        # check if the curently displayed item has trees and enable the ok and tree selection
+        # check if the currently displayed item has trees and enable the ok and tree selection
         self.enable_buttons(self.categories[0])
 
     def change_tree_category(self, text):
@@ -498,3 +528,167 @@ class TreeSelectDialog(QDialog):
         else:
             self.ok_button.setEnabled(True)
             self.tree_select.setEnabled(True)
+
+
+class SettingsDialog(QDialog):
+    """
+    Dialog that allows for changing the values of the settings
+    requires MainWindow to interact with listener
+    """
+
+    def __init__(self, gui: MainWindow):
+        super(SettingsDialog, self).__init__()
+        self.gui = gui
+        self.main_layout = QVBoxLayout()
+        self.setLayout(self.main_layout)
+        self.setMinimumWidth(500)
+        self.setMaximumHeight(100)
+        self.setWindowTitle("Settings")
+
+        # grid layout for showing the settings
+        self.settings_widget = QWidget()
+        self.settings_layout = QGridLayout()
+        self.settings_widget.setLayout(self.settings_layout)
+        self.settings_layout.setContentsMargins(0, 0, 0, 0)
+        self.main_layout.addWidget(self.settings_widget)
+
+        # layout and widget for the ok, apply and cancel button
+        self.buttons_widget = QWidget()
+        self.buttons_layout = QHBoxLayout()
+        self.buttons_widget.setLayout(self.buttons_layout)
+        self.buttons_layout.setContentsMargins(0, 0, 0, 0)
+        self.main_layout.addWidget(self.buttons_widget)
+        self.buttons_layout.addStretch(1)
+
+        # ok, apply and cancel button
+        self.ok_button = QPushButton("Ok")
+        self.buttons_layout.addWidget(self.ok_button)
+        self.ok_button.clicked.connect(self.ok)
+        self.apply_button = QPushButton("Apply")
+        self.buttons_layout.addWidget(self.apply_button)
+        self.apply_button.clicked.connect(self.apply)
+        self.cancel_button = QPushButton("Cancel")
+        self.cancel_button.clicked.connect(self.reject)
+        self.buttons_layout.addWidget(self.cancel_button)
+        self.enable_apply(False)
+
+        # settings for the jsons folder
+        self.jsons_label = QLabel("JSONS:")
+        self.jsons_path = Settings.default_json_folder()
+        self.jsons_edit = QLineEdit(str(self.jsons_path))
+        self.jsons_edit.setEnabled(False)
+        self.jsons_select = QPushButton("Select")
+        self.jsons_select.clicked.connect(self.select_jsons_folder)
+        self.settings_layout.addWidget(self.jsons_label, 0, 0)
+        self.settings_layout.addWidget(self.jsons_edit, 0, 1)
+        self.settings_layout.addWidget(self.jsons_select, 0, 2)
+
+        # settings for the node types folder
+        self.node_types_label = QLabel("Node Types:")
+        self.node_types_path = Settings.default_node_types_folder()
+        self.node_types_edit = QLineEdit(str(self.node_types_path))
+        self.node_types_edit.setEnabled(False)
+        self.node_types_select = QPushButton("Select")
+        self.node_types_select.clicked.connect(self.select_node_types_folder)
+        self.settings_layout.addWidget(self.node_types_label, 1, 0)
+        self.settings_layout.addWidget(self.node_types_edit, 1, 1)
+        self.settings_layout.addWidget(self.node_types_select, 1, 2)
+
+        # settings for selecting logfile
+        self.logfile_label = QLabel("Logfile:")
+        self.logfile_path = Settings.default_logfile_name()
+        self.logfile_edit = QLineEdit(str(self.logfile_path))
+        self.logfile_edit.setEnabled(False)
+        self.logfile_select = QPushButton("Select")
+        self.logfile_select.clicked.connect(self.select_logfile)
+        self.settings_layout.addWidget(self.logfile_label, 2, 0)
+        self.settings_layout.addWidget(self.logfile_edit, 2, 1)
+        self.settings_layout.addWidget(self.logfile_select, 2, 2)
+
+        # settings for selecting the id size
+        self.id_size_label = QLabel("Node id size:")
+        self.id_size_def = Settings.default_id_size()
+        self.id_size_select = QSpinBox()
+        self.id_size_select.setMinimum(1)
+        self.id_size_select.setValue(self.id_size_def)
+        self.id_size_select.valueChanged.connect(self.select_id_size_changed)
+        self.settings_layout.addWidget(self.id_size_label, 3, 0)
+        self.settings_layout.addWidget(self.id_size_select, 3, 1, 3, 2)
+
+    def select_logfile(self):
+        """
+        Selector for the logfile
+        """
+        path = Dialogs.save_file_dialog("Select logfile", self.logfile_path, False)
+        if path is None:
+            return
+        self.enable_apply(True)
+        self.logfile_path = path
+        self.logfile_edit.setText(str(self.logfile_path))
+
+    def select_node_types_folder(self):
+        """
+        Selector for the node types folder
+        """
+        path = Dialogs.open_folder_dialog("Select Node types folder", self.node_types_path)
+        if path is None:
+            return
+        self.enable_apply(True)
+        self.node_types_path = path
+        self.node_types_edit.setText(str(self.node_types_path))
+
+    def select_jsons_folder(self):
+        """
+        Selector for the jsons folder
+        """
+        path = Dialogs.open_folder_dialog("Select JSONS path", self.jsons_path)
+        if path is None:
+            return
+        self.enable_apply(True)
+        self.jsons_path = path
+        self.jsons_edit.setText(str(self.jsons_path))
+
+    def select_id_size_changed(self):
+        self.enable_apply(True)
+        self.id_size_def = self.id_size_select.value()
+
+    def enable_apply(self, enable: bool):
+        """
+        Method to quickly enable or disable the ok and apply button
+        :param enable: enable or disable the buttons
+        """
+        self.apply_button.setEnabled(enable)
+
+    def show(self):
+        """
+        Method that opens the dialog
+        """
+        self.exec()
+
+    def apply(self):
+        """
+        Applies the settings, stores them and keeps the window open
+        """
+        Settings.alter_default_id_size(self.id_size_def)
+
+        # update the logfile location and update the logging
+        Settings.alter_default_logfile_name(self.logfile_path)
+
+        # update the node types folder and reset the node types
+        Settings.alter_default_node_types_folder(self.node_types_path)
+        self.gui.main_listener.open_node_types_signal.emit()
+
+        # update the jsons folder and open it as a collection
+        Settings.alter_default_json_folder(self.jsons_path)
+        self.gui.main_listener.open_collection_signal.emit()
+
+        # disable the apply button
+        self.enable_apply(False)
+
+    def ok(self):
+        """
+        Applies the settings and closes the window
+        :return:
+        """
+        self.apply()
+        self.accept()

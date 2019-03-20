@@ -40,24 +40,29 @@ class NodeTypesWidget(QWidget):
         self.layout.addWidget(self.add_subtree_button)
 
         self.header = QTreeWidgetItem(["Node Types"])
+        self.node_types_widget.setHeaderItem(self.header)
+
         self.selected: QTreeWidgetItem = None
+
+        # disable edit triggers
+        self.node_types_widget.setEditTriggers(self.node_types_widget.NoEditTriggers)
+
+        # set up triggers
+        self.node_types_widget.currentItemChanged.connect(self.node_type_selected)
+        self.node_types_widget.itemDoubleClicked.connect(self.node_from_selected_type)
 
         # emit signal to worker
         self.gui.main_listener.open_node_types_signal.emit()
 
-    def set_up_node_types(self, node_types: NodeTypes=None):
+    def set_up_node_types(self, node_types: NodeTypes):
         """
         Initializes the node types and shows them in a widget
         :param node_types: node types dictionary
         """
         self.selected = None
+        self.node_from_type_button.setEnabled(False)
         self.node_types_widget.clear()
-        self.node_types_widget.setHeaderItem(self.header)
         root = self.node_types_widget.invisibleRootItem()
-
-        if node_types is None:
-            path = Settings.default_node_types_folder()
-            node_types = NodeTypes.from_csv(path)
 
         for category, types in sorted(node_types.node_types.items()):
             category = QTreeWidgetItem(root, [category])
@@ -71,18 +76,14 @@ class NodeTypesWidget(QWidget):
                     property_item = QTreeWidgetItem(type_item, [type_property])
                     property_item.setDisabled(True)
 
-        # disable edit triggers
-        self.node_types_widget.setEditTriggers(self.node_types_widget.NoEditTriggers)
-
-        # set up triggers
-        self.node_types_widget.currentItemChanged.connect(self.node_type_selected)
-        self.node_types_widget.itemDoubleClicked.connect(self.node_from_selected_type)
-
     def node_type_selected(self, current: QTreeWidgetItem):
         """
         Slot that handles when another node type is selected
         :param current: the current item selected in the TreeWidget
         """
+        # check for none to prevent errors when updating node types
+        if current is None:
+            return
         # check if the item is a node type
         if current.data(1, Qt.UserRole) is None:
             self.selected = None
