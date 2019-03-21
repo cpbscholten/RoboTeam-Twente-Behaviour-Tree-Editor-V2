@@ -3,15 +3,28 @@ from PyQt5.QtGui import QPixmap, QFontMetrics, QBrush, QColor, QIcon
 from PyQt5.QtWidgets import QGraphicsObject, QGraphicsEllipseItem, QGraphicsScene, QGraphicsItem, \
     QGraphicsSimpleTextItem, QGraphicsLineItem, QPushButton
 
+from model.tree import Node as ModelNode, NodeTypes
+
 
 class Node(QGraphicsEllipseItem):
     i = 0
     NODE_MIN_WIDTH = 100
     NODE_MAX_WIDTH = 150
     NODE_HEIGHT = 50
-    NODE_COLOR = (152, 193, 217)
+    NODE_COLOR = (152, 193, 217)                # LIGHT BLUE
 
-    def __init__(self, x: float, y: float, scene: QGraphicsScene, title: str = None, parent: QGraphicsItem = None):
+    TACTIC_COLOR = (255, 51, 51)                # RED
+    STRATEGY_COLOR = (77, 255, 77)              # GREEN
+    ROLE_COLOR = (166, 77, 255)                 # PURPLE
+    KEEPER_COLOR = (255, 255, 26)               # YELLOW
+    OTHER_SUBTREE_COLOR = (147, 147, 147)       # GREY
+
+    DECORATOR_COLOR = (51, 51, 255)             # DARK BLUE
+    COMPOSITE_COLOR = (255, 153, 0)             # ORANGE
+    OTHER_NODE_TYPES_COLOR = (255, 102, 153)    # PINK
+
+    def __init__(self, x: float, y: float, scene: QGraphicsScene, title: str = None, parent: QGraphicsItem = None,
+                 model_node: ModelNode=None, node_types: NodeTypes=None):
         """
         The constructor for a UI node
         :param x: x position for the center of the node
@@ -54,9 +67,32 @@ class Node(QGraphicsEllipseItem):
         self.dragging = False
         self.setCursor(Qt.PointingHandCursor)
         self.setAcceptHoverEvents(True)
-        # give node a random color
-        # TODO: Determine color scheme for node types
+        # give the node a default colour
         self.setBrush(QBrush(QColor(*self.NODE_COLOR)))
+        # give node another color
+        if model_node is not None and node_types is not None:
+            # check for node types and color them
+            types = node_types.get_node_type_by_name(model_node.title)
+            if len(types) > 0:
+                category, type = types[0]
+                if category == 'decorators':
+                    self.setBrush(QBrush(QColor(*self.DECORATOR_COLOR)))
+                elif category == 'composites':
+                    self.setBrush(QBrush(QColor(*self.COMPOSITE_COLOR)))
+                else:
+                    self.setBrush(QBrush(QColor(*self.OTHER_NODE_TYPES_COLOR)))
+            # check for a strategy, role, tactic or keeper
+            if 'name' in model_node.attributes.keys():
+                if model_node.title == 'Tactic':
+                    self.setBrush(QBrush(QColor(*self.TACTIC_COLOR)))
+                elif model_node.title == 'Strategy':
+                    self.setBrush(QBrush(QColor(*self.STRATEGY_COLOR)))
+                elif model_node.title == 'Keeper':
+                    self.setBrush(QBrush(QColor(*self.KEEPER_COLOR)))
+                elif model_node.title == 'Role':
+                    self.setBrush(QBrush(QColor(*self.ROLE_COLOR)))
+                else:
+                    self.setBrush(QBrush(QColor(*self.OTHER_SUBTREE_COLOR)))
         # create the bottom collapse/expand button for this node
         self.bottom_collapse_expand_button = CollapseExpandButton(self)
         self.bottom_collapse_expand_button.setParentItem(self)
@@ -316,6 +352,7 @@ class CollapseExpandButton(QGraphicsObject):
         else:
             self.collapse.emit()
             self.isCollapsed = True
+
 
 class ToolbarButton(QPushButton):
 

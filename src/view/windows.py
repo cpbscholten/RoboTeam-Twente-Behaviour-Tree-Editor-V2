@@ -46,7 +46,7 @@ class MainWindow(QMainWindow):
         self.main_layout.addWidget(self.node_types_widget, Qt.AlignLeft)
 
         # widget with the view of the tree
-        self.tree_view_widget: TreeViewWidget = TreeViewWidget()
+        self.tree_view_widget: TreeViewWidget = TreeViewWidget(self)
         self.tree_view_widget.layout.setContentsMargins(0, 0, 0, 0)
         self.tree_view_widget.setMinimumWidth(1000)
         self.main_layout.addWidget(self.tree_view_widget, Qt.AlignJustify)

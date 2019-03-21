@@ -14,13 +14,15 @@ class TreeScene(QGraphicsScene):
     NODE_Y_OFFSET = 100
     ZOOM_SENSITIVITY = 0.05
 
-    def __init__(self, view, parent=None):
+    def __init__(self, view, gui, parent=None):
         """
         The constructor for a tree scene
         :param view: The view for this scene
+        :param gui: the main window
         :param parent: The parent widget of this scene
         """
         super(TreeScene, self).__init__(QRectF(0, 0, 1, 1), parent)
+        self.gui = gui
         self.view = view
         # Indicates if the TreeScene is dragged around
         self.dragging = False
@@ -65,7 +67,8 @@ class TreeScene(QGraphicsScene):
         :return: The created subtree root node,
                  the width of both sides of the subtree
         """
-        subtree_root_node = ViewNode(x, y, self, subtree_root.title)
+        subtree_root_node = ViewNode(x, y, self, subtree_root.title, model_node=subtree_root,
+                                     node_types=self.gui.load_node_types)
         y += self.NODE_Y_OFFSET
         middle_index = (len(subtree_root.children) - 1) / 2
         # keep track of level width to prevent overlapping nodes
