@@ -13,7 +13,7 @@ from model.exceptions import *
 class Node:
     logger = logging.getLogger("node")
 
-    def __init__(self, title: str, node_id: str=None, attributes: Dict[str, Any]=None, children: List[str]=None):
+    def __init__(self, title: str, node_id: str = None, attributes: Dict[str, Any] = None, children: List[str] = None):
         """
         Constructor for a Node object
         :param node_id: a unique identification string
@@ -23,7 +23,7 @@ class Node:
         """
         self.title: str = title
         # generate ID if not provided
-        self.id: str = node_id if not None else Node.generate_id()
+        self.id: str = node_id if node_id is not None else Node.generate_id()
         # if statements and list/dict copies because because of mutability
         # A node will always have a title but not always a name, if it has a name it will be saved in attributes
         self.attributes: Dict[str, Any] = dict(attributes) if attributes is not None else {}

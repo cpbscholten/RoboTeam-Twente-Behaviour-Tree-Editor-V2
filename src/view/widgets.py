@@ -5,7 +5,7 @@ from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon, QPainter, QPalette
 from PyQt5.QtWidgets import QGraphicsView, QTreeWidget, QTreeWidgetItem, QWidget, QVBoxLayout, QPushButton, QFormLayout, \
-    QLabel, QHBoxLayout
+    QApplication, QLabel, QHBoxLayout
 
 import view.windows
 from controller.utils import singularize, capitalize
@@ -14,12 +14,11 @@ from view.elements import ToolbarButton, Node as ViewNode
 from view.scenes import TreeScene
 
 
-
 class NodeTypesWidget(QWidget):
     def __init__(self, gui):
         super(QWidget, self).__init__()
         self.gui: view.windows.MainWindow = gui
-
+        self.app: QApplication = self.gui.app
         # vertical layout to align the widget and buttons
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
@@ -101,11 +100,13 @@ class NodeTypesWidget(QWidget):
         """
         pyqtSlot that creates a new node by asking for a title and adds it to the view
         """
+        if self.app.wait_for_click_filter:
+            self.app.wait_for_click_filter.reset_event_filter()
         title = view.windows.Dialogs.text_input_dialog("Create Node", "Title of the node:")
         if title is not None or '':
             print("test")
             node = Node(title)
-            # todo add node to view
+            self.add_node_to_view(node)
 
     def node_from_selected_type(self):
         """
@@ -115,7 +116,7 @@ class NodeTypesWidget(QWidget):
             return
         node_type = self.selected.data(1, Qt.UserRole)
         node = NodeTypes.create_node_from_node_type(node_type)
-        # todo use add created node to tree
+        self.add_node_to_view(node)
 
     def add_subtree_button_clicked(self):
         """
@@ -128,7 +129,15 @@ class NodeTypesWidget(QWidget):
         tree = self.gui.load_collection.collection.get(category).get(filename)
         category_singular = singularize(capitalize(category))
         node = Node(category_singular, attributes={"name": tree.title})
-        # todo add node to view
+        self.add_node_to_view(node)
+
+    def add_node_to_view(self, node: Node):
+        # transfer new node to the scene
+        scene = self.gui.tree_view_widget.graphics_scene
+        # setting this attribute starts node addition sequence in the scene
+        scene.adding_node = node
+        # set special cursor for node addition
+        self.app.add_node_cursor(scene)
 
 
 class TreeViewToolbar(QWidget):
@@ -147,7 +156,6 @@ class TreeViewToolbar(QWidget):
         self.zoom_out_button = ToolbarButton(QIcon("view/icon/zoom_out.svg"))
         self.zoom_out_button.clicked.connect(lambda: self.scene.zoom(0.75, 0.75))
         # self.filter_button = ToolbarButton(QIcon("view/icon/filter.svg"))
-        # TODO filter implementation
         self.reset_button = ToolbarButton(QIcon("view/icon/reset.svg"))
         self.reset_button.clicked.connect(self.scene.align_tree)
         self.layout.addWidget(self.zoom_in_button)
@@ -178,14 +186,14 @@ class TreeViewWidget(QWidget):
         self.graphics_view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.graphics_view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.toolbar = TreeViewToolbar(self.graphics_scene, self)
-        self.node_color_legend_widget = NodeColorLegendWidget(self.graphics_scene, self)
+        self.node_color_legend_widget = NodeColorLegendWidget(self.graphics_scene, self.gui.app, self)
         self.layout.addWidget(self.graphics_view)
         self.setLayout(self.layout)
 
-    def resizeEvent(self, QResizeEvent):
+    def resizeEvent(self, resize_event):
         """
         Overrides the method when this widget is resized, to correctly place the widgets on the view
-        :param QResizeEvent: the old dimensions
+        :param resize_event: the old dimensions
         """
         self.node_color_legend_widget.resize()
 
@@ -197,9 +205,10 @@ class NodeColorLegendWidget(QWidget):
     Y_OFFSET = 10
     X_OFFSET = 10
 
-    def __init__(self, scene: TreeScene, parent=None):
+    def __init__(self, scene: TreeScene, app: QApplication, parent=None):
         super(NodeColorLegendWidget, self).__init__(parent, Qt.Widget)
         self.scene = scene
+        self.app = app
         self.layout = QFormLayout(self)
 
         self.layout.addRow(QLabel("Subtrees:"))
@@ -217,7 +226,7 @@ class NodeColorLegendWidget(QWidget):
 
         self.setAutoFillBackground(True)
         palette = self.palette()
-        background = QtWidgets.QApplication.instance().palette().brush(QPalette.Background).color()
+        background = self.app.palette().brush(QPalette.Background).color()
         palette.setColor(self.backgroundRole(), background)
         self.setPalette(palette)
 

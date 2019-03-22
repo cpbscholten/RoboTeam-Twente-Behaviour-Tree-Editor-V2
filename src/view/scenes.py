@@ -1,7 +1,7 @@
 import math
 
 from PyQt5.QtCore import QRectF, Qt
-from PyQt5.QtWidgets import QGraphicsScene
+from PyQt5.QtWidgets import QGraphicsScene, QGraphicsLineItem
 
 from model.tree import Tree
 from model.tree import Node as ModelNode
@@ -23,13 +23,21 @@ class TreeScene(QGraphicsScene):
         """
         super(TreeScene, self).__init__(QRectF(0, 0, 1, 1), parent)
         self.gui = gui
+        self.app = self.gui.app
         self.view = view
         # Indicates if the TreeScene is dragged around
         self.dragging = False
-        self.collapsed = False
+        # The tree ModelNode being added to the scene
+        self.adding_node: ModelNode = None
+        # The node being connected to the tree
+        self.connecting_node = None
+        # Line connected to cursor when connecting nodes
+        self.connecting_line = None
         # Indicates the node being dragged
         self.dragging_node = None
-        self.tree = None
+        # start position of every node
+        self.node_init_pos = None
+        # root of the tree
         self.root_ui_node = None
 
     def add_tree(self, tree: Tree, x: int = None, y: int = 0):
@@ -44,32 +52,28 @@ class TreeScene(QGraphicsScene):
             x = self.width() / 2
         if not y:
             y = - (self.view.viewport().height() / 2) + ViewNode.NODE_HEIGHT
+        self.node_init_pos = (x, y)
         # remove old content
         self.clear()
-        # store current tree inside scene
-        self.tree = tree
         # check if there is a root, otherwise do not display the tree
         if tree.root == '':
             return
         # start recursively drawing tree
         root_node = tree.nodes[tree.root]
-        self.root_ui_node = self.add_subtree(tree, root_node, x, y)[0]
+        self.root_ui_node = self.add_subtree(tree, root_node)[0]
         self.root_ui_node.top_collapse_expand_button.hide()
         self.addItem(self.root_ui_node)
 
-    def add_subtree(self, tree: Tree, subtree_root: ModelNode, x, y):
+    def add_subtree(self, tree: Tree, subtree_root: ModelNode):
         """
         Recursive functions that adds node and its children to the tree.
         :param tree: The complete tree, used for node lookup
         :param subtree_root: The root of this subtree/branch
-        :param x: The x position for the root
-        :param y: The y position for the root
         :return: The created subtree root node,
                  the width of both sides of the subtree
         """
-        subtree_root_node = ViewNode(x, y, self, subtree_root.title, model_node=subtree_root,
+        subtree_root_node = ViewNode(*self.node_init_pos, scene=self, model_node=subtree_root, title=subtree_root.title,
                                      node_types=self.gui.load_node_types)
-        y += self.NODE_Y_OFFSET
         middle_index = (len(subtree_root.children) - 1) / 2
         # keep track of level width to prevent overlapping nodes
         subtree_left_width = subtree_right_width = 0
@@ -80,31 +84,33 @@ class TreeScene(QGraphicsScene):
             child = tree.nodes[child_id]
             # add the child and its own subtree,
             # returned values are used to adjust the nodes position to prevent overlap
-            child_view_node, child_subtree_width_left, child_subtree_width_right = self.add_subtree(tree, child, x, y)
+            child_view_node, child_subtree_width_left, child_subtree_width_right = self.add_subtree(tree, child)
+            subtree_root_node.add_child(child_view_node)
             move_x = - (child_subtree_width_left + child_subtree_width_right)
             # prevent double spacing when there is no middle node
             if i == math.floor(middle_index) and not middle_index.is_integer():
                 # use half the offset because the other half is added later for the other part of the tree
                 move_x -= self.NODE_X_OFFSET / 2
-                child_view_node.moveBy(- (child_subtree_width_right + (self.NODE_X_OFFSET / 2)), 0)
+                child_view_node.moveBy(- (child_subtree_width_right + (self.NODE_X_OFFSET / 2)), self.NODE_Y_OFFSET)
             else:
                 # use the default node offset
                 move_x -= self.NODE_X_OFFSET
-                child_view_node.moveBy(- (child_subtree_width_right + self.NODE_X_OFFSET), 0)
+                child_view_node.moveBy(- (child_subtree_width_right + self.NODE_X_OFFSET), self.NODE_Y_OFFSET)
             # add width to total left subtree width
             subtree_left_width += abs(move_x)
             # move all previous nodes to the left to make room for the new node
             for n in left_nodes:
                 n.moveBy(move_x, 0)
             left_nodes.append(child_view_node)
-            subtree_root_node.add_child(child_view_node)
         # add middle node
         if middle_index.is_integer():
             child_id = subtree_root.children[int(middle_index)]
             child = tree.nodes[child_id]
             # add the child and its own subtree,
             # returned values are used to adjust the nodes position to prevent overlap
-            child_view_node, child_subtree_width_left, child_subtree_width_right = self.add_subtree(tree, child, x, y)
+            child_view_node, child_subtree_width_left, child_subtree_width_right = self.add_subtree(tree, child)
+            subtree_root_node.add_child(child_view_node)
+            child_view_node.moveBy(0, self.NODE_Y_OFFSET)
             # move all left nodes further to the left to make room for the middle node
             move_x = - self.NODE_X_OFFSET
             if child_subtree_width_left > self.NODE_X_OFFSET:
@@ -113,13 +119,13 @@ class TreeScene(QGraphicsScene):
                 n.moveBy(move_x, 0)
             subtree_left_width += child_subtree_width_left
             subtree_right_width += child_subtree_width_right
-            subtree_root_node.add_child(child_view_node)
         # iterate over the right nodes
         for i, child_id in enumerate(subtree_root.children[math.floor(middle_index) + 1:]):
             child = tree.nodes[child_id]
             # add the child and its own subtree,
             # returned values are used to adjust the nodes position to prevent overlap
-            child_view_node, child_subtree_width_left, child_subtree_width_right = self.add_subtree(tree, child, x, y)
+            child_view_node, child_subtree_width_left, child_subtree_width_right = self.add_subtree(tree, child)
+            subtree_root_node.add_child(child_view_node)
             move_x = subtree_right_width + child_subtree_width_left
             # add width to total right subtree width
             subtree_right_width += child_subtree_width_left + child_subtree_width_right
@@ -133,8 +139,7 @@ class TreeScene(QGraphicsScene):
                 move_x += self.NODE_X_OFFSET
                 subtree_right_width += self.NODE_X_OFFSET
             # move node next to the previous node, all the way to the right
-            child_view_node.moveBy(move_x, 0)
-            subtree_root_node.add_child(child_view_node)
+            child_view_node.moveBy(move_x, self.NODE_Y_OFFSET)
         # set the widths of both subtree sides to a default value if no children or a smaller child node
         if not subtree_root.children or subtree_left_width < subtree_root_node.rect().width() / 2 or \
                 subtree_right_width < subtree_root_node.rect().width() / 2:
@@ -145,7 +150,7 @@ class TreeScene(QGraphicsScene):
         """
         Aligns the tree currently visible in the ui
         """
-        if self.tree and self.root_ui_node:
+        if self.gui.tree and self.root_ui_node:
             self.align_from_node(self.root_ui_node)
 
     def align_from_node(self, node: ViewNode):
@@ -167,7 +172,7 @@ class TreeScene(QGraphicsScene):
             if node.isVisible() and child.isVisible():
                 move_x = - (child_subtree_width_left + child_subtree_width_right)
                 # reset node to start position
-                child.setPos(0, 0)
+                child.setPos(0, self.NODE_Y_OFFSET)
                 # prevent double spacing when there is no middle node
                 if i == math.floor(middle_index) and not middle_index.is_integer():
                     # use half the offset because the other half is added later for the other part of the tree
@@ -191,7 +196,7 @@ class TreeScene(QGraphicsScene):
             # only align visible nodes
             if node.isVisible() and child.isVisible():
                 # reset node to start position
-                child.setPos(0, 0)
+                child.setPos(0, self.NODE_Y_OFFSET)
                 # move all left nodes further to the left to make room for the middle node
                 move_x = - self.NODE_X_OFFSET
                 if child_subtree_width_left > self.NODE_X_OFFSET:
@@ -219,7 +224,7 @@ class TreeScene(QGraphicsScene):
                     move_x += self.NODE_X_OFFSET
                     subtree_right_width += self.NODE_X_OFFSET
                 # reset node to start position
-                child.setPos(0, 0)
+                child.setPos(0, self.NODE_Y_OFFSET)
                 # move node next to the previous node, all the way to the right
                 child.moveBy(move_x, 0)
         # set the widths of both subtree sides to a default value if no children or a smaller child node
@@ -234,22 +239,33 @@ class TreeScene(QGraphicsScene):
         :param m_event: The mouse press event and its details
         """
         super(TreeScene, self).mousePressEvent(m_event)
-        # If stop function if node is clicked
         item = self.itemAt(m_event.scenePos(), self.view.transform())
-        if m_event.button() == Qt.LeftButton and item:
-            if isinstance(item, CollapseExpandButton):
+        if self.adding_node:
+            x = int(m_event.scenePos().x())
+            y = int(m_event.scenePos().y())
+            self.start_node_addition(x, y)
+            self.adding_node = None
+        elif self.connecting_node:
+            if isinstance(item, ViewNode) or isinstance(item.parentItem(), ViewNode):
+                clicked_node = item if isinstance(item, ViewNode) else item.parentItem()
+                self.finish_node_addition(clicked_node)
+                self.connecting_node = None
+                self.connecting_line = None
+        else:
+            if m_event.button() == Qt.LeftButton and item:
+                if isinstance(item, CollapseExpandButton):
+                    return
+                if isinstance(item, ViewNode):
+                    self.dragging_node = item
+                    item.dragging = True
+                if isinstance(item.parentItem(), ViewNode):
+                    self.dragging_node = item.parentItem()
+                    item.parentItem().dragging = True
                 return
-            if isinstance(item, ViewNode):
-                self.dragging_node = item
-                item.dragging = True
-            if isinstance(item.parentItem(), ViewNode):
-                self.dragging_node = item.parentItem()
-                item.parentItem().dragging = True
-            return
-        # Set dragging state of the scene
-        if m_event.button() == Qt.LeftButton:
-            self.dragging = True
-            self.view.setCursor(Qt.ClosedHandCursor)
+            # Set dragging state of the scene
+            if m_event.button() == Qt.LeftButton:
+                self.dragging = True
+                self.view.setCursor(Qt.ClosedHandCursor)
 
     def mouseReleaseEvent(self, m_event):
         """
@@ -277,6 +293,11 @@ class TreeScene(QGraphicsScene):
         if self.dragging_node:
             self.dragging_node.mouseMoveEvent(m_event)
             return
+        # adjust connection line when connecting node
+        if self.connecting_node:
+            line = self.connecting_line.line()
+            line.setP2(m_event.scenePos())
+            self.connecting_line.setLine(line)
         # pass mouse move event to top item that accepts hover events
         item = self.itemAt(m_event.scenePos(), self.view.transform())
         if item:
@@ -312,3 +333,52 @@ class TreeScene(QGraphicsScene):
         """
         zoom_value = 1 + (self.ZOOM_SENSITIVITY * (wheel_event.delta() / 120))
         self.zoom(zoom_value, zoom_value)
+
+    def start_node_addition(self, x, y):
+        """
+        Starts node addition sequence, spawn a node and let a connection line follow the cursor
+        :param x: Clicked x position in the scene
+        :param y: Clicked y position in the scene
+        :return:
+        """
+        # create node based on model node
+        node = ViewNode(*self.node_init_pos, scene=self, model_node=self.adding_node, title=self.adding_node.title,
+                        node_types=self.gui.load_node_types)
+        # adjust to correct position
+        node.moveBy(x - self.node_init_pos[0], y - self.node_init_pos[1])
+        self.addItem(node)
+        # initiate connection state if tree has a root
+        if self.gui.tree and self.gui.tree.root != '':
+            self.connecting_node = node
+            self.connecting_line = QGraphicsLineItem(x, y - node.rect().height() / 2, x, y)
+            # keep connection line on top
+            self.connecting_line.setZValue(-1)
+        else:
+            # top root node can not collapse upwards
+            node.top_collapse_expand_button.hide()
+            # add root to model of the tree
+            self.gui.tree.add_node(node.model_node)
+            self.gui.tree.root = node.model_node.id
+            # reset back to normal cursor
+            self.app.restoreOverrideCursor()
+        self.addItem(self.connecting_line)
+
+    def finish_node_addition(self, parent_node):
+        # remember current node position
+        node_pos = (self.connecting_node.xpos(), self.connecting_node.ypos())
+        # add child to parent ViewNode
+        parent_node.add_child(self.connecting_node)
+        # move node back to original position
+        self.connecting_node.moveBy(node_pos[0] - self.connecting_node.xpos(),
+                                    node_pos[1] - self.connecting_node.ypos())
+        # add node to model of the tree
+        self.gui.tree.add_node(self.connecting_node.model_node)
+        # sort the children in the UI and get correct model node order
+        sorted_children = parent_node.sort_children()
+        # set correct child order
+        parent_node.model_node.children = [c.id for c in sorted_children]
+        self.removeItem(self.connecting_line)
+        # reset back to normal cursor
+        self.app.restoreOverrideCursor()
+        # remove reset cursor filter (cursor already reset)
+        self.app.removeEventFilter(self.app.wait_for_click_filter)

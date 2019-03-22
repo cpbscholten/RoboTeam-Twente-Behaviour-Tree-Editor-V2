@@ -5,7 +5,7 @@ from typing import Union
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QAction, QMainWindow, QFileDialog, QMessageBox, QInputDialog, QLineEdit, QWidget, \
-    QHBoxLayout, QDialog, QFormLayout, QLabel, QComboBox, QPushButton, QVBoxLayout, QGridLayout, QSpinBox
+    QHBoxLayout, QDialog, QFormLayout, QLabel, QComboBox, QPushButton, QVBoxLayout, QApplication, QGridLayout, QSpinBox
 
 from controller.utils import singularize, capitalize
 from model.config import Settings
@@ -19,12 +19,12 @@ class MainWindow(QMainWindow):
     Class to draw the main window of the editor
     """
 
-    def __init__(self, parent=None):
+    def __init__(self, app: QApplication, parent=None):
         """
         Constructor for the main widget
         """
         super().__init__(parent, Qt.Window)
-
+        self.app: QApplication = app
         # create listener that interacts with the controller workers
         self.main_listener = MainListener(self)
 
@@ -92,6 +92,14 @@ class MainWindow(QMainWindow):
         self.menubar.save_tree_as_act.setEnabled(enable)
         self.tree_view_widget.toolbar.setEnabled(enable)
         self.toolbar_widget.verify_button.setEnabled(enable)
+        self.node_types_widget.create_node_button.setEnabled(enable)
+        self.node_types_widget.add_subtree_button.setEnabled(enable)
+        # correctly enable or disable the add node from selected button
+        current_selected = self.node_types_widget.node_types_widget.currentItem()
+        if self.node_types_widget.node_from_type_button.isEnabled():
+            self.node_types_widget.node_from_type_button.setEnabled(enable)
+        elif current_selected is not None and current_selected.data(1, Qt.UserRole) is not None:
+            self.node_types_widget.node_from_type_button.setEnabled(enable)
 
     def close_tree(self):
         """
