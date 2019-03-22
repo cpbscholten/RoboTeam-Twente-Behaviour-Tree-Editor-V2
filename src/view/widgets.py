@@ -1,20 +1,22 @@
-from typing import Tuple
+from functools import partial
 
 from PyQt5 import QtWidgets
-
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon, QPainter, QPalette
-from PyQt5.QtWidgets import QGraphicsView, QTreeWidget, QTreeWidgetItem, QWidget, QVBoxLayout, QPushButton, QFormLayout, \
-    QApplication, QLabel, QHBoxLayout
+from PyQt5.QtWidgets import QGraphicsView, QTreeWidget, QTreeWidgetItem, QWidget, QVBoxLayout, QPushButton, QLabel, \
+    QLineEdit, QFormLayout, QApplication, QGridLayout, QHBoxLayout
 
 import view.windows
+import view.scenes
+import view.elements
 from controller.utils import singularize, capitalize
 from model.tree import NodeTypes, Node
-from view.elements import ToolbarButton, Node as ViewNode
-from view.scenes import TreeScene
+
+from typing import Dict, Any, Tuple
 
 
 class NodeTypesWidget(QWidget):
+
     def __init__(self, gui):
         super(QWidget, self).__init__()
         self.gui: view.windows.MainWindow = gui
@@ -104,7 +106,6 @@ class NodeTypesWidget(QWidget):
             self.app.wait_for_click_filter.reset_event_filter()
         title = view.windows.Dialogs.text_input_dialog("Create Node", "Title of the node:")
         if title is not None or '':
-            print("test")
             node = Node(title)
             self.add_node_to_view(node)
 
@@ -131,7 +132,7 @@ class NodeTypesWidget(QWidget):
         node = Node(category_singular, attributes={"name": tree.title})
         self.add_node_to_view(node)
 
-    def add_node_to_view(self, node: Node):
+    def add_node_to_view(self, node):
         # transfer new node to the scene
         scene = self.gui.tree_view_widget.graphics_scene
         # setting this attribute starts node addition sequence in the scene
@@ -142,7 +143,7 @@ class NodeTypesWidget(QWidget):
 
 class TreeViewToolbar(QWidget):
 
-    def __init__(self, scene: TreeScene, parent=None):
+    def __init__(self, scene, parent=None):
         """
         The constructor for a tree view toolbar
         :param scene: The tree scene for this toolbar
@@ -151,12 +152,12 @@ class TreeViewToolbar(QWidget):
         super(TreeViewToolbar, self).__init__(parent, Qt.Widget)
         self.scene = scene
         self.layout = QVBoxLayout(self)
-        self.zoom_in_button = ToolbarButton(QIcon("view/icon/zoom_in.svg"))
+        self.zoom_in_button = view.elements.ToolbarButton(QIcon("view/icon/zoom_in.svg"))
         self.zoom_in_button.clicked.connect(lambda: self.scene.zoom(1.25, 1.25))
-        self.zoom_out_button = ToolbarButton(QIcon("view/icon/zoom_out.svg"))
+        self.zoom_out_button = view.elements.ToolbarButton(QIcon("view/icon/zoom_out.svg"))
         self.zoom_out_button.clicked.connect(lambda: self.scene.zoom(0.75, 0.75))
         # self.filter_button = ToolbarButton(QIcon("view/icon/filter.svg"))
-        self.reset_button = ToolbarButton(QIcon("view/icon/reset.svg"))
+        self.reset_button = view.elements.ToolbarButton(QIcon("view/icon/reset.svg"))
         self.reset_button.clicked.connect(self.scene.align_tree)
         self.layout.addWidget(self.zoom_in_button)
         self.layout.addWidget(self.zoom_out_button)
@@ -180,13 +181,14 @@ class TreeViewWidget(QWidget):
         self.graphics_view = QGraphicsView(self)
         self.graphics_view.setCursor(Qt.OpenHandCursor)
         self.graphics_view.setRenderHints(QPainter.Antialiasing)
-        self.graphics_scene = TreeScene(self.graphics_view, self.gui, self)
+        self.graphics_scene = view.scenes.TreeScene(self.graphics_view, self.gui, self)
         self.graphics_view.setScene(self.graphics_scene)
         self.graphics_view.setMinimumSize(500, 500)
         self.graphics_view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.graphics_view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.toolbar = TreeViewToolbar(self.graphics_scene, self)
         self.node_color_legend_widget = NodeColorLegendWidget(self.graphics_scene, self.gui.app, self)
+        self.property_display: TreeViewPropertyDisplay = None
         self.layout.addWidget(self.graphics_view)
         self.setLayout(self.layout)
 
@@ -196,6 +198,8 @@ class TreeViewWidget(QWidget):
         :param resize_event: the old dimensions
         """
         self.node_color_legend_widget.resize()
+        if self.property_display is not None:
+            self.property_display.resize()
 
 
 class NodeColorLegendWidget(QWidget):
@@ -205,24 +209,24 @@ class NodeColorLegendWidget(QWidget):
     Y_OFFSET = 10
     X_OFFSET = 10
 
-    def __init__(self, scene: TreeScene, app: QApplication, parent=None):
+    def __init__(self, scene, app: QApplication, parent=None):
         super(NodeColorLegendWidget, self).__init__(parent, Qt.Widget)
         self.scene = scene
         self.app = app
         self.layout = QFormLayout(self)
 
         self.layout.addRow(QLabel("Subtrees:"))
-        self.add_legend_type("Keeper", ViewNode.KEEPER_COLOR)
-        self.add_legend_type("Role", ViewNode.ROLE_COLOR)
-        self.add_legend_type("Strategy", ViewNode.STRATEGY_COLOR)
-        self.add_legend_type("Tactic", ViewNode.TACTIC_COLOR)
-        self.add_legend_type("Other", ViewNode.OTHER_SUBTREE_COLOR)
+        self.add_legend_type("Keeper", view.elements.Node.KEEPER_COLOR)
+        self.add_legend_type("Role", view.elements.Node.ROLE_COLOR)
+        self.add_legend_type("Strategy", view.elements.Node.STRATEGY_COLOR)
+        self.add_legend_type("Tactic", view.elements.Node.TACTIC_COLOR)
+        self.add_legend_type("Other", view.elements.Node.OTHER_SUBTREE_COLOR)
         self.layout.addRow(QLabel("Node Types:"))
-        self.add_legend_type("Composite", ViewNode.COMPOSITE_COLOR)
-        self.add_legend_type("Decorator", ViewNode.DECORATOR_COLOR)
-        self.add_legend_type("Other", ViewNode.OTHER_NODE_TYPES_COLOR)
+        self.add_legend_type("Composite", view.elements.Node.COMPOSITE_COLOR)
+        self.add_legend_type("Decorator", view.elements.Node.DECORATOR_COLOR)
+        self.add_legend_type("Other", view.elements.Node.OTHER_NODE_TYPES_COLOR)
         self.layout.addRow(QLabel("Other:"))
-        self.add_legend_type("Other", ViewNode.NODE_COLOR)
+        self.add_legend_type("Other", view.elements.Node.NODE_COLOR)
 
         self.setAutoFillBackground(True)
         palette = self.palette()
@@ -287,3 +291,177 @@ class ToolbarWidget(QWidget):
                                              "No errors have been found.")
         else:
             view.windows.Dialogs.error_box("Error", "Error! Tree is not valid!")
+
+
+class TreeViewPropertyDisplay(QWidget):
+
+    Y_OFFSET = 10
+    X_OFFSET = 10
+    ROW_MIN_HEIGHT = 25
+    ROW_MIN_WIDTH = 100
+    BUTTON_MARGINS = 6
+
+    def __init__(self, scene, attributes: Dict[str, Any], parent=None, node_id=None, node_title=None):
+        """
+        The constructor for a tree view toolbar
+        :param scene: The tree scene for this property display
+        :param attributes: Attributes given to be displayed
+        :param parent: The parent widget
+        :param node_id: Id of the node to be displayed
+        :param node_title: Title of the node to be displayed
+        """
+        super(TreeViewPropertyDisplay, self).__init__(parent, Qt.Widget)
+        self.scene = scene
+        self.layout = QGridLayout(self)
+        self.attributes = attributes
+        self.node_id = node_id
+        self.node_title = node_title
+
+        # Add attributes if given
+        if attributes is not None:
+            self.add_properties(attributes, node_id, node_title)
+
+        self.setAutoFillBackground(True)
+        palette = self.palette()
+        background = QtWidgets.QApplication.instance().palette().brush(QPalette.Background).color()
+        palette.setColor(self.backgroundRole(), background)
+        self.setPalette(palette)
+        self.show()
+
+        # Add buttons for saving and adding new properties and set some small margins so the buttons have space
+        self.add_property_button = QPushButton("Add Property")
+        self.add_property_button.clicked.connect(self.add_property)
+        self.add_property_button.setContentsMargins(self.BUTTON_MARGINS, self.BUTTON_MARGINS, self.BUTTON_MARGINS, self.BUTTON_MARGINS)
+
+        # Add property button in current row, 0th column, spanning 1 row and 3 columns
+        self.layout.addWidget(self.add_property_button, self.layout.rowCount(), 0, 1, 3)
+
+        self.resize()
+        self.setLayout(self.layout)
+
+    def resize(self):
+        """
+        Method that correctly places the widget on the treeViewWidget
+        """
+        self.setGeometry(self.scene.view.width() - self.layout.sizeHint().width() - self.X_OFFSET, self.Y_OFFSET, self.layout.sizeHint().width(), self.layout.sizeHint().height())
+
+    def add_property(self):
+        """
+        Add a new property to our list
+        :return: Nothing
+        """
+        root_window = self.scene.gui
+        node_to_update = root_window.tree.nodes[self.node_id]
+        self.update_properties()
+        node_to_update.add_property("", "")
+        updated_view = TreeViewPropertyDisplay(self.parent().graphics_scene, self.attributes, parent=self.parent(), node_id=self.node_id, node_title=self.node_title)
+        if self.parent().property_display is not None:
+            self.setParent(None)
+            self.deleteLater()
+        self.scene.view.parent().property_display = updated_view
+
+    def update_properties(self):
+        """
+        Update the properties of the node according to the properties in the property display window
+        :return: Nothing
+        """
+        # TODO: Add logging if two entries have the same key
+        properties = []
+        # Skip variable indicates if we're at the first entry of our rows or not.
+        skip = False
+        for item_index in range(0, self.layout.count()):
+            if isinstance(self.layout.itemAt(item_index).widget(), QLineEdit):  # If it's an editable property
+                if not skip:
+                    skip = True
+                    properties.append((self.layout.itemAt(item_index).widget().text(), self.layout.itemAt(item_index + 1).widget().text()))
+                else:
+                    skip = False
+                    pass
+        root_window = self.scene.gui
+        node_to_update = root_window.tree.nodes[self.node_id]
+        node_to_update.attributes["properties"] = {}
+        for property in properties:
+            node_to_update.add_property(property[0], property[1])
+
+    def remove_rows(self):
+        """
+        Remove all the rows in our QFormLayout
+        :return: Nothing
+        """
+        while self.layout.rowCount() > 0:
+            self.layout.removeRow(0)
+
+    def remove_property(self, key):
+        """
+        Remove property from properties that node has
+        :param key: Key of the property
+        :return: Nothing
+        """
+        root_window = self.scene.gui
+        node_to_update = root_window.tree.nodes[self.node_id]
+        node_to_update.remove_property(key)
+        updated_view = TreeViewPropertyDisplay(self.parent().graphics_scene, self.attributes, parent=self.parent(),
+                                               node_id=self.node_id, node_title=self.node_title)
+        if self.parent().property_display is not None:
+            self.setParent(None)
+            self.deleteLater()
+        self.scene.view.parent().property_display = updated_view
+
+    def add_properties(self, attributes: Dict, id=None, title=None):
+        """
+        Show the properties of a node that was selected
+        :param attributes: Attributes of selected node
+        :param id: Id of the node
+        :param title: Title of the node
+        :return: Nothing
+        """
+        # self.remove_rows()
+        # Make dicts to be used to display attributes and properties in different ways
+        display_attributes = dict()
+        display_properties = dict()
+
+        if id is not None:
+            display_attributes['id'] = id
+        if title is not None:
+            display_attributes['title'] = title
+
+        # Fill the attributes and properties dicts
+        for key in attributes:
+            if key != "properties":
+                display_attributes[key] = attributes[key]
+            else:
+                for prop_key in attributes[key]:
+                    display_properties[prop_key] = attributes[key][prop_key]
+
+        # Add attributes to the display (these are non-editable)
+        # TODO: Add heading to say these are attributes?
+        for key in display_attributes:
+            current_row = self.layout.rowCount()
+            key_label = QLabel(str(key))
+            key_label.setMinimumSize(self.ROW_MIN_WIDTH, self.ROW_MIN_HEIGHT)
+            value_label = QLabel(str(display_attributes[key]))
+            value_label.setMinimumSize(self.ROW_MIN_WIDTH, self.ROW_MIN_HEIGHT)
+            self.layout.addWidget(key_label, current_row, 0)
+            self.layout.addWidget(value_label, current_row, 1)
+
+        # Add property to the display (these are editable)
+        # TODO: Add heading to say these are properties?
+        for key in display_properties:
+            current_row = self.layout.rowCount()
+            key_line = QLineEdit(str(key))
+            key_line.setMinimumSize(self.ROW_MIN_WIDTH, self.ROW_MIN_HEIGHT)
+            value_line = QLineEdit(str(display_properties[key]))
+            value_line.setMinimumSize(self.ROW_MIN_WIDTH, self.ROW_MIN_HEIGHT)
+            remove_button = QPushButton(QIcon("view/icon/delete_icon.svg"), "", self)
+            remove_button.clicked.connect(partial(self.remove_property, key))
+            self.layout.addWidget(key_line, current_row, 0)
+            self.layout.addWidget(value_line, current_row, 1)
+            self.layout.addWidget(remove_button, current_row, 2)
+
+        # TODO: Add resize event
+
+
+
+
+
+

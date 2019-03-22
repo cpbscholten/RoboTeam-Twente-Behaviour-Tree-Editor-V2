@@ -1,10 +1,9 @@
-from math import floor
-
 from PyQt5.QtCore import pyqtSignal, Qt, QRectF, QPointF, QPoint
 from PyQt5.QtGui import QPixmap, QFontMetrics, QBrush, QColor, QIcon
 from PyQt5.QtWidgets import QGraphicsObject, QGraphicsEllipseItem, QGraphicsScene, QGraphicsItem, \
     QGraphicsSimpleTextItem, QGraphicsLineItem, QPushButton
 
+import view.widgets
 from model.tree import Node as ModelNode, NodeTypes
 
 
@@ -20,13 +19,12 @@ class Node(QGraphicsEllipseItem):
     ROLE_COLOR = (166, 77, 255)                 # PURPLE
     KEEPER_COLOR = (255, 255, 26)               # YELLOW
     OTHER_SUBTREE_COLOR = (147, 147, 147)       # GREY
-
     DECORATOR_COLOR = (51, 51, 255)             # DARK BLUE
     COMPOSITE_COLOR = (255, 153, 0)             # ORANGE
     OTHER_NODE_TYPES_COLOR = (255, 102, 153)    # PINK
 
     def __init__(self, x: float, y: float, scene: QGraphicsScene, model_node: ModelNode, title: str = None,
-                 parent: QGraphicsItem = None, node_types: NodeTypes = None):
+                 parent: QGraphicsItem = None, id: str= None, node_types: NodeTypes = None):
         """
         The constructor for a UI node
         :param x: x position for the center of the node
@@ -39,6 +37,7 @@ class Node(QGraphicsEllipseItem):
         else:
             # give node a unique title
             self.title = "node {}".format(Node.i)
+        self.id = id
         Node.i += 1
         self.scene = scene
         self.model_node = model_node
@@ -266,6 +265,14 @@ class Node(QGraphicsEllipseItem):
         :param m_event: The mouse press event and its details
         """
         super(Node, self).mousePressEvent(m_event)
+        tree = self.scene.gui.tree.nodes[self.id]
+        if self.scene.view.parent().property_display is not None:
+            self.scene.view.parent().property_display.update_properties()
+            self.scene.view.parent().property_display.setParent(None)
+            self.scene.view.parent().property_display.deleteLater()
+        self.scene.view.parent().property_display = view.widgets.TreeViewPropertyDisplay(
+            self.scene.view.parent().graphics_scene, tree.attributes, parent=self.scene.view.parent(), node_id=tree.id,
+            node_title=tree.title)
         # TODO: Sort children when moving nodes and removes this function
         self.sort_children()
 

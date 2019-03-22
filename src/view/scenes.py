@@ -72,8 +72,8 @@ class TreeScene(QGraphicsScene):
         :return: The created subtree root node,
                  the width of both sides of the subtree
         """
-        subtree_root_node = ViewNode(*self.node_init_pos, scene=self, model_node=subtree_root, title=subtree_root.title,
-                                     node_types=self.gui.load_node_types)
+        subtree_root_node = ViewNode(*self.node_init_pos, scene=self, title=subtree_root.title, id=subtree_root.id,
+                                     model_node=subtree_root, node_types=self.gui.load_node_types)
         middle_index = (len(subtree_root.children) - 1) / 2
         # keep track of level width to prevent overlapping nodes
         subtree_left_width = subtree_right_width = 0
@@ -262,6 +262,12 @@ class TreeScene(QGraphicsScene):
                     self.dragging_node = item.parentItem()
                     item.parentItem().dragging = True
                 return
+            # Remove property display window and save changes
+            if self.view.parent().property_display is not None:
+                self.view.parent().property_display.update_properties()
+                self.view.parent().property_display.setParent(None)
+                self.view.parent().property_display.deleteLater()
+                self.view.parent().property_display = None
             # Set dragging state of the scene
             if m_event.button() == Qt.LeftButton:
                 self.dragging = True

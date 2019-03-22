@@ -11,7 +11,8 @@ from controller.utils import singularize, capitalize
 from model.config import Settings
 from model.tree import Tree, Collection, NodeTypes
 from view.listeners import MainListener
-from view.widgets import NodeTypesWidget, TreeViewWidget, ToolbarWidget
+
+import view.widgets
 
 
 class MainWindow(QMainWindow):
@@ -39,10 +40,10 @@ class MainWindow(QMainWindow):
         self.main_widget.setLayout(self.main_layout)
 
         # widget with node types selector
-        self.node_types_widget: NodeTypesWidget = NodeTypesWidget(self)
+        self.node_types_widget: view.widgets.NodeTypesWidget = view.widgets.NodeTypesWidget(self)
         # set margins of widget to 0, to prevent double margins
         self.node_types_widget.layout.setContentsMargins(0, 0, 0, 0)
-        self.node_types_widget.setMinimumWidth(200)
+        self.node_types_widget.setFixedWidth(200)
         self.main_layout.addWidget(self.node_types_widget, Qt.AlignLeft)
 
         # widget with the tree view and verification bar
@@ -53,13 +54,13 @@ class MainWindow(QMainWindow):
         self.main_layout.addWidget(self.tree_and_toolbar_widget)
 
         # widget with the view of the tree
-        self.tree_view_widget: TreeViewWidget = TreeViewWidget(self)
+        self.tree_view_widget: view.widgets.TreeViewWidget = view.widgets.TreeViewWidget(self)
         self.tree_view_widget.layout.setContentsMargins(0, 0, 0, 0)
         self.tree_view_widget.setMinimumWidth(1000)
         self.tree_and_toolbar_layout.addWidget(self.tree_view_widget)
 
         # toolbar below view with verify button
-        self.toolbar_widget = ToolbarWidget(self)
+        self.toolbar_widget = view.widgets.ToolbarWidget(self)
         self.toolbar_widget.layout.setContentsMargins(0, 0, 0, 0)
         self.tree_and_toolbar_layout.addWidget(self.toolbar_widget)
 
@@ -117,6 +118,10 @@ class MainWindow(QMainWindow):
         self.tree_view_widget.graphics_scene.clear()
         # clear the pah of the tree from the window title
         self.setWindowTitle(self.def_window_title)
+        if self.tree_view_widget.property_display is not None:
+            self.tree_view_widget.property_display.setParent(None)
+            self.tree_view_widget.property_display.deleteLater()
+        self.tree_view_widget.property_display = None
 
     def show_tree(self, category, filename, tree):
         """
@@ -270,6 +275,7 @@ class MenuBar:
         opens a tree from the collection and show it on screen
         """
         tree = self.main_window.load_collection.collection.get(category).get(filename)
+        self.main_window.close_tree()
         self.main_window.show_tree(category, filename, tree)
         self.main_window.load_tree = tree
 
