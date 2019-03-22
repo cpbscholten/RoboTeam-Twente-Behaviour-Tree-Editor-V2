@@ -508,7 +508,8 @@ class Collection:
         """
         Function to verify if a tree is valid according to the definition of a tree. So being acyclic and having no
         unconnected nodes in short. But also according to the definition of a behaviour tree and
-        lastly if the structure is correct (Strategy -> Tactic -> Role with compositors and decorators in between)
+        lastly if the structure is correct (Strategy -> Tactic -> Role with compositors and decorators in between) if
+        a category is given.
         :param tree: The tree to verify
         :param category: The category node (Role, Strategy or Tactic for example), used to verify the structure of the
         tree. The default argument is None, if category is None then we don't check the structure of the tree as defined

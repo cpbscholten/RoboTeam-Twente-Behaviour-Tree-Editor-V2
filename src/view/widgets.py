@@ -5,7 +5,7 @@ from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon, QPainter, QPalette
 from PyQt5.QtWidgets import QGraphicsView, QTreeWidget, QTreeWidgetItem, QWidget, QVBoxLayout, QPushButton, QFormLayout, \
-    QLabel
+    QLabel, QHBoxLayout
 
 import view.windows
 from controller.utils import singularize, capitalize
@@ -243,3 +243,38 @@ class NodeColorLegendWidget(QWidget):
         color_label = QLabel("●")
         color_label.setStyleSheet("QLabel { color: rgb" + str(rgb) + "; }")
         self.layout.addRow(color_label, QLabel(title))
+
+
+class ToolbarWidget(QWidget):
+    """
+    Widget with a button toolbar for a verification button
+    """
+
+    def __init__(self, gui):
+        super(ToolbarWidget, self).__init__()
+        self.gui = gui
+        self.layout = QHBoxLayout()
+        self.setLayout(self.layout)
+
+        self.layout.addStretch(1)
+
+        # verification button
+        self.verify_button = QPushButton("Verify")
+        self.layout.addWidget(self.verify_button)
+        self.verify_button.clicked.connect(self.verify_tree)
+
+    def verify_tree(self):
+        """
+        Slot that checks a tree when the verify button has been clicked
+        """
+        collection = self.gui.load_collection
+        tree = self.gui.tree
+        category = self.gui.category
+        # TODO more detailed info when failing and auto checking
+        # TODO add checkmark
+        verified = collection.verify_tree(tree, category)
+        if verified:
+            view.windows.Dialogs.message_box("Success", "The Tree has been verified successfully. "
+                                             "No errors have been found.")
+        else:
+            view.windows.Dialogs.error_box("Error", "Error! Tree is not valid!")

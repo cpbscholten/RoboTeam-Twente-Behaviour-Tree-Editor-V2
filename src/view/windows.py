@@ -11,7 +11,7 @@ from controller.utils import singularize, capitalize
 from model.config import Settings
 from model.tree import Tree, Collection, NodeTypes
 from view.listeners import MainListener
-from view.widgets import NodeTypesWidget, TreeViewWidget
+from view.widgets import NodeTypesWidget, TreeViewWidget, ToolbarWidget
 
 
 class MainWindow(QMainWindow):
@@ -45,11 +45,23 @@ class MainWindow(QMainWindow):
         self.node_types_widget.setMinimumWidth(200)
         self.main_layout.addWidget(self.node_types_widget, Qt.AlignLeft)
 
+        # widget with the tree view and verification bar
+        self.tree_and_toolbar_widget = QWidget()
+        self.tree_and_toolbar_layout = QVBoxLayout()
+        self.tree_and_toolbar_widget.setLayout(self.tree_and_toolbar_layout)
+        self.tree_and_toolbar_layout.setContentsMargins(0, 0, 0, 0)
+        self.main_layout.addWidget(self.tree_and_toolbar_widget)
+
         # widget with the view of the tree
         self.tree_view_widget: TreeViewWidget = TreeViewWidget(self)
         self.tree_view_widget.layout.setContentsMargins(0, 0, 0, 0)
         self.tree_view_widget.setMinimumWidth(1000)
-        self.main_layout.addWidget(self.tree_view_widget, Qt.AlignJustify)
+        self.tree_and_toolbar_layout.addWidget(self.tree_view_widget)
+
+        # toolbar below view with verify button
+        self.toolbar_widget = ToolbarWidget(self)
+        self.toolbar_widget.layout.setContentsMargins(0, 0, 0, 0)
+        self.tree_and_toolbar_layout.addWidget(self.toolbar_widget)
 
         # collection and NodeTypes that has been loaded, used for checking for unsaved changes
         self.load_collection: Collection = None
@@ -79,6 +91,7 @@ class MainWindow(QMainWindow):
         self.menubar.save_tree_act.setEnabled(enable)
         self.menubar.save_tree_as_act.setEnabled(enable)
         self.tree_view_widget.toolbar.setEnabled(enable)
+        self.toolbar_widget.verify_button.setEnabled(enable)
 
     def close_tree(self):
         """
@@ -134,8 +147,7 @@ class MenuBar:
         self.settings_act = QAction('Settings', self.main_window)
         self.settings_act.setStatusTip('Change settings')
         self.settings_act.triggered.connect(self.open_settings)
-        # todo shortcut and action
-        # settings_act.setShortcut()
+        self.settings_act.setShortcut('Ctrl+Alt+S')
 
         self.exit_act = QAction('Exit', self.main_window)
         self.exit_act.setShortcut('Alt+F4')
@@ -219,7 +231,6 @@ class MenuBar:
                 add_tree_act.triggered.connect(partial(self.create_tree, category))
                 # add_tree_act.setEnabled(False)
                 category_menu.addAction(add_tree_act)
-                # todo create action for making a new tree
                 # adds an action for each file in the category
                 for filename in filenames:
                     category_file_act = QAction(filename, self.main_window)
