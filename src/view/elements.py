@@ -259,6 +259,39 @@ class Node(QGraphicsEllipseItem):
         model_nodes_order = [e.childItems()[0].model_node for e in child_edges]
         return model_nodes_order
 
+    def detect_order_change(self):
+        """
+        Detects if node order has changed and updates model accordingly
+        """
+        # parent node of self
+        parent_node = self.parentItem().parentItem()
+        # own child index
+        node_index = parent_node.children.index(self)
+        # check if node is swapped with left neighbour
+        try:
+            # can throw IndexError if there is no left neighbour
+            left_node = parent_node.children[node_index - 1]
+            # check if node is swapped
+            if left_node.xpos() > self.xpos():
+                # sort children of parent
+                sorted_nodes = parent_node.sort_children()
+                # change model tree structure accordingly
+                self.scene.gui.tree.nodes[parent_node.model_node.id].children = [n.id for n in sorted_nodes]
+        except IndexError:
+            pass
+        # check if node is swapped with right neighbour
+        try:
+            # can throw IndexError if there is no right neighbour
+            right_node = parent_node.children[node_index + 1]
+            # check if node is swapped
+            if right_node.xpos() < self.xpos():
+                # sort children of parent
+                sorted_nodes = parent_node.sort_children()
+                # change model tree structure accordingly
+                self.scene.gui.tree.nodes[parent_node.model_node.id].children = [n.id for n in sorted_nodes]
+        except IndexError:
+            pass
+
     def mousePressEvent(self, m_event):
         """
         Handles a mouse press on a node
@@ -287,6 +320,9 @@ class Node(QGraphicsEllipseItem):
             dx = m_event.scenePos().x() - m_event.lastScenePos().x()
             dy = m_event.scenePos().y() - m_event.lastScenePos().y()
             self.setPos(self.pos().x() + dx, self.pos().y() + dy)
+            # Set correct order for children if node has a parent
+            if self.parentItem():
+                self.detect_order_change()
             # reposition incoming edge
             if isinstance(self.parentItem(), Edge):
                 self.parentItem().change_position()
