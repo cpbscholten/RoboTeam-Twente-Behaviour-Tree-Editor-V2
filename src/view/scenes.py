@@ -72,7 +72,7 @@ class TreeScene(QGraphicsScene):
         :return: The created subtree root node,
                  the width of both sides of the subtree
         """
-        subtree_root_node = ViewNode(*self.node_init_pos, scene=self, title=subtree_root.title, id=subtree_root.id,
+        subtree_root_node = ViewNode(*self.node_init_pos, scene=self, title=subtree_root.title,
                                      model_node=subtree_root, node_types=self.gui.load_node_types)
         middle_index = (len(subtree_root.children) - 1) / 2
         # keep track of level width to prevent overlapping nodes

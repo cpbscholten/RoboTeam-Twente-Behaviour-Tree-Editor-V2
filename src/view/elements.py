@@ -1,7 +1,7 @@
 from PyQt5.QtCore import pyqtSignal, Qt, QRectF, QPointF, QPoint
 from PyQt5.QtGui import QPixmap, QFontMetrics, QBrush, QColor, QIcon
 from PyQt5.QtWidgets import QGraphicsObject, QGraphicsEllipseItem, QGraphicsScene, QGraphicsItem, \
-    QGraphicsSimpleTextItem, QGraphicsLineItem, QPushButton
+    QGraphicsSimpleTextItem, QGraphicsLineItem, QPushButton, QMenu, QAction
 
 import view.widgets
 from model.tree import Node as ModelNode, NodeTypes
@@ -24,7 +24,7 @@ class Node(QGraphicsEllipseItem):
     OTHER_NODE_TYPES_COLOR = (255, 102, 153)    # PINK
 
     def __init__(self, x: float, y: float, scene: QGraphicsScene, model_node: ModelNode, title: str = None,
-                 parent: QGraphicsItem = None, id: str= None, node_types: NodeTypes = None):
+                 parent: QGraphicsItem = None, node_types: NodeTypes = None):
         """
         The constructor for a UI node
         :param x: x position for the center of the node
@@ -37,7 +37,7 @@ class Node(QGraphicsEllipseItem):
         else:
             # give node a unique title
             self.title = "node {}".format(Node.i)
-        self.id = id
+        self.id = model_node.id
         Node.i += 1
         self.scene = scene
         self.model_node = model_node
@@ -194,9 +194,9 @@ class Node(QGraphicsEllipseItem):
         self.setParentItem(None)
         # move node to retain correct position
         self.setPos(0, 0)
-        self.moveBy(self.collapse_data["abs_pos"][0] - self.collapse_data["root_item"].xpos(),
-                    self.collapse_data["abs_pos"][1] - self.collapse_data["root_item"].ypos())
-
+        move_x = self.collapse_data["abs_pos"][0] - (self.collapse_data["root_item"].xpos()) - (self.scene.node_init_pos[0] - self.collapse_data["root_item"].xpos())
+        move_y = self.collapse_data["abs_pos"][1] - self.collapse_data["root_item"].ypos() - (self.scene.node_init_pos[1] - self.collapse_data["root_item"].ypos())
+        self.moveBy(move_x, move_y)
         # hide parent nodes
         self.collapse_data['top_level_item'].hide()
 
@@ -292,6 +292,26 @@ class Node(QGraphicsEllipseItem):
         except IndexError:
             pass
 
+    def delete_self(self):
+        # remove children
+        for c in self.children:
+            c.delete_self()
+        # remove child reference from parent
+        if self.parentItem():
+            parent_node: Node = self.parentItem().parentItem()
+            parent_node.children.remove(self)
+            parent_node.edges.remove(self.parentItem())
+            if not parent_node.children:
+                parent_node.bottom_collapse_expand_button.hide()
+            self.scene.gui.tree.nodes[parent_node.model_node.id].children.remove(self.model_node.id)
+            # remove parent edge and this node
+            self.scene.removeItem(self.parentItem())
+        else:
+            # remove this node
+            self.scene.removeItem(self)
+        # remove node from internal tree structure
+        del self.scene.gui.tree.nodes[self.model_node.id]
+
     def mousePressEvent(self, m_event):
         """
         Handles a mouse press on a node
@@ -326,6 +346,14 @@ class Node(QGraphicsEllipseItem):
             # reposition incoming edge
             if isinstance(self.parentItem(), Edge):
                 self.parentItem().change_position()
+
+    def contextMenuEvent(self, menu_event):
+        menu = QMenu()
+        delete_node_action = QAction("Delete Node")
+        delete_node_action.triggered.connect(self.delete_self)
+        menu.addAction(delete_node_action)
+        menu.exec(menu_event.screenPos())
+        menu_event.setAccepted(True)
 
 
 class Edge(QGraphicsLineItem):
@@ -389,7 +417,6 @@ class Edge(QGraphicsLineItem):
 
 
 class CollapseExpandButton(QGraphicsObject):
-
     collapse = pyqtSignal()
     expand = pyqtSignal()
 
