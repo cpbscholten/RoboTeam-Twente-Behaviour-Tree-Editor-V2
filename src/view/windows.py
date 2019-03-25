@@ -578,6 +578,7 @@ class TreeSelectDialog(QDialog):
         """
         self.return_category_val = self.category_select.currentText()
         self.return_tree_val = self.tree_select.currentText()
+        self.accept()
 
     def show(self):
         """

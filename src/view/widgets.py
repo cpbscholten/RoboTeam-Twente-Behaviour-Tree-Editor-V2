@@ -129,7 +129,7 @@ class NodeTypesWidget(QWidget):
             return
         tree = self.gui.load_collection.collection.get(category).get(filename)
         category_singular = singularize(capitalize(category))
-        node = Node(category_singular, attributes={"name": tree.title})
+        node = Node(category_singular, attributes={"name": tree.name})
         self.add_node_to_view(node)
 
     def add_node_to_view(self, node):
