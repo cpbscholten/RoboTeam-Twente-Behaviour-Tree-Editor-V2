@@ -309,6 +309,8 @@ class Node(QGraphicsEllipseItem):
         else:
             # remove this node
             self.scene.removeItem(self)
+        if self.scene.gui.tree.root == self.model_node.id:
+            self.scene.gui.tree.root = ''
         # remove node from internal tree structure
         del self.scene.gui.tree.nodes[self.model_node.id]
 

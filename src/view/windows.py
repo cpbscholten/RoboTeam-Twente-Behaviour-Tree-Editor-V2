@@ -1,4 +1,5 @@
 import re
+from copy import deepcopy
 from functools import partial
 from pathlib import Path
 from typing import Union
@@ -107,7 +108,11 @@ class MainWindow(QMainWindow):
         Closes the tree that currently is displayed
         """
         # ask if there are changes that need to be saved
-        self.check_unsaved_changes()
+        save = self.check_unsaved_changes()
+        if not save:
+            return
+        if self.app.wait_for_click_filter:
+            self.app.wait_for_click_filter.reset_event_filter()
         # reset the changes in the loaded tree
         self.load_tree = None
         # close the currently displayed collection
@@ -130,21 +135,45 @@ class MainWindow(QMainWindow):
         :param filename: filename
         :param tree: tree object to display
         """
-        self.check_unsaved_changes()
+        # ask if there are changes that need to be saved
+        save = self.check_unsaved_changes()
+        if not save:
+            return
         self.category = category
-        self.tree = tree
+        self.tree = deepcopy(tree)
         self.filename = filename
         self.enable_tree_actions(True)
         self.tree_view_widget.graphics_scene.add_tree(tree)
         # set the window title to also show the path of the tree
         self.setWindowTitle(self.def_window_title + ' - ' + self.category + '/' + self.filename)
 
-    def check_unsaved_changes(self):
+    def check_unsaved_changes(self) -> bool:
+        """
+        Method that checks for unsaved changes asks for yes, no, cacnel
+        :return bool: true if yes or no, false if cancel clicked or true if no unsaved changes
+        """
         if self.load_tree != self.tree:
-            save = Dialogs.yes_no_message_box('Unsaved changes',
-                                              'There are some unsaved changes, do you want to save them?')
-            if save:
+            save = Dialogs.yes_no_cancel_message_box('Unsaved changes',
+                                                     'There are some unsaved changes, do you want to save them?')
+            if save is 2:
                 self.main_listener.write_tree_signal.emit(self.category, self.filename, self.tree)
+                return True
+            elif save is 1:
+                return True
+            return False
+        return True
+
+    def closeEvent(self, event):
+        """
+        Event that is called when closing the window
+        check for unsaved changes
+        :param event: the event
+        """
+        save = self.check_unsaved_changes()
+        if save:
+            event.accept()
+        else:
+            event.ignore()
 
 
 class MenuBar:
@@ -355,6 +384,23 @@ class Dialogs:
         :param text: the text in the message box
         """
         QMessageBox.question(None, title, text, QMessageBox.Ok, QMessageBox.Ok)
+
+    @staticmethod
+    def yes_no_cancel_message_box(title: str, text: str) -> int:
+        """
+        Displays a message box with a title and message with yes no and cancel buttons
+        :param title: the title in the top bar
+        :param text: the text in the message box
+        :return int containing the value
+        """
+        clicked = QMessageBox.question(None, title, text, QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel,
+                                       QMessageBox.Yes)
+        if clicked == QMessageBox.Cancel:
+            return 0
+        elif clicked == QMessageBox.No:
+            return 1
+        else:
+            return 2
 
     @staticmethod
     def yes_no_message_box(title: str, text: str) -> bool:

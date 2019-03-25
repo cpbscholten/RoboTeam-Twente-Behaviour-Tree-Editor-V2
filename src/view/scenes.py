@@ -359,6 +359,7 @@ class TreeScene(QGraphicsScene):
             self.connecting_line = QGraphicsLineItem(x, y - node.rect().height() / 2, x, y)
             # keep connection line on top
             self.connecting_line.setZValue(-1)
+            self.addItem(self.connecting_line)
         else:
             # top root node can not collapse upwards
             node.top_collapse_expand_button.hide()
@@ -367,7 +368,6 @@ class TreeScene(QGraphicsScene):
             self.gui.tree.root = node.model_node.id
             # reset back to normal cursor
             self.app.restoreOverrideCursor()
-        self.addItem(self.connecting_line)
 
     def finish_node_addition(self, parent_node):
         # remember current node position
