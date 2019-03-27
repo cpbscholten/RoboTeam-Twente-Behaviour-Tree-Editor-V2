@@ -135,10 +135,6 @@ class MainWindow(QMainWindow):
         :param filename: filename
         :param tree: tree object to display
         """
-        # ask if there are changes that need to be saved
-        save = self.check_unsaved_changes()
-        if not save:
-            return
         self.category = category
         self.tree = deepcopy(tree)
         self.filename = filename
@@ -171,9 +167,11 @@ class MainWindow(QMainWindow):
         """
         save = self.check_unsaved_changes()
         if save:
-            event.accept()
-        else:
-            event.ignore()
+            # todo fix this ugly quick fix
+            verified = self.load_collection.verify_tree(self.tree)
+            if verified:
+                event.accept()
+        event.ignore()
 
 
 class MenuBar:

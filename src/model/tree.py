@@ -432,7 +432,7 @@ class Collection:
             break
         self.collection = collection
 
-    def write_collection(self, path: Path=None):
+    def write_collection(self, path: Path=None) -> bool:
         """
         Writes the collection in memory to the given directory
         :param path: the location to write to
@@ -444,6 +444,7 @@ class Collection:
             path = self.path
         # make a copy of the current collection
         collection = dict(self.collection)
+        success = True
         # read each nested dictionary and write each file in that directory
         for directory, files in collection.items():
             # create directories if it does not exist
@@ -452,7 +453,8 @@ class Collection:
                 os.makedirs(str(write_path))
             for filename, content in files.items():
                 # write collection
-                self.write_tree(content, write_path / filename)
+                success &= self.write_tree(content, write_path / filename)
+        return success
 
     def add_tree(self, directory: str, name: str, tree: Tree):
         """
@@ -751,11 +753,16 @@ class Collection:
                 if self.collection[category][tree].root == node:
                     return category
 
-    def write_tree(self, tree: Tree, path: Path):
+    def write_tree(self, tree: Tree, path: Path) -> bool:
         if self.verify_tree(tree):
-            write_json(path, Tree.create_json(tree))
-        else:
-            Tree.logger.error('Tree {} is invalid and can not be written'.format(tree.name))
+            try:
+                write_json(path, Tree.create_json(tree))
+                return True
+            except Exception:
+                Tree.logger.error('An exception occurred when writing tree {}.'.format(tree.name))
+                return False
+        Tree.logger.error('Tree {} is invalid and can not be written'.format(tree.name))
+        return False
 
     def categories_and_filenames(self) -> Dict[str, List[str]]:
         """

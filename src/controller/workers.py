@@ -60,12 +60,12 @@ class MainWorker(QObject):
         :param collection: the collection to write
         :param path: the path to write to, None if writing to path in collection or Settings
         """
-        try:
-            self.collection = collection
-            self.collection.write_collection(path)
+        self.collection = collection
+        success = self.collection.write_collection(path)
+        if success:
             self.write_collection_finished_signal.emit(True)
-        # todo catch more specific exceptions
-        except:
+        else:
+            # todo return more specific errors
             self.write_collection_finished_signal.emit(False)
 
     @pyqtSlot(str, str, Tree)
@@ -78,14 +78,11 @@ class MainWorker(QObject):
         :param filename: the filename of the tree
         :param tree: the Tree to write
         """
-        # todo error handling
-        # todo add to collection if tree does not exist yet
-        # todo fix merge issues with write_tree method later
-        try:
-            self.collection.write_tree(tree, self.collection.jsons_path() / category / filename)
+        success = self.collection.write_tree(tree, self.collection.jsons_path() / category / filename)
+        if success:
             self.write_tree_finished_signal.emit(category, filename, tree, True)
-        except:
-            # todo catch more specific exceptions
+        else:
+            # todo return more specific errors
             self.write_tree_finished_signal.emit(category, filename, tree, False)
 
     @pyqtSlot(Path, Tree)
@@ -97,12 +94,11 @@ class MainWorker(QObject):
         :param path: the path to write the tree to
         :param tree: the Tree to write
         """
-        # todo error handling
-        try:
-            self.collection.write_tree(tree, path)
+        success = self.collection.write_tree(tree, path)
+        if success:
             self.write_tree_custom_path_finished_signal.emit(path, tree, True)
-        except:
-            # todo catch more specific exceptions
+        else:
+            # todo return more specific errors
             self.write_tree_custom_path_finished_signal.emit(path, tree, False)
 
     @pyqtSlot()
