@@ -753,8 +753,15 @@ class Collection:
                 if self.collection[category][tree].root == node:
                     return category
 
-    def write_tree(self, tree: Tree, path: Path) -> bool:
-        if self.verify_tree(tree):
+    def write_tree(self, tree: Tree, path: Path, verify=False) -> bool:
+        if verify:
+            # verify the entire tree
+            verified = self.verify_tree(tree)
+        else:
+            # only check mathematical properties
+            # TODO only check mathematical properties
+            verified = True
+        if verified:
             try:
                 write_json(path, Tree.create_json(tree))
                 return True

@@ -383,6 +383,7 @@ class TreeScene(QGraphicsScene):
         sorted_children = parent_node.sort_children()
         # set correct child order
         parent_node.model_node.children = [c.id for c in sorted_children]
+        self.gui.tree.nodes[parent_node.model_node.id].children = [c.id for c in sorted_children]
         self.removeItem(self.connecting_line)
         # reset back to normal cursor
         self.app.restoreOverrideCursor()

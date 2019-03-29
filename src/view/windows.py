@@ -11,6 +11,7 @@ from PyQt5.QtWidgets import QAction, QMainWindow, QFileDialog, QMessageBox, QInp
 from controller.utils import singularize, capitalize
 from model.config import Settings
 from model.tree import Tree, Collection, NodeTypes
+from view.enums import DialogEnum
 from view.listeners import MainListener
 
 import view.widgets
@@ -109,7 +110,7 @@ class MainWindow(QMainWindow):
         """
         # ask if there are changes that need to be saved
         save = self.check_unsaved_changes()
-        if not save:
+        if save is DialogEnum.Cancel:
             return
         if self.app.wait_for_click_filter:
             self.app.wait_for_click_filter.reset_event_filter()
@@ -143,21 +144,28 @@ class MainWindow(QMainWindow):
         # set the window title to also show the path of the tree
         self.setWindowTitle(self.def_window_title + ' - ' + self.category + '/' + self.filename)
 
-    def check_unsaved_changes(self) -> bool:
+    def check_unsaved_changes(self) -> DialogEnum:
         """
         Method that checks for unsaved changes asks for yes, no, cacnel
         :return bool: true if yes or no, false if cancel clicked or true if no unsaved changes
         """
-        if self.load_tree != self.tree:
-            save = Dialogs.yes_no_cancel_message_box('Unsaved changes',
-                                                     'There are some unsaved changes, do you want to save them?')
-            if save is 2:
-                self.main_listener.write_tree_signal.emit(self.category, self.filename, self.tree)
-                return True
-            elif save is 1:
-                return True
-            return False
-        return True
+        if not self.load_tree:
+            return DialogEnum.No
+        elif self.load_tree != self.tree:
+            verified = self.load_collection.verify_tree(self.tree, self.category)
+            if verified:
+                save = Dialogs.yes_no_cancel_message_box('Unsaved changes',
+                                                         'There are some unsaved changes, do you want to save them?')
+
+            else:
+                save = Dialogs.yes_no_cancel_message_box('Unsaved changes',
+                                                         'The tree currently is invalid and cannot be used '
+                                                         'by the simulator. Do you want to save them?')
+            if save is DialogEnum.Yes:
+                if verified:
+                    self.main_listener.write_tree_signal.emit(self.category, self.filename, self.tree)
+            return save
+        return DialogEnum.No
 
     def closeEvent(self, event):
         """
@@ -166,11 +174,18 @@ class MainWindow(QMainWindow):
         :param event: the event
         """
         save = self.check_unsaved_changes()
-        if save:
+        if save is DialogEnum.Cancel:
+            event.ignore()
+            return
+        elif save is DialogEnum.No:
+            event.accept()
+            return
+        elif save is DialogEnum.Yes:
             # todo fix this ugly quick fix
-            verified = self.load_collection.verify_tree(self.tree)
+            verified = self.load_collection.verify_tree(self.tree, self.category)
             if verified:
                 event.accept()
+                return
         event.ignore()
 
 
@@ -384,21 +399,21 @@ class Dialogs:
         QMessageBox.question(None, title, text, QMessageBox.Ok, QMessageBox.Ok)
 
     @staticmethod
-    def yes_no_cancel_message_box(title: str, text: str) -> int:
+    def yes_no_cancel_message_box(title: str, text: str) -> DialogEnum:
         """
         Displays a message box with a title and message with yes no and cancel buttons
         :param title: the title in the top bar
         :param text: the text in the message box
-        :return int containing the value
+        :return dialogenum: containing the return type of the dialog
         """
         clicked = QMessageBox.question(None, title, text, QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel,
                                        QMessageBox.Yes)
         if clicked == QMessageBox.Cancel:
-            return 0
+            return DialogEnum.Cancel
         elif clicked == QMessageBox.No:
-            return 1
+            return DialogEnum.No
         else:
-            return 2
+            return DialogEnum.Yes
 
     @staticmethod
     def yes_no_message_box(title: str, text: str) -> bool:
