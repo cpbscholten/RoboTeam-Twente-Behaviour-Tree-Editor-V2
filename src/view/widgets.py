@@ -379,9 +379,10 @@ class TreeViewPropertyDisplay(QWidget):
                     pass
         root_window = self.scene.gui
         node_to_update = root_window.tree.nodes[self.node_id]
-        node_to_update.attributes["properties"] = {}
-        for property in properties:
-            node_to_update.add_property(property[0], property[1])
+        if len(properties) > 0:
+            node_to_update.attributes["properties"] = {}
+            for property in properties:
+                node_to_update.add_property(property[0], property[1])
 
     def remove_rows(self):
         """

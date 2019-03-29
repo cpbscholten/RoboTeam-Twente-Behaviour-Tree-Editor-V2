@@ -341,6 +341,9 @@ class Tree:
         file = {"name": self.name, "data": {"trees": [tree]}}
         return file
 
+    def __str__(self) -> str:
+        return "{{root: {}, name: {}, nodes: {}}}".format(self.root, self.name, self.nodes)
+
     def __eq__(self, other):
         return (isinstance(other, self.__class__)
                 and self.__dict__ == other.__dict__)
