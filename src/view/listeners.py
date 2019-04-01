@@ -82,24 +82,24 @@ class MainListener(QObject):
         self.gui.load_collection = collection
         self.gui.menubar.build_menu_bar(collection)
 
-    @pyqtSlot(bool)
-    def write_collection_finished(self, success: bool):
+    @pyqtSlot(list)
+    def write_collection_finished(self, errors: List[str]):
         """
         Method that handles the result of writing a collection from the controller
         if it succeeded, update the collection again
         if it failed show an error message
-        :param success: if writing succeeded or not
+        :param errors: a list with errors
         """
         # update the collection
-        if success:
+        if len(errors) == 0:
             view.windows.Dialogs.message_box("Success", 'Tree written successfully!')
             self.open_collection_signal.emit()
         else:
-            view.windows.Dialogs.error_box("ERROR", 'There were errors while writing the collection, '
-                                                    'for more details read the logs!')
+            # show errors
+            view.windows.Dialogs.error_box("ERROR", 'There were errors while writing the collection!')
 
-    @pyqtSlot(str, str, Tree, bool)
-    def write_tree_finished(self, category: str, filename: str, tree: Tree, success: bool):
+    @pyqtSlot(str, str, Tree, list)
+    def write_tree_finished(self, category: str, filename: str, tree: Tree, errors: List[str]):
         """
         Method that handles the result of writing a tree from the controller
         if it succeeded, update the collection again
@@ -107,35 +107,35 @@ class MainListener(QObject):
         :param category: the category writing to
         :param filename: the filename writing
         :param tree: tree we were trying to write
-        :param success: if writing succeeded or not
+        :param errors: a list with errors
         """
         # update the collection
-        if success:
+        if len(errors) == 0:
             view.windows.Dialogs.message_box("Success", 'Tree written successfully!')
             self.open_collection_signal.emit()
         else:
             # show the failed tree on the screen
+            # todo show errors
             self.gui.show_tree(category, filename, tree)
-            view.windows.Dialogs.error_box("ERROR", 'There were errors while writing the tree, '
-                                                    'for more details read the logs!')
+            view.windows.Dialogs.error_box("ERROR", 'There were errors while writing the tree', errors)
 
-    @pyqtSlot(Path, Tree, bool)
-    def write_tree_custom_path_finished(self, path: Path, tree: Tree, success: bool):
+    @pyqtSlot(Path, Tree, list)
+    def write_tree_custom_path_finished(self, path: Path, tree: Tree, errors: List[str]):
         """
         Method that handles the result of writing a tree from the controller
         if it succeeded, update the collection again
         if it failed show an error message
         :param path: the path written to
         :param tree: the tree we were trying to write
-        :param success: if writing succeeded or not
+        :param errors: a list with errors
         """
         # update the collection
-        if success:
+        if len(errors) == 0:
             view.windows.Dialogs.message_box("Success", 'Tree written successfully!')
             self.open_collection_signal.emit()
         else:
-            view.windows.Dialogs.error_box("ERROR", 'There were errors while writing the tree to ' + str(path) + ','
-                                                    ' for more details read the logs!')
+            view.windows.Dialogs.error_box("ERROR", 'There were errors while writing the tree to ' + str(path)
+                                           + '!', errors)
 
     @pyqtSlot(dict)
     def open_node_types_finished(self, node_types: NodeTypes):

@@ -441,7 +441,7 @@ class TestCollection(object):
             for file in collection.collection[category]:
                 # TODO: Remove this if else after we figure out what to do with 2 children under decorator
                 if not (file == "GetBallTestTactic.json" or file == "GetBallTestStrategy.json"):
-                    assert collection.verify_tree(collection.collection[category][file], category)
+                    assert 0 is len(collection.verify_tree(collection.collection[category][file], category))
 
     def test_write_tree(self, tmpdir):
         # TODO add case when not valid
@@ -490,49 +490,49 @@ class TestVerification(object):
     def test_simple_tree_with_cycle(self):
         collection = Collection(self.collection)
         tree = self.simple_cyclic_tree
-        assert not collection.verify_tree(tree)
+        assert 0 is not len(collection.verify_tree(tree))
 
     def test_simple_valid_tree(self):
         collection = Collection(self.collection)
         tree = self.simple_non_cyclic_tree
-        assert collection.verify_tree(tree)
+        assert 0 is len(collection.verify_tree(tree))
 
     def test_simple_unconnected_tree(self):
         collection = Collection(self.collection)
         tree = self.simple_unconnected_tree
-        assert not collection.verify_tree(tree)
+        assert 0 is not len(collection.verify_tree(tree))
 
     def test_invalid_role_inheritance_tree_1(self):
         collection = Collection(self.collection)
         tree = self.simple_invalid_role_inheritance_tree_1
-        assert not collection.verify_tree(tree)
+        assert 0 is not len(collection.verify_tree(tree))
 
     def test_invalid_role_inheritance_tree_2(self):
         collection = Collection(self.collection)
         tree = self.simple_invalid_role_inheritance_tree_2
-        assert not collection.verify_tree(tree)
+        assert 0 is not len(collection.verify_tree(tree))
 
     def test_invalid_composites_tree(self):
         collection = Collection(self.collection)
         tree = self.simple_invalid_composites_tree
-        assert not collection.verify_tree(tree, "roles")
+        assert 0 is not len(collection.verify_tree(tree, "roles"))
 
     def test_invalid_decorator_tree(self):
         collection = Collection(self.collection)
         tree = self.simple_invalid_decorator_tree
-        assert not collection.verify_tree(tree, "roles")
+        assert 0 is not len(collection.verify_tree(tree, "roles"))
 
     def test_complex_tree(self):
         collection = Collection(self.collection)
         tree = self.complex_tree
         result = collection.get_category_from_node(tree.root)
         assert "tactics" == result
-        assert collection.verify_tree(tree, "tactics")
+        assert 0 is len(collection.verify_tree(tree, "tactics"))
 
     def test_offensive_strategy(self):
         collection = Collection(self.collection)
         tree = self.offensive_strategy_tree
-        assert collection.verify_tree(tree, "strategies")
+        assert 0 is len(collection.verify_tree(tree, "strategies"))
 
 
 class TestNodeTypes:

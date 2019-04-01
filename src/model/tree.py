@@ -415,7 +415,7 @@ class Collection:
                                 if not verify:
                                     collection[directory][file] = tree
                                     continue
-                                elif self.verify_tree(tree):
+                                elif len(self.verify_tree(tree)) == 0:
                                     collection[directory][file] = tree
                                 else:
                                     # todo fix coverage
@@ -435,11 +435,13 @@ class Collection:
             break
         self.collection = collection
 
-    def write_collection(self, path: Path=None) -> bool:
+    def write_collection(self, path: Path=None) -> List[str]:
         """
         Writes the collection in memory to the given directory
         :param path: the location to write to
+        :returns errors, a list with errors that occurred during verification
         """
+        errors = []
         # set the path to the path specified in settings if None
         if path is None and self.path is None:
             path = Settings.default_json_folder()
@@ -447,7 +449,6 @@ class Collection:
             path = self.path
         # make a copy of the current collection
         collection = dict(self.collection)
-        success = True
         # read each nested dictionary and write each file in that directory
         for directory, files in collection.items():
             # create directories if it does not exist
@@ -456,8 +457,8 @@ class Collection:
                 os.makedirs(str(write_path))
             for filename, content in files.items():
                 # write collection
-                success &= self.write_tree(content, write_path / filename)
-        return success
+                errors.extend(self.write_tree(content, write_path / filename))
+        return errors
 
     def add_tree(self, directory: str, name: str, tree: Tree):
         """
@@ -509,7 +510,7 @@ class Collection:
     # TODO: Check if root node is actually in the tree (also do this in verification)
     # TODO: Return a list of problems instead of just False
     # TODO: Check if only leaf nodes can only be subtrees
-    def verify_tree(self, tree, category=None, only_check_mathematical_properties=False) -> bool:
+    def verify_tree(self, tree, category=None, only_check_mathematical_properties=False) -> List[str]:
         """
         Function to verify if a tree is valid according to the definition of a tree. So being acyclic and having no
         unconnected nodes in short. But also according to the definition of a behaviour tree and
@@ -522,22 +523,25 @@ class Collection:
         some properties.
         :param only_check_mathematical_properties: Boolean value if we only want to check the mathematical properties
         of the tree
-        :return: True if the tree is verified
+        :return: A list with errors, it the list is empty, no errors were found
         """
         root = tree.root
+        errors = []
 
         # Check for cycles
         visited_nodes = {}
         try:
             self.contains_cycles(tree, visited_nodes)
         except CycleInTreeException:
-            return False
+            errors.append("The tree contains a cycle and is invalid.")
+            # return immediately as further verification will fail
+            return errors
 
         # Check for unconnected nodes (and if there's only one root)
         try:
             self.has_unconnected_nodes(visited_nodes, tree.nodes, tree)
         except UnconnectedNodeException:
-            return False
+            errors.append("The tree contains unconnected nodes and is invalid.")
 
         if not only_check_mathematical_properties:
             # Is a category given? If so, check the tree structure
@@ -550,9 +554,11 @@ class Collection:
                         found = True
                         break
                 if not found:
-                    self.logger.error("Error in structure of tree {}, root node was supposed to be a {} but was a {}"
-                                      .format(tree.name, category, self.get_category_from_node(tree.root)))
-                    return False
+                    error = "Error in structure of tree {}, root node was supposed to be a {} but was a {}"\
+                        .format(tree.name, category, self.get_category_from_node(tree.root))
+                    self.logger.error(error)
+                    errors.append(error)
+                    return errors
 
                 # Walk the tree different ways depending on the category
                 passed_nodes = [False]*3
@@ -564,53 +570,47 @@ class Collection:
                     passed_nodes = [True, True, False]
 
                 # Check validity by walking the tree and verifying properties defined by behaviour trees and RoboTeam
-                valid = self.check_category_structure(tree, tree.root, passed_nodes, first_step=True)
+                errors.extend(self.check_category_structure(tree, tree.root, passed_nodes, first_step=True))
 
-                if not valid:
-                    self.logger.error("Error in structure of tree {}, one or more of the paths to the leaf "
-                                      "nodes does not follow Strategy -> Tactic -> Role".format(tree.name))
-                    return False
+            errors.extend(self.check_composites_and_decorators(tree, tree.root))
+            errors.extend(self.check_role_inheritance(tree, tree.root))
 
-            if not self.check_composites_and_decorators(tree, tree.root):
-                return False
+        return errors
 
-            if not self.check_role_inheritance(tree, tree.root):
-                return False
-
-        # If the above checks don't raise an exception or return False, the tree is valid.
-        return True
-
-    def check_role_inheritance(self, tree, current_node: str, current_role=None) -> bool:
+    def check_role_inheritance(self, tree, current_node: str, current_role=None) -> List[str]:
+        errors = []
         children = tree.nodes[current_node].children
         current_node_properties = tree.nodes[current_node].properties()
         if current_node_properties is None:
             if current_role is not None:
-                self.logger.error("Error in structure of tree {}, node {} has no properties, but should inherit the"
-                                  "{} ROLE property from parent".format(tree.name, current_node, current_role))
-                return False
+                error = "Error in structure of tree {}, node {} has no properties, but should inherit the " \
+                        "{} ROLE property from parent".format(tree.name, current_node, current_role)
+                self.logger.error(error)
+                errors.append(error)
         elif "ROLE" in current_node_properties.keys():
             if current_role is None:
                 current_role = current_node_properties["ROLE"]
             else:
                 if not current_role == current_node_properties["ROLE"]:
-                    self.logger.error("Error in structure of tree {}, node {} has ROLE property {}, but should inherit"
-                                      "{} from parent".format(tree.name, current_node, current_node_properties["ROLE"], current_role))
-                    return False
+                    error = "Error in structure of tree {}, node {} has ROLE property {}, but should inherit" \
+                            "{} from parent".format(tree.name, current_node,
+                                                    current_node_properties["ROLE"], current_role)
+                    self.logger.error(error)
+                    errors.append(error)
 
         # Walk the children of the current node
         for child in children:
-            walk_result = self.check_role_inheritance(tree, child, current_role)
-            if walk_result is False:
-                return False
+            errors.extend(self.check_role_inheritance(tree, child, current_role))
 
-        # Return true if all is good
-        return True
+        return errors
 
-    def check_composites_and_decorators(self, tree: Tree, current_node: str) -> bool:
+    def check_composites_and_decorators(self, tree: Tree, current_node: str) -> List[str]:
         node_types = NodeTypes.from_csv()
         current_node_types = node_types.get_node_type_by_name(tree.nodes[current_node].title)
         children = tree.nodes[current_node].children
         current_node_type_is_sequence = False
+
+        errors = []
 
         for current_node_type in current_node_types:
             current_type = current_node_type[0]
@@ -619,16 +619,18 @@ class Collection:
             # Decorators should have only one child
             if current_type == "decorators":
                 if len(children) != 1:
-                    self.logger.error("Error in structure of tree {}, node {} is a decorator which should have 1 child,"
-                                      " but it has {} children".format(tree.name, current_node, len(children)))
-                    return False
+                    error = "Error in structure of tree {}, node {} is a decorator which should have 1 child," \
+                            " but it has {} children".format(tree.name, current_node, len(children))
+                    self.logger.error(error)
+                    errors.append(error)
 
             # Composites should have one or more children
             if current_type == "composites":
                 if len(children) < 1:
-                    self.logger.error("Error in structure of tree {}, node {} is a compositor and should have more "
-                                      "than 1 child, but it has 0".format(tree.name, current_node))
-                    return False
+                    error = "Error in structure of tree {}, node {} is a compositor and should have more " \
+                            "than 1 child, but it has 0".format(tree.name, current_node)
+                    self.logger.error(error)
+                    errors.append(error)
                 if "Sequence" in current_type_name:
                     current_node_type_is_sequence = True
 
@@ -642,28 +644,26 @@ class Collection:
                     # If the child of a sequence is a condition, then we don't walk it
                     pass
                 else:
-                    # Else walk normally
-                    walk_result = self.check_composites_and_decorators(tree, child)
-                    if walk_result is False:
-                        return False
+                    # Else walk normally recursively
+                    errors.extend(self.check_composites_and_decorators(tree, child))
             else:
-                walk_result = self.check_composites_and_decorators(tree, child)
-                if walk_result is False:
-                    return False
+                errors.extend(self.check_composites_and_decorators(tree, child))
 
-        # Return true if all is good
-        return True
+        return errors
 
-    def check_category_structure(self, tree: Tree, current_node: str, passed_nodes: [bool], first_step: bool=False) -> bool:
+    def check_category_structure(self, tree: Tree, current_node: str, passed_nodes: [bool], first_step: bool=False) \
+            -> List[str]:
         """
         Helper function to check if the tree has a Strategy -> Tactic -> Role structure, which is defined as a structure
         by the RoboTeam.
-        :return: True if the structure is correct
+        :return: a list with errors
         """
         node_types = NodeTypes.from_csv()
         current_node_types = node_types.get_node_type_by_name(tree.nodes[current_node].title)
         children = tree.nodes[current_node].children
         current_node_type_is_sequence = False
+
+        errors = []
 
         for current_node_type in current_node_types:
             current_type = current_node_type[0]
@@ -678,11 +678,11 @@ class Collection:
             if "name" not in tree.nodes[current_node].attributes:
                 valid_walk = passed_nodes == [True] * 3
                 if valid_walk is False:
-                    self.logger.error(
-                        "Error in structure of tree {}, the path to leaf node {} does not follow the "
-                        "Strategy -> Tactic -> Role pattern".format(tree.name, current_node))
-                    return False
-                return True
+                    error = "Error in structure of tree {}, the path to leaf node {} does not follow the " \
+                            "Strategy -> Tactic -> Role pattern".format(tree.name, current_node)
+                    self.logger.error(error)
+                    errors.append(error)
+                return errors
             else:
                 current_node_name = tree.nodes[current_node].attributes["name"]
                 # If the name of the leaf does not match the current tree (to prevent cycles)
@@ -695,25 +695,31 @@ class Collection:
             if passed_nodes[0] is False:
                 passed_nodes[0] = True
             else:
-                self.logger.error("Error in structure of tree {}, the path to node {} encountered "
-                                  "strategies twice".format(tree.name, current_node))
-                raise IncorrectTreeStructureException
+                error = "Error in structure of tree {}, the path to node {} encountered " \
+                        "strategies twice".format(tree.name, current_node)
+                self.logger.error(error)
+                errors.append(error)
+                raise errors
         elif current_node_category == "tactics":
             # We check if it's still false, because we can't pass the same node type twice.
             if passed_nodes[1] is False:
                 passed_nodes[1] = True
             else:
-                self.logger.error("Error in structure of tree {}, the path to node {} "
-                                  "encountered tactics twice".format(tree.name, current_node))
-                raise IncorrectTreeStructureException
+                error = "Error in structure of tree {}, the path to node {} " \
+                        "encountered tactics twice".format(tree.name, current_node)
+                self.logger.error(error)
+                errors.append(error)
+                raise errors
         elif current_node_category == "roles" or tree.nodes[current_node].title == "Role":
             # We check if it's still false, because we can't pass the same node type twice.
             if passed_nodes[2] is False:
                 passed_nodes[2] = True
             else:
-                self.logger.error("Error in structure of tree {}, the path to node {} "
-                                  "encountered roles twice".format(tree.name, current_node))
-                raise IncorrectTreeStructureException
+                error = "Error in structure of tree {}, the path to node {} " \
+                        "encountered roles twice".format(tree.name, current_node)
+                self.logger.error(error)
+                errors.append(error)
+                return errors
         # Check for Keeper property here, since this kind of can replace Role apparently.
         elif tree.nodes[current_node].properties() is not None \
                 and "ROLE" in tree.nodes[current_node].properties().keys() \
@@ -728,25 +734,11 @@ class Collection:
                 # TODO: Are we sure the first entry in the list is always a condition?
                 if len(child_node_type) > 0 and child_node_type[0][0] == "conditions":
                     # If the child of a sequence is a condition, then we don't walk it
-                    pass
-                else:
-                    # Else walk normally
-                    try:
-                        walk_result = self.check_category_structure(tree, child, passed_nodes.copy())
-                        if walk_result is False:
-                            return False
-                    except IncorrectTreeStructureException:
-                        return False
-            else:
-                try:
-                    walk_result = self.check_category_structure(tree, child, passed_nodes.copy())
-                    if walk_result is False:
-                        return False
-                except IncorrectTreeStructureException:
-                    return False
+                    continue
+            errors.extend(self.check_category_structure(tree, child, passed_nodes.copy()))
 
-        # Return true if all is good
-        return True
+        # Return a list with errors
+        return errors
 
     def contains_cycles(self, tree: Tree, visited_nodes):
         """
@@ -796,117 +788,6 @@ class Collection:
             raise UnconnectedNodeException
         return True
 
-    # def walk_tree(self, tree: Tree, current_node: str, passed_nodes: [bool], first_step: bool=False) -> bool:
-    #     """
-    #     Helper function to walk through a tree, verifying its structure (Strategy -> Tactic -> Role)
-    #     :param tree: The tree to walk.
-    #     :param current_node: The current node we're checking.
-    #     :param passed_nodes: An array of passed nodes, the positions of the array are strategy, tactics and role
-    #     respectively. If the tree has them all on True that means all node types were passed while walking to the
-    #     current position.
-    #     :param first_step: Used to indicate if this is the first call, this allows trees with no children to be
-    #     validated.
-    #     :return: True if all paths to all leaves encounter all necessary node types.
-    #     """
-    #     node_types = NodeTypes.from_csv()
-    #     current_node_types = node_types.get_node_type_by_name(tree.nodes[current_node].title)
-    #     children = tree.nodes[current_node].children
-    #     current_node_type_is_sequence = False
-    #
-    #     for current_node_type in current_node_types:
-    #         # Decorators should have one child
-    #         current_type = current_node_type[0]
-    #         # Composites only have one entry in their list, so we're allowed to do this
-    #         current_type_name = current_node_type[1][0]
-    #         if current_type == "decorators":
-    #             if len(children) != 1:
-    #                 self.logger.error("Error in structure of tree {}, node {} is a decorator which should have 1 child,"
-    #                                   " but it has {} children".format(tree.name, current_node, len(children)))
-    #                 return False
-    #
-    #         # Composites should have one or more children
-    #         if current_type == "composites":
-    #             if len(children) < 1:
-    #                 self.logger.error("Error in structure of tree {}, node {} is a compositor and should have more "
-    #                                   "than 1 child, but it has 0".format(tree.name, current_node))
-    #                 return False
-    #             if "Sequence" in current_type_name:
-    #                 current_node_type_is_sequence = True
-    #
-    #     # If we're at a leaf node (and not the root node) check if all node types have been passed
-    #     if len(children) == 0 and not first_step:
-    #         if "name" not in tree.nodes[current_node].attributes:
-    #             valid_walk = passed_nodes == [True]*3
-    #             if valid_walk is False:
-    #                 self.logger.error(
-    #                     "Error in structure of tree {}, the path to leaf node {} does not follow the "
-    #                     "Strategy -> Tactic -> Role pattern".format(tree.name, current_node))
-    #                 return False
-    #             return True
-    #         else:
-    #             current_node_name = tree.nodes[current_node].attributes["name"]
-    #             # If the name of the leaf does not match the current tree (to prevent cycles)
-    #             if tree.name != tree.nodes[current_node].title:
-    #                 tree = self.get_tree_by_name(current_node_name)
-    #                 current_node = tree.root
-    #     current_node_category = self.get_category_from_node(current_node)
-    #     if current_node_category == "strategies":
-    #         # We check if it's still false, because we can't pass the same node type twice.
-    #         if passed_nodes[0] is False:
-    #             passed_nodes[0] = True
-    #         else:
-    #             self.logger.error("Error in structure of tree {}, the path to node {} encountered "
-    #                               "strategies twice".format(tree.name, current_node))
-    #             raise IncorrectTreeStructureException
-    #     elif current_node_category == "tactics":
-    #         # We check if it's still false, because we can't pass the same node type twice.
-    #         if passed_nodes[1] is False:
-    #             passed_nodes[1] = True
-    #         else:
-    #             self.logger.error("Error in structure of tree {}, the path to node {} "
-    #                               "encountered tactics twice".format(tree.name, current_node))
-    #             raise IncorrectTreeStructureException
-    #     elif current_node_category == "roles" or tree.nodes[current_node].title == "Role":
-    #         # We check if it's still false, because we can't pass the same node type twice.
-    #         if passed_nodes[2] is False:
-    #             passed_nodes[2] = True
-    #         else:
-    #             self.logger.error("Error in structure of tree {}, the path to node {} "
-    #                               "encountered roles twice".format(tree.name, current_node))
-    #             raise IncorrectTreeStructureException
-    #     # Check for Keeper property here, since this kind of can replace Role apparently.
-    #     elif tree.nodes[current_node].properties() is not None \
-    #             and tree.nodes[current_node].properties()["ROLE"] == "Keeper":
-    #         passed_nodes[2] = True
-    #
-    #     # Walk the children of the current node
-    #     for child in tree.nodes[current_node].children:
-    #         # If the current node is a sequence, we must only walk nodes that are not conditions
-    #         if current_node_type_is_sequence:
-    #             child_node_type = node_types.get_node_type_by_name(tree.nodes[child].title)
-    #             # TODO: Are we sure the first entry in the list is always a condition?
-    #             if len(child_node_type) > 0 and child_node_type[0][0] == "conditions":
-    #                 # If the child of a sequence is a condition, then we don't walk it
-    #                 pass
-    #             else:
-    #                 # Else walk normally
-    #                 try:
-    #                     walk_result = self.walk_tree(tree, child, passed_nodes.copy())
-    #                     if walk_result is False:
-    #                         return False
-    #                 except IncorrectTreeStructureException:
-    #                     return False
-    #         else:
-    #             try:
-    #                 walk_result = self.walk_tree(tree, child, passed_nodes.copy())
-    #                 if walk_result is False:
-    #                     return False
-    #             except IncorrectTreeStructureException:
-    #                 return False
-    #
-    #     # Return true if all is good
-    #     return True
-
     def get_root_nodes_by_category(self, category: str) -> List[Tuple[str, str]]:
         """
         Gets all the rood nodes from a specific category (Like 'strategies')
@@ -932,23 +813,27 @@ class Collection:
                 if self.collection[category][tree].root == node:
                     return category
 
-    def write_tree(self, tree: Tree, path: Path, verify=False) -> bool:
+    def write_tree(self, tree: Tree, path: Path, verify=False) -> List[str]:
         """
         Method that writes a tree to a file
         :param tree: the tree to write
         :param path: the path to write to
         :param verify: verify mathematical properties (False) or full verification (True)
-        :return: True when writing was successfully, false when verification failed or an exception occurred
+        :return: a list with errors during writing of verification
         """
-        if self.verify_tree(tree, only_check_mathematical_properties=verify):
+        errors = self.verify_tree(tree, only_check_mathematical_properties=verify)
+        if len(errors) == 0:
             try:
                 write_json(path, Tree.create_json(tree))
-                return True
             except Exception:
-                Tree.logger.error('An exception occurred when writing tree {}.'.format(tree.name))
-                return False
-        Tree.logger.error('Tree {} is invalid and can not be written'.format(tree.name))
-        return False
+                error = 'An exception occurred when writing tree {}.'.format(tree.name)
+                Tree.logger.error(error)
+                errors.extend(error)
+        else:
+            error = 'Tree {} could not be written as there were errors during verification'.format(tree.name)
+            Tree.logger.error(error)
+            errors.append(error)
+        return errors
 
     def categories_and_filenames(self) -> Dict[str, List[str]]:
         """

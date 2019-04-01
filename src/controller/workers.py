@@ -19,12 +19,12 @@ class MainWorker(QObject):
     # returns category filename and the tree object
     open_tree_from_collection_finished_signal = pyqtSignal(str, str, Tree)
     # signal when writing collection is finished
-    # return if writing succeeded or not TODO add details if there were errors?
-    write_collection_finished_signal = pyqtSignal(bool)
+    # return a list of errors
+    write_collection_finished_signal = pyqtSignal(list)
     # write tree finished
-    # return tree and if writing succeeded or not TODO add details if there were errors?
-    write_tree_finished_signal = pyqtSignal(str, str, Tree, bool)
-    write_tree_custom_path_finished_signal = pyqtSignal(Path, Tree, bool)
+    # return tree and a list with possible errors
+    write_tree_finished_signal = pyqtSignal(str, str, Tree, list)
+    write_tree_custom_path_finished_signal = pyqtSignal(Path, Tree, list)
     # signal when opening node_types is finished
     # returns the node types dictionary with list of lists for each type
     open_node_types_finished_signal = pyqtSignal(NodeTypes)
@@ -61,12 +61,8 @@ class MainWorker(QObject):
         :param path: the path to write to, None if writing to path in collection or Settings
         """
         self.collection = collection
-        success = self.collection.write_collection(path)
-        if success:
-            self.write_collection_finished_signal.emit(True)
-        else:
-            # todo return more specific errors
-            self.write_collection_finished_signal.emit(False)
+        errors = self.collection.write_collection(path)
+        self.write_collection_finished_signal.emit(errors)
 
     @pyqtSlot(str, str, Tree)
     def write_tree(self, category: str, filename: str, tree: Tree):
@@ -78,12 +74,8 @@ class MainWorker(QObject):
         :param filename: the filename of the tree
         :param tree: the Tree to write
         """
-        success = self.collection.write_tree(tree, self.collection.jsons_path() / category / filename)
-        if success:
-            self.write_tree_finished_signal.emit(category, filename, tree, True)
-        else:
-            # todo return more specific errors
-            self.write_tree_finished_signal.emit(category, filename, tree, False)
+        errors = self.collection.write_tree(tree, self.collection.jsons_path() / category / filename)
+        self.write_tree_finished_signal.emit(category, filename, tree, errors)
 
     @pyqtSlot(Path, Tree)
     def write_tree_custom_path(self, path: Path, tree: Tree):
@@ -94,12 +86,8 @@ class MainWorker(QObject):
         :param path: the path to write the tree to
         :param tree: the Tree to write
         """
-        success = self.collection.write_tree(tree, path)
-        if success:
-            self.write_tree_custom_path_finished_signal.emit(path, tree, True)
-        else:
-            # todo return more specific errors
-            self.write_tree_custom_path_finished_signal.emit(path, tree, False)
+        errors = self.collection.write_tree(tree, path)
+        self.write_tree_custom_path_finished_signal.emit(path, tree, errors)
 
     @pyqtSlot()
     def open_node_types(self):

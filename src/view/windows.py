@@ -2,7 +2,7 @@ import re
 from copy import deepcopy
 from functools import partial
 from pathlib import Path
-from typing import Union
+from typing import Union, List
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QAction, QMainWindow, QFileDialog, QMessageBox, QInputDialog, QLineEdit, QWidget, \
@@ -152,8 +152,8 @@ class MainWindow(QMainWindow):
         if not self.load_tree:
             return DialogEnum.No
         elif self.load_tree != self.tree:
-            verified = self.load_collection.verify_tree(self.tree, self.category)
-            if verified:
+            errors = self.load_collection.verify_tree(self.tree, self.category)
+            if len(errors) == 0:
                 save = Dialogs.yes_no_cancel_message_box('Unsaved changes',
                                                          'There are some unsaved changes, do you want to save them?')
 
@@ -162,7 +162,7 @@ class MainWindow(QMainWindow):
                                                          'The tree currently is invalid and cannot be used '
                                                          'by the simulator. Do you want to save them?')
             if save is DialogEnum.Yes:
-                if verified:
+                if len(errors) == 0:
                     self.main_listener.write_tree_signal.emit(self.category, self.filename, self.tree)
             return save
         return DialogEnum.No
@@ -182,8 +182,8 @@ class MainWindow(QMainWindow):
             return
         elif save is DialogEnum.Yes:
             # todo fix this ugly quick fix
-            verified = self.load_collection.verify_tree(self.tree, self.category)
-            if verified:
+            errors = self.load_collection.verify_tree(self.tree, self.category)
+            if len(errors) == 0:
                 event.accept()
                 return
         event.ignore()
@@ -427,13 +427,23 @@ class Dialogs:
         return True if clicked == QMessageBox.Yes else False
 
     @staticmethod
-    def error_box(title: str, text: str):
+    def error_box(title: str, text: str, detailed_text: List[str] = None):
         """
         Displays an error box with a title and message and only an ok button
         :param title: title in top bar
         :param text: text in the error box
+        :param detailed_text: detailed list of errors
         """
-        QMessageBox.critical(None, title, text, QMessageBox.Ok, QMessageBox.Ok)
+        if detailed_text is None:
+            QMessageBox.critical(None, title, text, QMessageBox.Ok, QMessageBox.Ok)
+        else:
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Critical)
+            msg.setText(text)
+            msg.setWindowTitle(title)
+            msg.setDetailedText('\n'.join(detailed_text))
+            msg.setStandardButtons(QMessageBox.Ok)
+            msg.exec()
 
     @staticmethod
     def open_folder_dialog(title: str, start_path: Path) -> Union[Path, None]:

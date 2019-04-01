@@ -283,14 +283,14 @@ class ToolbarWidget(QWidget):
         collection = self.gui.load_collection
         tree = self.gui.tree
         category = self.gui.category
-        # TODO more detailed info when failing and auto checking
         # TODO add checkmark
-        verified = collection.verify_tree(tree, category)
-        if verified:
+        errors = collection.verify_tree(tree, category)
+        if len(errors) == 0:
             view.windows.Dialogs.message_box("Success", "The Tree has been verified successfully. "
                                              "No errors have been found.")
         else:
-            view.windows.Dialogs.error_box("Error", "Error! Tree is not valid!")
+            view.windows.Dialogs.error_box("Error", "There were errors while verifying the tree, "
+                                                    "click more details for more info.", errors)
 
 
 class TreeViewPropertyDisplay(QWidget):
