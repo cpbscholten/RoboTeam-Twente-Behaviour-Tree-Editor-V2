@@ -383,11 +383,26 @@ class TreeViewPropertyDisplay(QWidget):
             node_to_update.attributes["properties"] = {}
             for property in properties:
                 node_to_update.add_property(property[0], property[1])
+                # If we have a ROLE property, propagate that to its children
+                if property[0] == "ROLE":
+                    self.propagate_role(self.node_id, property[1])
+
+    def propagate_role(self, current_node_id: str, to_propagate: str):
+        """
+        Function to recursively go through children to propagate ROLE property.
+        :param current_node_id: id of the current node.
+        :param to_propagate: the value of the ROLE property to propagate
+        """
+        root_window = self.scene.gui
+        children = root_window.tree.nodes[current_node_id].children
+        for child in children:
+            current_child = root_window.tree.nodes[child]
+            current_child.add_property("ROLE", to_propagate)
+            self.propagate_role(child, to_propagate)
 
     def remove_rows(self):
         """
         Remove all the rows in our QFormLayout
-        :return: Nothing
         """
         while self.layout.rowCount() > 0:
             self.layout.removeRow(0)
@@ -396,7 +411,6 @@ class TreeViewPropertyDisplay(QWidget):
         """
         Remove property from properties that node has
         :param key: Key of the property
-        :return: Nothing
         """
         root_window = self.scene.gui
         node_to_update = root_window.tree.nodes[self.node_id]
@@ -414,7 +428,6 @@ class TreeViewPropertyDisplay(QWidget):
         :param attributes: Attributes of selected node
         :param id: Id of the node
         :param title: Title of the node
-        :return: Nothing
         """
         # self.remove_rows()
         # Make dicts to be used to display attributes and properties in different ways
