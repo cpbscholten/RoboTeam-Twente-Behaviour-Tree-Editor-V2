@@ -213,8 +213,70 @@ class NodeColorLegendWidget(QWidget):
         super(NodeColorLegendWidget, self).__init__(parent, Qt.Widget)
         self.scene = scene
         self.app = app
-        self.layout = QFormLayout(self)
+        self.parent = parent
+        self.widget = None
+        self.layout = None
+        self.collapse_button = None
+        self.expand_button = None
+        self.expanded = False
+        self.init()
 
+    def set_expanded(self, expand: bool):
+        """
+        Removes the current legend and rebuild a collapsed or expanded version
+        :param expand: if the widget should be expanded or collapsed
+        """
+        self.expanded = expand
+        # delete the old legend
+        self.widget.deleteLater()
+        # initialize a collapsed or expanded version
+        self.init()
+
+    def init(self):
+        """
+        Rebuilds the legend based on the expanded variable
+        """
+        # creates a new widget and add it to the scene
+        self.widget = QWidget()
+        self.widget.setParent(self.parent)
+        self.layout = QFormLayout()
+        self.widget.setLayout(self.layout)
+        self.widget.setAutoFillBackground(True)
+        # set to correct system palette of the widget
+        palette = self.palette()
+        background = self.app.palette().brush(QPalette.Background).color()
+        palette.setColor(self.backgroundRole(), background)
+        self.widget.setPalette(palette)
+        # initialize an expanded or collapsed widget
+        if self.expanded:
+            self.expand()
+        else:
+            self.collapse()
+        # place the widget on the correct place on the screen
+        self.resize()
+        self.widget.show()
+
+    def collapse(self):
+        """
+        Create a collapsed version of the widget. Can only be called through init()
+        """
+        self.collapse_button = QPushButton()
+        self.collapse_button.setIcon(QIcon('view/icon/collapse.png'))
+        self.collapse_button.clicked.connect(partial(self.set_expanded, False))
+        self.collapse_button.setFlat(True)
+        self.collapse_button.setStyleSheet("QPushButton { border: none; margin: 0px; padding: 0px; }")
+        self.layout.addRow(self.expand_button, QLabel("Legend"))
+
+    def expand(self):
+        """
+        Create an expanded version of the legend. Can only be called through init()
+        """
+        self.expand_button = QPushButton()
+        self.expand_button.setIcon(QIcon('view/icon/expand.png'))
+        self.expand_button.clicked.connect(partial(self.set_expanded, True))
+        self.expand_button.setFlat(True)
+        self.expand_button.setStyleSheet("QPushButton { border: none; margin: 0px; padding: 0px; }")
+        self.layout.addRow(self.collapse_button, QLabel("Legend"))
         self.layout.addRow(QLabel("Subtrees:"))
         self.add_legend_type("Keeper", view.elements.Node.KEEPER_COLOR)
         self.add_legend_type("Role", view.elements.Node.ROLE_COLOR)
@@ -228,22 +290,12 @@ class NodeColorLegendWidget(QWidget):
         self.layout.addRow(QLabel("Other:"))
         self.add_legend_type("Other", view.elements.Node.NODE_COLOR)
 
-        self.setAutoFillBackground(True)
-        palette = self.palette()
-        background = self.app.palette().brush(QPalette.Background).color()
-        palette.setColor(self.backgroundRole(), background)
-        self.setPalette(palette)
-
-        self.resize()
-        self.setLayout(self.layout)
-        self.show()
-
     def resize(self):
         """
         Places the window at the bottom of the screen
         :return:
         """
-        self.setGeometry(self.X_OFFSET,
+        self.widget.setGeometry(self.X_OFFSET,
                          self.scene.view.height() - self.layout.sizeHint().height() - self.Y_OFFSET,
                          self.layout.sizeHint().width(), self.layout.sizeHint().height())
 
