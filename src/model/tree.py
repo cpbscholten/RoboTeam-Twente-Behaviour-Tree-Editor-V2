@@ -349,7 +349,7 @@ class Tree:
 
     def __str__(self) -> str:
         """
-        String represenatation of the tree
+        String representation of the tree
         """
         return str(self.create_json())
 
@@ -1057,17 +1057,17 @@ class Verification:
                 passed_nodes[0] = True
             else:
                 error = "Error in structure of tree {}, the path to node {} encountered " \
-                        "strategies twice".format(tree.name, current_node)
+                        "a strategy node twice".format(tree.name, current_node)
                 Verification.logger.error(error)
                 errors.append(error)
                 raise errors
-        elif current_node_category == "tactics":
+        elif current_node_category == "tactics" or tree.nodes[current_node].title == "Tactic":
             # We check if it's still false, because we can't pass the same node type twice.
             if passed_nodes[1] is False:
                 passed_nodes[1] = True
             else:
                 error = "Error in structure of tree {}, the path to node {} " \
-                        "encountered tactics twice".format(tree.name, current_node)
+                        "encountered a tactic node twice".format(tree.name, current_node)
                 Verification.logger.error(error)
                 errors.append(error)
                 raise errors
@@ -1077,7 +1077,7 @@ class Verification:
                 passed_nodes[2] = True
             else:
                 error = "Error in structure of tree {}, the path to node {} " \
-                        "encountered roles twice".format(tree.name, current_node)
+                        "encountered a role node twice".format(tree.name, current_node)
                 Verification.logger.error(error)
                 errors.append(error)
                 return errors
