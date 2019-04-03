@@ -30,17 +30,24 @@ class NodeTypesWidget(QWidget):
 
         # button to create a node type from the selected node type
         self.node_from_type_button = QPushButton('Create selected Type', self)
+        # todo fix shortcut node addition
+        self.node_from_type_button.setShortcut('Ctrl+T')
+        self.node_from_type_button.setToolTip('Create a node from the selected node type. Shortcut: Ctrl+T')
         self.node_from_type_button.clicked.connect(self.node_from_selected_type)
         self.node_from_type_button.setEnabled(False)
         self.layout.addWidget(self.node_from_type_button)
 
         # button for creating a new custom node type
         self.create_node_button = QPushButton('New Node', self)
+        self.create_node_button.setShortcut('Ctrl+N')
+        self.setToolTip('Create a new custom node. Shortcut: Ctrl+N')
         self.create_node_button.clicked.connect(self.create_node_button_clicked)
         self.layout.addWidget(self.create_node_button)
 
         # button for adding a subtree
         self.add_subtree_button = QPushButton('Add subtree', self)
+        self.add_subtree_button.setShortcut('Ctrl+Shift+N')
+        self.add_subtree_button.setToolTip('Create a subtree. Shortcut: Ctrl+Shift+N')
         self.add_subtree_button.clicked.connect(self.add_subtree_button_clicked)
         self.layout.addWidget(self.add_subtree_button)
 
@@ -87,7 +94,7 @@ class NodeTypesWidget(QWidget):
         :param current: the current item selected in the TreeWidget
         """
         # check for none to prevent errors when updating node types
-        if current is None:
+        if not current or not self.gui.load_tree:
             return
         # check if the item is a node type
         if current.data(1, Qt.UserRole) is None:
@@ -261,6 +268,8 @@ class NodeColorLegendWidget(QWidget):
         """
         self.expand_button = QPushButton()
         self.expand_button.setIcon(QIcon('view/icon/expand.png'))
+        self.expand_button.setShortcut('Ctrl+L')
+        self.expand_button.setToolTip('Expand the legend. Shortcut: Ctrl+L')
         self.expand_button.clicked.connect(partial(self.set_expanded, True))
         self.expand_button.setFlat(True)
         self.expand_button.setStyleSheet("QPushButton { border: none; margin: 0px; padding: 0px; }")
@@ -272,6 +281,8 @@ class NodeColorLegendWidget(QWidget):
         """
         self.collapse_button = QPushButton()
         self.collapse_button.setIcon(QIcon('view/icon/collapse.png'))
+        self.collapse_button.setShortcut('Ctrl+L')
+        self.collapse_button.setToolTip('Collapse the legend. Shortcut: Ctrl+L')
         self.collapse_button.clicked.connect(partial(self.set_expanded, False))
         self.collapse_button.setFlat(True)
         self.collapse_button.setStyleSheet("QPushButton { border: none; margin: 0px; padding: 0px; }")
@@ -324,6 +335,8 @@ class ToolbarWidget(QWidget):
 
         # verification button
         self.verify_button = QPushButton("Verify")
+        self.verify_button.setShortcut('Ctrl+E')
+        self.verify_button.setToolTip('Verify the current tree. Shortcut: Ctrl+E')
         self.layout.addWidget(self.verify_button)
         self.verify_button.clicked.connect(self.verify_tree)
 

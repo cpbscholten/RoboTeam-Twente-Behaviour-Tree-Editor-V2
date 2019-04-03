@@ -218,8 +218,8 @@ class MenuBar:
         self.open_collection_act.triggered.connect(self.open_collection_custom_path)
 
         self.save_collection_as_act = QAction('Save as', self.main_window)
-        # self.# save_collection_as_act.setShortcut()
-        self.save_collection_as_act.setShortcut('Save current collection as')
+        self.save_collection_as_act.setShortcut('Ctrl+Shift+Alt+S')
+        self.save_collection_as_act.setToolTip('Save current collection as.')
         self.save_collection_as_act.triggered.connect(self.save_collection_as)
 
         # tree actions
@@ -271,9 +271,12 @@ class MenuBar:
         else:
             self.main_window.enable_tree_actions(False)
 
+        # counter for collection categories shortcut. First one will be Ctrl+1, second Ctrl+2, etc.
+        shortcut_count = 0
         # initializes the collection menus and trees
         if not (collection_dict is None or len(collection_dict.keys()) == 0):
             for category, filenames in sorted(collection_dict.items()):
+                shortcut_count += 1
                 # create a menu for the category
                 # upper case first character of category
                 category_upper: str = capitalize(category)
@@ -284,6 +287,7 @@ class MenuBar:
 
                 # add an action to the menu for creating a new tree with the singular of category
                 add_tree_act = QAction('New ' + category_singular, self.main_window)
+                add_tree_act.setShortcut('Ctrl+' + str(shortcut_count))
                 add_tree_act.setStatusTip('Create a new ' + category_upper)
                 add_tree_act.triggered.connect(partial(self.create_tree, category))
                 # add_tree_act.setEnabled(False)
@@ -640,7 +644,6 @@ class SettingsDialog(QDialog):
         self.main_layout = QVBoxLayout()
         self.setLayout(self.main_layout)
         self.setMinimumWidth(500)
-        self.setMaximumHeight(100)
         self.setWindowTitle("Settings")
 
         # grid layout for showing the settings

@@ -354,6 +354,8 @@ class Node(QGraphicsEllipseItem):
     def contextMenuEvent(self, menu_event):
         menu = QMenu()
         delete_node_action = QAction("Delete Node")
+        delete_node_action.setShortcut('Ctrl+D')
+        delete_node_action.setToolTip('Delete node and all its children.')
         delete_node_action.triggered.connect(self.delete_self)
         menu.addAction(delete_node_action)
         menu.exec(menu_event.screenPos())
