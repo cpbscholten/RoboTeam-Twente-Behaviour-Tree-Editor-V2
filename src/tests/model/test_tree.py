@@ -121,6 +121,10 @@ class TestNode(object):
         node.add_property("a", "b")
         assert {"a": "b"} == node.properties()
 
+    def test_str(self):
+        node = Node('b', 'a', {'a': "b"}, ["c"])
+        assert str(node) == str(node.create_json())
+
 
 class TestTree(object):
     # valid trees
@@ -255,6 +259,10 @@ class TestTree(object):
         tree = Tree.from_json(self.tree_simple_tree)
         assert self.tree_simple_tree == tree.create_json()
 
+    def test_str(self):
+        tree = Tree.from_json(self.tree_simple_tree)
+        assert str(tree.create_json()) == str(tree)
+
 
 class TestCollection(object):
     path = Path("json/collection/")
@@ -316,7 +324,7 @@ class TestCollection(object):
         read.path = None
         assert collection == read
 
-#TODO: Comment back in
+    #TODO: Comment back in
     # def test_write_collection_default_path2(self, tmpdir):
     #     collection = Collection.from_path(verify=False)
     #     collection.path = tmpdir
@@ -675,3 +683,7 @@ class TestNodeTypes:
         assert [] == node_types.get_node_type_by_node(Node("test", "a"))
         # check for a existing node
         assert [('composites', ["Sequence"])] == node_types.get_node_type_by_node(Node('Sequence', 'a'))
+
+    def test_str(self):
+        node_types = NodeTypes.from_csv()
+        assert str(node_types.node_types) == str(node_types)

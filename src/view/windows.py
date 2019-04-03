@@ -2,7 +2,7 @@ import re
 from copy import deepcopy
 from functools import partial
 from pathlib import Path
-from typing import Union, List
+from typing import Union, List, Tuple
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QAction, QMainWindow, QFileDialog, QMessageBox, QInputDialog, QLineEdit, QWidget, \
@@ -109,7 +109,7 @@ class MainWindow(QMainWindow):
         Closes the tree that currently is displayed
         """
         # ask if there are changes that need to be saved
-        save = self.check_unsaved_changes()
+        save, errors = self.check_unsaved_changes()
         if save is DialogEnum.Cancel:
             return
         if self.app.wait_for_click_filter:
@@ -137,6 +137,7 @@ class MainWindow(QMainWindow):
         :param tree: tree object to display
         """
         self.category = category
+        self.load_tree = deepcopy(tree)
         self.tree = deepcopy(tree)
         self.filename = filename
         self.enable_tree_actions(True)
@@ -144,13 +145,15 @@ class MainWindow(QMainWindow):
         # set the window title to also show the path of the tree
         self.setWindowTitle(self.def_window_title + ' - ' + self.category + '/' + self.filename)
 
-    def check_unsaved_changes(self) -> DialogEnum:
+    def check_unsaved_changes(self) -> Tuple[DialogEnum, List[str]]:
         """
-        Method that checks for unsaved changes asks for yes, no, cacnel
-        :return bool: true if yes or no, false if cancel clicked or true if no unsaved changes
+        Method that checks for unsaved changes asks for yes, no, cancel
+        :return DialogEnum: Which button was clicked
+        :return errors: the errors while verifying before saving
         """
         if not self.load_tree:
-            return DialogEnum.No
+            # empty list as errors, as the errors are only relevant when saving
+            return DialogEnum.No, []
         elif self.load_tree != self.tree:
             errors = self.load_collection.verify_tree(self.tree, self.category)
             if len(errors) == 0:
@@ -164,8 +167,9 @@ class MainWindow(QMainWindow):
             if save is DialogEnum.Yes:
                 if len(errors) == 0:
                     self.main_listener.write_tree_signal.emit(self.category, self.filename, self.tree)
-            return save
-        return DialogEnum.No
+            return save, errors
+        # empty list as errors, as the errors are only relevant when saving
+        return DialogEnum.No, []
 
     def closeEvent(self, event):
         """
@@ -173,7 +177,7 @@ class MainWindow(QMainWindow):
         check for unsaved changes
         :param event: the event
         """
-        save = self.check_unsaved_changes()
+        save, errors = self.check_unsaved_changes()
         if save is DialogEnum.Cancel:
             event.ignore()
             return
@@ -181,8 +185,6 @@ class MainWindow(QMainWindow):
             event.accept()
             return
         elif save is DialogEnum.Yes:
-            # todo fix this ugly quick fix
-            errors = self.load_collection.verify_tree(self.tree, self.category)
             if len(errors) == 0:
                 event.accept()
                 return
@@ -303,7 +305,7 @@ class MenuBar:
         """
         Opens the settings window
         """
-        SettingsDialog(self.main_window).show()
+        SettingsDialog(self.main_window).exec()
 
     def open_collection(self):
         """
@@ -319,7 +321,6 @@ class MenuBar:
         tree = self.main_window.load_collection.collection.get(category).get(filename)
         self.main_window.close_tree()
         self.main_window.show_tree(category, filename, tree)
-        self.main_window.load_tree = tree
 
     def open_collection_custom_path(self):
         """
@@ -362,6 +363,7 @@ class MenuBar:
         """
         Save the tree currently displayed to the collection
         """
+        self.main_window.load_tree = self.main_window.tree
         self.main_window.main_listener.write_tree_signal.emit(self.main_window.category, self.main_window.filename,
                                                               self.main_window.tree)
 
@@ -375,6 +377,7 @@ class MenuBar:
         path = Dialogs.save_file_dialog('Save tree as', json_path / self.main_window.filename, )
         # do a call to the controller to write the collection
         if path is not None:
+            self.main_window.load_tree = self.main_window.tree
             self.main_window.main_listener.write_tree_custom_path_signal.emit(path, self.main_window.tree)
 
     def create_tree(self, category: str):
@@ -396,7 +399,7 @@ class Dialogs:
         :param title: the title in the top bar
         :param text: the text in the message box
         """
-        QMessageBox.question(None, title, text, QMessageBox.Ok, QMessageBox.Ok)
+        QMessageBox.question(QMessageBox(), title, text, QMessageBox.Ok, QMessageBox.Ok)
 
     @staticmethod
     def yes_no_cancel_message_box(title: str, text: str) -> DialogEnum:
@@ -406,8 +409,8 @@ class Dialogs:
         :param text: the text in the message box
         :return dialogenum: containing the return type of the dialog
         """
-        clicked = QMessageBox.question(None, title, text, QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel,
-                                       QMessageBox.Yes)
+        clicked = QMessageBox.question(QMessageBox(), title, text, QMessageBox.Yes | QMessageBox.No |
+                                       QMessageBox.Cancel, QMessageBox.Yes)
         if clicked == QMessageBox.Cancel:
             return DialogEnum.Cancel
         elif clicked == QMessageBox.No:
@@ -423,7 +426,7 @@ class Dialogs:
         :param text: the text in the message box
         :return true if yes is clicked else false
         """
-        clicked = QMessageBox.question(None, title, text, QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+        clicked = QMessageBox.question(QMessageBox(), title, text, QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
         return True if clicked == QMessageBox.Yes else False
 
     @staticmethod
@@ -435,7 +438,7 @@ class Dialogs:
         :param detailed_text: detailed list of errors
         """
         if detailed_text is None:
-            QMessageBox.critical(None, title, text, QMessageBox.Ok, QMessageBox.Ok)
+            QMessageBox.critical(QMessageBox(), title, text, QMessageBox.Ok, QMessageBox.Ok)
         else:
             msg = QMessageBox()
             msg.setIcon(QMessageBox.Critical)
@@ -454,9 +457,9 @@ class Dialogs:
         :param start_path: the path that the dialog will show when opened
         :return: None if cancel is pressed or a valid path
         """
-        path = QFileDialog.getExistingDirectory(None, title, str(start_path), QFileDialog.ShowDirsOnly)
+        path = QFileDialog.getExistingDirectory(QFileDialog(), title, str(start_path), QFileDialog.ShowDirsOnly)
         # do nothing if cancel has been pressed
-        if path is None or path == '':
+        if not path or path == '':
             return None
         return Path(path)
 
@@ -472,11 +475,11 @@ class Dialogs:
         :return: None if cancel is pressed or a valid path
         """
         if json_only:
-            path, _ = QFileDialog.getSaveFileName(None, title, str(start_path), "JSON files (*.json)")
+            path, _ = QFileDialog.getSaveFileName(QFileDialog(), title, str(start_path), "JSON files (*.json)")
         else:
-            path, _ = QFileDialog.getSaveFileName(None, title, str(start_path))
+            path, _ = QFileDialog.getSaveFileName(QFileDialog(), title, str(start_path))
         # do nothing if cancel has been pressed
-        if path is None or path == '':
+        if not path or path == '':
             return None
         return Path(path)
 
@@ -492,11 +495,11 @@ class Dialogs:
         :return: None if cancel is pressed or a valid path
         """
         if json_only:
-            path, _ = QFileDialog.getOpenFileName(None, title, str(start_path), "JSON files (*.json)")
+            path, _ = QFileDialog.getOpenFileName(QFileDialog(), title, str(start_path), "JSON files (*.json)")
         else:
-            path, _ = QFileDialog.getOpenFileName(None, title, str(start_path))
+            path, _ = QFileDialog.getOpenFileName(QFileDialog(), title, str(start_path))
         # do nothing if cancel has been pressed
-        if path is None or path == '':
+        if not path or path == '':
             return None
         return Path(path)
 
@@ -753,12 +756,6 @@ class SettingsDialog(QDialog):
         :param enable: enable or disable the buttons
         """
         self.apply_button.setEnabled(enable)
-
-    def show(self):
-        """
-        Method that opens the dialog
-        """
-        self.exec()
 
     def apply(self):
         """

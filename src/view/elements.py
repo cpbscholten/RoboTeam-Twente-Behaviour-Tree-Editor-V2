@@ -1,4 +1,4 @@
-from PyQt5.QtCore import pyqtSignal, Qt, QRectF, QPointF, QPoint
+from PyQt5.QtCore import pyqtSignal, Qt, QRectF, QPointF
 from PyQt5.QtGui import QPixmap, QFontMetrics, QBrush, QColor, QIcon
 from PyQt5.QtWidgets import QGraphicsObject, QGraphicsEllipseItem, QGraphicsScene, QGraphicsItem, \
     QGraphicsSimpleTextItem, QGraphicsLineItem, QPushButton, QMenu, QAction
@@ -194,8 +194,10 @@ class Node(QGraphicsEllipseItem):
         self.setParentItem(None)
         # move node to retain correct position
         self.setPos(0, 0)
-        move_x = self.collapse_data["abs_pos"][0] - (self.collapse_data["root_item"].xpos()) - (self.scene.node_init_pos[0] - self.collapse_data["root_item"].xpos())
-        move_y = self.collapse_data["abs_pos"][1] - self.collapse_data["root_item"].ypos() - (self.scene.node_init_pos[1] - self.collapse_data["root_item"].ypos())
+        move_x = self.collapse_data["abs_pos"][0] - (self.collapse_data["root_item"].xpos()) - \
+            (self.scene.node_init_pos[0] - self.collapse_data["root_item"].xpos())
+        move_y = self.collapse_data["abs_pos"][1] - self.collapse_data["root_item"].ypos() - \
+            (self.scene.node_init_pos[1] - self.collapse_data["root_item"].ypos())
         self.moveBy(move_x, move_y)
         # hide parent nodes
         self.collapse_data['top_level_item'].hide()

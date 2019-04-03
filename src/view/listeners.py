@@ -69,8 +69,7 @@ class MainListener(QObject):
         self.open_node_types_signal.connect(self.worker.open_node_types)
         self.worker.open_node_types_finished_signal.connect(self.open_node_types_finished)
 
-    # slots that handle the results of the worker
-    @pyqtSlot(dict)
+    @pyqtSlot(Collection)
     def open_collection_finished(self, collection: Collection):
         """
         Method that handles the result from controller
@@ -115,7 +114,6 @@ class MainListener(QObject):
             self.open_collection_signal.emit()
         else:
             # show the failed tree on the screen
-            # todo show errors
             self.gui.show_tree(category, filename, tree)
             view.windows.Dialogs.error_box("ERROR", 'There were errors while writing the tree', errors)
 
@@ -131,13 +129,13 @@ class MainListener(QObject):
         """
         # update the collection
         if len(errors) == 0:
-            view.windows.Dialogs.message_box("Success", 'Tree written successfully!')
+            view.windows.Dialogs.message_box("Success", 'Tree {} written successfully!'.format(tree.name))
             self.open_collection_signal.emit()
         else:
-            view.windows.Dialogs.error_box("ERROR", 'There were errors while writing the tree to ' + str(path)
-                                           + '!', errors)
+            view.windows.Dialogs.error_box("ERROR", 'There were errors while writing tree {} to '.format(tree.name)
+                                           + str(path) + '!', errors)
 
-    @pyqtSlot(dict)
+    @pyqtSlot(NodeTypes)
     def open_node_types_finished(self, node_types: NodeTypes):
         """
         Method that handles the result of opening node types

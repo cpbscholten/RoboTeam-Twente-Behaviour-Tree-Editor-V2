@@ -1,6 +1,6 @@
-from PyQt5.QtCore import QObject, Qt, QEvent, QPointF
-from PyQt5.QtGui import QMouseEvent, QHelpEvent
-from PyQt5.QtWidgets import QApplication, QGraphicsView, QWidget, QPushButton
+from PyQt5.QtCore import QObject, Qt
+from PyQt5.QtGui import QMouseEvent
+from PyQt5.QtWidgets import QApplication, QGraphicsView, QPushButton
 
 from view.scenes import TreeScene
 
@@ -46,16 +46,17 @@ class ResetCursorAfterClick(QObject):
         self.app = app
         self.scene = scene
 
-    def eventFilter(self, object, event):
+    def eventFilter(self, filter_object, event):
         """
         Event filter that detects mouse click outside of tree scene and resets cursor in that case.
-        :param object: Object related to the event
+        :param filter_object: Object related to the event
         :param event: Event that occurred
         :return: If the event needs to be suppressed
         """
         # widget currently focused
         focus_widget = self.app.focusWidget()
-        if isinstance(event, QMouseEvent) and not (isinstance(focus_widget, QGraphicsView) or isinstance(focus_widget, QPushButton)):
+        if isinstance(event, QMouseEvent) and not (isinstance(focus_widget, QGraphicsView)
+                                                   or isinstance(focus_widget, QPushButton)):
             if event.button() == Qt.LeftButton or event.button() == Qt.RightButton:
                 self.reset_event_filter()
                 return True
@@ -70,4 +71,3 @@ class ResetCursorAfterClick(QObject):
         # reset cursor and remove filter
         self.app.restoreOverrideCursor()
         self.app.removeEventFilter(self)
-

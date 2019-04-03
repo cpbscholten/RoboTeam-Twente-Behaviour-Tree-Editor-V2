@@ -1,10 +1,3 @@
-class CycleInTreeException(Exception):
-    """
-    Exception that can be thrown when a tree contains a cycle
-    """
-    pass
-
-
 class IncorrectTreeStructureException(Exception):
     """
     Is raised when structure of the tree is not correct, for example if the root node is not of the correct type
@@ -29,12 +22,5 @@ class InvalidTreeJsonFormatException(Exception):
 class SettingNotFoundException(Exception):
     """
     Exception when a non-existent setting is queried or altered
-    """
-    pass
-
-
-class UnconnectedNodeException(Exception):
-    """
-    Exception that can be thrown when a tree contains unconnected nodes
     """
     pass

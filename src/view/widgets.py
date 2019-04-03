@@ -16,7 +16,6 @@ from typing import Dict, Any, Tuple
 
 
 class NodeTypesWidget(QWidget):
-
     def __init__(self, gui):
         super(QWidget, self).__init__()
         self.gui: view.windows.MainWindow = gui
@@ -260,22 +259,22 @@ class NodeColorLegendWidget(QWidget):
         """
         Create a collapsed version of the widget. Can only be called through init()
         """
-        self.collapse_button = QPushButton()
-        self.collapse_button.setIcon(QIcon('view/icon/collapse.png'))
-        self.collapse_button.clicked.connect(partial(self.set_expanded, False))
-        self.collapse_button.setFlat(True)
-        self.collapse_button.setStyleSheet("QPushButton { border: none; margin: 0px; padding: 0px; }")
+        self.expand_button = QPushButton()
+        self.expand_button.setIcon(QIcon('view/icon/expand.png'))
+        self.expand_button.clicked.connect(partial(self.set_expanded, True))
+        self.expand_button.setFlat(True)
+        self.expand_button.setStyleSheet("QPushButton { border: none; margin: 0px; padding: 0px; }")
         self.layout.addRow(self.expand_button, QLabel("Legend"))
 
     def expand(self):
         """
         Create an expanded version of the legend. Can only be called through init()
         """
-        self.expand_button = QPushButton()
-        self.expand_button.setIcon(QIcon('view/icon/expand.png'))
-        self.expand_button.clicked.connect(partial(self.set_expanded, True))
-        self.expand_button.setFlat(True)
-        self.expand_button.setStyleSheet("QPushButton { border: none; margin: 0px; padding: 0px; }")
+        self.collapse_button = QPushButton()
+        self.collapse_button.setIcon(QIcon('view/icon/collapse.png'))
+        self.collapse_button.clicked.connect(partial(self.set_expanded, False))
+        self.collapse_button.setFlat(True)
+        self.collapse_button.setStyleSheet("QPushButton { border: none; margin: 0px; padding: 0px; }")
         self.layout.addRow(self.collapse_button, QLabel("Legend"))
         self.layout.addRow(QLabel("Subtrees:"))
         self.add_legend_type("Keeper", view.elements.Node.KEEPER_COLOR)
@@ -296,8 +295,8 @@ class NodeColorLegendWidget(QWidget):
         :return:
         """
         self.widget.setGeometry(self.X_OFFSET,
-                         self.scene.view.height() - self.layout.sizeHint().height() - self.Y_OFFSET,
-                         self.layout.sizeHint().width(), self.layout.sizeHint().height())
+                                self.scene.view.height() - self.layout.sizeHint().height() - self.Y_OFFSET,
+                                self.layout.sizeHint().width(), self.layout.sizeHint().height())
 
     def add_legend_type(self, title: str, rgb: Tuple[int, int, int]):
         """
@@ -346,6 +345,9 @@ class ToolbarWidget(QWidget):
 
 
 class TreeViewPropertyDisplay(QWidget):
+    """
+    Widget for viewing and editing properties of a node
+    """
 
     Y_OFFSET = 10
     X_OFFSET = 10
@@ -368,6 +370,7 @@ class TreeViewPropertyDisplay(QWidget):
         self.attributes = attributes
         self.node_id = node_id
         self.node_title = node_title
+        self.setLayout(self.layout)
 
         # Add attributes if given
         if attributes is not None:
@@ -388,8 +391,8 @@ class TreeViewPropertyDisplay(QWidget):
         # Add property button in current row, 0th column, spanning 1 row and 3 columns
         self.layout.addWidget(self.add_property_button, self.layout.rowCount(), 0, 1, 3)
 
+        # resize the widget, so it will be placed at the correct location
         self.resize()
-        self.setLayout(self.layout)
 
     def resize(self):
         """
@@ -425,7 +428,7 @@ class TreeViewPropertyDisplay(QWidget):
             if isinstance(self.layout.itemAt(item_index).widget(), QLineEdit):  # If it's an editable property
                 if not skip:
                     skip = True
-                    properties.append((self.layout.itemAt(item_index).widget().text(), self.layout.itemAt(item_index + 1).widget().text()))
+                    properties.append((self.layout.itemAt(item_index).widget().text(), self.layout.itemAt(item_index + 1 ).widget().text()))
                 else:
                     skip = False
                     pass
@@ -433,11 +436,11 @@ class TreeViewPropertyDisplay(QWidget):
         node_to_update = root_window.tree.nodes[self.node_id]
         if len(properties) > 0:
             node_to_update.attributes["properties"] = {}
-            for property in properties:
-                node_to_update.add_property(property[0], property[1])
+            for node_property in properties:
+                node_to_update.add_property(node_property[0], node_property[1])
                 # If we have a ROLE property, propagate that to its children
-                if property[0] == "ROLE":
-                    self.propagate_role(self.node_id, property[1])
+                if node_property[0] == "ROLE":
+                    self.propagate_role(self.node_id, node_property[1])
 
     def propagate_role(self, current_node_id: str, to_propagate: str):
         """
@@ -523,11 +526,3 @@ class TreeViewPropertyDisplay(QWidget):
             self.layout.addWidget(key_line, current_row, 0)
             self.layout.addWidget(value_line, current_row, 1)
             self.layout.addWidget(remove_button, current_row, 2)
-
-        # TODO: Add resize event
-
-
-
-
-
-
