@@ -1,13 +1,13 @@
-from PyQt5.QtCore import pyqtSignal, Qt, QRectF, QPointF
-from PyQt5.QtGui import QPixmap, QFontMetrics, QBrush, QColor, QIcon
-from PyQt5.QtWidgets import QGraphicsObject, QGraphicsEllipseItem, QGraphicsScene, QGraphicsItem, \
-    QGraphicsSimpleTextItem, QGraphicsLineItem, QPushButton, QMenu, QAction
+from PyQt5.QtCore import pyqtSignal, Qt, QRectF, QPointF, QRect
+from PyQt5.QtGui import QPixmap, QFontMetrics, QBrush, QColor, QIcon, QPainter
+from PyQt5.QtWidgets import QGraphicsObject, QGraphicsScene, QGraphicsItem, \
+    QGraphicsSimpleTextItem, QGraphicsLineItem, QPushButton, QMenu, QAction, QGraphicsRectItem, QStyleOptionGraphicsItem
 
 import view.widgets
 from model.tree import Node as ModelNode, NodeTypes
 
 
-class Node(QGraphicsEllipseItem):
+class Node(QGraphicsItem):
     i = 0
     NODE_MIN_WIDTH = 100
     NODE_MAX_WIDTH = 150
@@ -38,6 +38,8 @@ class Node(QGraphicsEllipseItem):
             # give node a unique title
             self.title = "node {}".format(Node.i)
         self.id = model_node.id
+        self.x = x
+        self.y = y
         Node.i += 1
         self.scene = scene
         self.model_node = model_node
@@ -52,23 +54,18 @@ class Node(QGraphicsEllipseItem):
         self.node_text.setText(elided_title)
         self.node_text.setAcceptedMouseButtons(Qt.NoButton)
         self.node_text.setAcceptHoverEvents(False)
-        text_width = self.node_text.boundingRect().width()
-        text_height = self.node_text.boundingRect().height()
-        self.node_text.setPos(x - (text_width / 2), y - (text_height / 2))
-        # set node size based on text size
-        if text_width > self.NODE_MIN_WIDTH - 10:
-            rect = QRectF(x - (text_width + 10) / 2, y - self.NODE_HEIGHT / 2, text_width + 10, self.NODE_HEIGHT)
-        else:
-            rect = QRectF(x - self.NODE_MIN_WIDTH / 2, y - self.NODE_HEIGHT / 2, self.NODE_MIN_WIDTH, self.NODE_HEIGHT)
+        self.text_width = self.node_text.boundingRect().width()
+        self.text_height = self.node_text.boundingRect().height()
+        self.node_text.setX(x - (self.text_width / 2))
         # call super function now we know the node size
-        super(Node, self).__init__(rect, parent)
+        super(Node, self).__init__(parent)
         self.node_text.setParentItem(self)
         # indicates if node is being dragged
         self.dragging = False
         self.setCursor(Qt.PointingHandCursor)
         self.setAcceptHoverEvents(True)
-        # give the node a default colour
-        self.setBrush(QBrush(QColor(*self.NODE_COLOR)))
+        # give the node a default color
+        self.color = QColor(*self.NODE_COLOR)
         # give node another color
         if node_types is not None:
             # check for node types and color them
@@ -76,23 +73,66 @@ class Node(QGraphicsEllipseItem):
             if len(types) > 0:
                 category, node_type = types[0]
                 if category == 'decorators':
-                    self.setBrush(QBrush(QColor(*self.DECORATOR_COLOR)))
+                    self.color = QColor(*self.DECORATOR_COLOR)
                 elif category == 'composites':
-                    self.setBrush(QBrush(QColor(*self.COMPOSITE_COLOR)))
+                    self.color = QColor(*self.COMPOSITE_COLOR)
                 else:
-                    self.setBrush(QBrush(QColor(*self.OTHER_NODE_TYPES_COLOR)))
+                    self.color = QColor(*self.OTHER_NODE_TYPES_COLOR)
             # check for a strategy, role, tactic or keeper
             if 'name' in model_node.attributes.keys():
                 if model_node.title == 'Tactic':
-                    self.setBrush(QBrush(QColor(*self.TACTIC_COLOR)))
+                    self.color = QColor(*self.TACTIC_COLOR)
                 elif model_node.title == 'Strategy':
-                    self.setBrush(QBrush(QColor(*self.STRATEGY_COLOR)))
+                    self.color = QColor(*self.STRATEGY_COLOR)
                 elif model_node.title == 'Keeper':
-                    self.setBrush(QBrush(QColor(*self.KEEPER_COLOR)))
+                    self.color = QColor(*self.KEEPER_COLOR)
                 elif model_node.title == 'Role':
-                    self.setBrush(QBrush(QColor(*self.ROLE_COLOR)))
+                    self.color = QColor(*self.ROLE_COLOR)
                 else:
-                    self.setBrush(QBrush(QColor(*self.OTHER_SUBTREE_COLOR)))
+                    self.color = QColor(*self.OTHER_SUBTREE_COLOR)
+        self.info_display = []
+        self.max_width = 0
+        self.total_height = 0
+        self.bottom_collapse_expand_button = None
+        self.top_collapse_expand_button = None
+        self._rect = None
+        self.initiate_view()
+
+    def initiate_view(self, propagate=False):
+        """
+        Initiates all the children for the current view
+        :param propagate: Propagate initiate view signal to children
+        """
+        for rect in self.info_display:
+            rect.setParentItem(None)
+        if self.top_collapse_expand_button and self.bottom_collapse_expand_button:
+            self.top_collapse_expand_button.setParentItem(None)
+            self.bottom_collapse_expand_button.setParentItem(None)
+        self.info_display = []
+        self.max_width = self.text_width
+        self.total_height = self.NODE_HEIGHT
+        if self.scene.info_mode:
+            self.create_info_display(self.x, self.y, self.model_node.attributes)
+        if self.max_width > self.NODE_MIN_WIDTH - 10:
+            self._rect = QRect(self.x - self.max_width / 2, self.y - self.total_height / 2, self.max_width,
+                               self.total_height)
+        else:
+            self._rect = QRect(self.x - self.NODE_MIN_WIDTH / 2, self.y - self.total_height / 2, self.NODE_MIN_WIDTH,
+                               self.total_height)
+        # set node size based on children
+        self.node_text.setY(self.y - self.total_height / 2 + self.NODE_HEIGHT / 2 - self.text_height / 2)
+        self.create_expand_collapse_buttons()
+        self.scene.update()
+        if propagate:
+            for c in self.children:
+                c.initiate_view(True)
+            for e in self.edges:
+                e.change_position()
+
+    def create_expand_collapse_buttons(self):
+        """
+        Creates the expand/collapse buttons of the node
+        """
         # create the bottom collapse/expand button for this node
         self.bottom_collapse_expand_button = CollapseExpandButton(self)
         self.bottom_collapse_expand_button.setParentItem(self)
@@ -100,21 +140,120 @@ class Node(QGraphicsEllipseItem):
         self.bottom_collapse_expand_button.collapse.connect(self.collapse_children)
         self.bottom_collapse_expand_button.expand.connect(self.expand_children)
         # position the bottom button at the bottom-center of the node
-        button_x = x - (self.bottom_collapse_expand_button.boundingRect().width() / 2)
-        button_y = y + (self.NODE_HEIGHT / 2) - (self.bottom_collapse_expand_button.boundingRect().height() / 2)
+        button_x = self.x - (self.bottom_collapse_expand_button.boundingRect().width() / 2)
+        button_y = self.y + self.total_height / 2 - (self.bottom_collapse_expand_button.boundingRect().height() / 2)
         self.bottom_collapse_expand_button.setPos(button_x, button_y)
         # hidden by default, the button is only needed if the node has children
-        self.bottom_collapse_expand_button.hide()
+        if not self.children:
+            self.bottom_collapse_expand_button.hide()
         # create the top collapse/expand button for this node
         self.top_collapse_expand_button = CollapseExpandButton(self)
         self.top_collapse_expand_button.setParentItem(self)
         self.top_collapse_expand_button.setZValue(1)
         self.top_collapse_expand_button.collapse.connect(self.collapse_upwards)
         self.top_collapse_expand_button.expand.connect(self.expand_upwards)
+        if not self.parentItem():
+            self.top_collapse_expand_button.hide()
         # position the top button at the top-center of the node
-        button_x = x - (self.top_collapse_expand_button.boundingRect().width() / 2)
-        button_y = y - (self.NODE_HEIGHT / 2) - (self.top_collapse_expand_button.boundingRect().height() / 2)
+        button_x = self.x - (self.top_collapse_expand_button.boundingRect().width() / 2)
+        button_y = self.y - self.total_height / 2 - (self.top_collapse_expand_button.boundingRect().height() / 2)
         self.top_collapse_expand_button.setPos(button_x, button_y)
+
+    def create_info_display(self, x, y, attributes):
+        """
+        Creates view elements for the info display
+        :param x: x position of the node
+        :param y: y position of the node
+        :param attributes: attributes that will be displayed in the view
+        :return:
+        """
+        start_height = y + (self.NODE_HEIGHT / 2)
+        # unfold dictionary values at the bottom of the list
+        sorted_attributes = []
+        for k, v in sorted(attributes.items(), key=lambda tup: isinstance(tup[1], dict)):
+            if isinstance(v, dict):
+                sorted_attributes.append((k, v))
+                sorted_attributes.extend(v.items())
+            else:
+                sorted_attributes.append((k, v))
+        # create property rows
+        for i, (k, v) in enumerate(sorted_attributes):
+            value_text = None
+            value_height = 0
+            if isinstance(v, dict):
+                # display dictionary key as title
+                text = "{}".format(k)
+                if len(text) > 20:
+                    text = text[:20] + "..."
+                key_text = QGraphicsSimpleTextItem(text)
+                f = key_text.font()
+                f.setBold(True)
+                key_text.setFont(f)
+                text_width = key_text.boundingRect().width()
+            else:
+                key_text = QGraphicsSimpleTextItem("{}:".format(k) if k else " ")
+                text = str(v)
+                if len(text) > 20:
+                    text = text[:20] + "..."
+                value_text = QGraphicsSimpleTextItem(text)
+                value_height = value_text.boundingRect().height()
+                text_width = key_text.boundingRect().width() + value_text.boundingRect().width()
+            # create box around property
+            attribute_container = QGraphicsRectItem(x, start_height, text_width + 10,
+                                                    max(key_text.boundingRect().height(),
+                                                        value_height) + 10)
+            attribute_container.setBrush(QBrush(Qt.white))
+            self.total_height += attribute_container.rect().height()
+            key_text.setParentItem(attribute_container)
+            if value_text:
+                value_text.setParentItem(attribute_container)
+            self.max_width = max(self.max_width, attribute_container.rect().width())
+            attribute_container.setParentItem(self)
+            self.info_display.append(attribute_container)
+            start_height += max(key_text.boundingRect().height(), value_height) + 10
+        # calculate correct coordinates for positioning of the attribute boxes
+        if self.max_width > self.NODE_MIN_WIDTH - 10:
+            x -= (self.max_width + 10) / 2
+            y -= self.total_height / 2
+            self.max_width += 10
+        else:
+            x -= self.NODE_MIN_WIDTH / 2
+            y -= self.total_height / 2
+            self.max_width = self.NODE_MIN_WIDTH
+        h = 0
+        # position all the elements previously created
+        for attribute_container in self.info_display:
+            rect: QRectF = attribute_container.rect()
+            rect.setX(x)
+            rect_height = rect.height()
+            rect.setY(y + self.NODE_HEIGHT + h)
+            rect.setHeight(rect_height)
+            key_child = attribute_container.childItems()[0]
+            if len(attribute_container.childItems()) == 2:
+                key_child.setX(x + 5)
+                value_child = attribute_container.childItems()[1]
+                value_child.setX(x + self.max_width - value_child.boundingRect().width() - 5)
+                value_child.setY(y + self.NODE_HEIGHT + h + 5)
+            else:
+                key_child.setX(x - key_child.boundingRect().width() / 2 + self.max_width / 2)
+            key_child.setY(y + self.NODE_HEIGHT + h + 5)
+            h += rect.height()
+            rect.setWidth(self.max_width)
+            attribute_container.setRect(rect)
+
+    def paint(self, painter: QPainter, style_options: QStyleOptionGraphicsItem, widget=None):
+        """
+        Paint the basic shape of the node (ellipse or rectangle)
+        :param painter: painter used to paint objects
+        :param style_options: Styling options for the graphics item
+        :param widget: The widget being painted
+        """
+        painter.setPen(Qt.SolidLine)
+        painter.setBrush(QBrush(self.color))
+        if self.scene.info_mode:
+            painter.drawRect(self.rect().x(), self.rect().y(), self.rect().width(), self.NODE_HEIGHT)
+        else:
+            painter.drawEllipse(self.rect())
 
     def add_child(self, child):
         """
@@ -175,6 +314,12 @@ class Node(QGraphicsEllipseItem):
         :return: the y position of the node
         """
         return self.yoffset()
+
+    def boundingRect(self):
+        return QRectF(self._rect)
+
+    def rect(self):
+        return self._rect
 
     def collapse_upwards(self):
         """
@@ -311,6 +456,7 @@ class Node(QGraphicsEllipseItem):
         else:
             # remove this node
             self.scene.removeItem(self)
+        del self.scene.nodes[self.model_node.id]
         if self.scene.gui.tree.root == self.model_node.id:
             self.scene.gui.tree.root = ''
         # remove node from internal tree structure

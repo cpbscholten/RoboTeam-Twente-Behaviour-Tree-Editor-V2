@@ -10,7 +10,7 @@ from view.elements import Node as ViewNode, CollapseExpandButton
 
 class TreeScene(QGraphicsScene):
 
-    NODE_X_OFFSET = 50
+    NODE_X_OFFSET = 100
     NODE_Y_OFFSET = 100
     ZOOM_SENSITIVITY = 0.05
 
@@ -25,6 +25,10 @@ class TreeScene(QGraphicsScene):
         self.gui = gui
         self.app = self.gui.app
         self.view = view
+        # mapping for model node to view node
+        self.nodes = {}
+        # Indicates if the scene is in info mode
+        self.info_mode = False
         # Indicates if the TreeScene is dragged around
         self.dragging = False
         # The tree ModelNode being added to the scene
@@ -55,6 +59,7 @@ class TreeScene(QGraphicsScene):
         self.node_init_pos = (x, y)
         # remove old content
         self.clear()
+        self.nodes.clear()
         # check if there is a root, otherwise do not display the tree
         if tree.root == '':
             return
@@ -74,6 +79,7 @@ class TreeScene(QGraphicsScene):
         """
         subtree_root_node = ViewNode(*self.node_init_pos, scene=self, title=subtree_root.title,
                                      model_node=subtree_root, node_types=self.gui.load_node_types)
+        self.nodes[subtree_root.id] = subtree_root_node
         middle_index = (len(subtree_root.children) - 1) / 2
         # keep track of level width to prevent overlapping nodes
         subtree_left_width = subtree_right_width = 0
@@ -91,11 +97,13 @@ class TreeScene(QGraphicsScene):
             if i == math.floor(middle_index) and not middle_index.is_integer():
                 # use half the offset because the other half is added later for the other part of the tree
                 move_x -= self.NODE_X_OFFSET / 2
-                child_view_node.moveBy(- (child_subtree_width_right + (self.NODE_X_OFFSET / 2)), self.NODE_Y_OFFSET)
+                child_view_node.moveBy(- (child_subtree_width_right + (self.NODE_X_OFFSET / 2)),
+                                       (subtree_root_node.rect().height() / 2) + self.NODE_Y_OFFSET)
             else:
                 # use the default node offset
                 move_x -= self.NODE_X_OFFSET
-                child_view_node.moveBy(- (child_subtree_width_right + self.NODE_X_OFFSET), self.NODE_Y_OFFSET)
+                child_view_node.moveBy(- (child_subtree_width_right + self.NODE_X_OFFSET),
+                                       (subtree_root_node.rect().height() / 2) + self.NODE_Y_OFFSET)
             # add width to total left subtree width
             subtree_left_width += abs(move_x)
             # move all previous nodes to the left to make room for the new node
@@ -110,7 +118,7 @@ class TreeScene(QGraphicsScene):
             # returned values are used to adjust the nodes position to prevent overlap
             child_view_node, child_subtree_width_left, child_subtree_width_right = self.add_subtree(tree, child)
             subtree_root_node.add_child(child_view_node)
-            child_view_node.moveBy(0, self.NODE_Y_OFFSET)
+            child_view_node.moveBy(0, (subtree_root_node.rect().height() / 2) + self.NODE_Y_OFFSET)
             # move all left nodes further to the left to make room for the middle node
             move_x = - self.NODE_X_OFFSET
             if child_subtree_width_left > self.NODE_X_OFFSET:
@@ -139,7 +147,7 @@ class TreeScene(QGraphicsScene):
                 move_x += self.NODE_X_OFFSET
                 subtree_right_width += self.NODE_X_OFFSET
             # move node next to the previous node, all the way to the right
-            child_view_node.moveBy(move_x, self.NODE_Y_OFFSET)
+            child_view_node.moveBy(move_x, (subtree_root_node.rect().height() / 2) + self.NODE_Y_OFFSET)
         # set the widths of both subtree sides to a default value if no children or a smaller child node
         if not subtree_root.children or subtree_left_width < subtree_root_node.rect().width() / 2 or \
                 subtree_right_width < subtree_root_node.rect().width() / 2:
@@ -172,7 +180,7 @@ class TreeScene(QGraphicsScene):
             if node.isVisible() and child.isVisible():
                 move_x = - (child_subtree_width_left + child_subtree_width_right)
                 # reset node to start position
-                child.setPos(0, self.NODE_Y_OFFSET)
+                child.setPos(0, (node.rect().height() / 2) + self.NODE_Y_OFFSET)
                 # prevent double spacing when there is no middle node
                 if i == math.floor(middle_index) and not middle_index.is_integer():
                     # use half the offset because the other half is added later for the other part of the tree
@@ -196,7 +204,7 @@ class TreeScene(QGraphicsScene):
             # only align visible nodes
             if node.isVisible() and child.isVisible():
                 # reset node to start position
-                child.setPos(0, self.NODE_Y_OFFSET)
+                child.setPos(0, (node.rect().height() / 2) + self.NODE_Y_OFFSET)
                 # move all left nodes further to the left to make room for the middle node
                 move_x = - self.NODE_X_OFFSET
                 if child_subtree_width_left > self.NODE_X_OFFSET:
@@ -224,7 +232,7 @@ class TreeScene(QGraphicsScene):
                     move_x += self.NODE_X_OFFSET
                     subtree_right_width += self.NODE_X_OFFSET
                 # reset node to start position
-                child.setPos(0, self.NODE_Y_OFFSET)
+                child.setPos(0, (node.rect().height() / 2) + self.NODE_Y_OFFSET)
                 # move node next to the previous node, all the way to the right
                 child.moveBy(move_x, 0)
         # set the widths of both subtree sides to a default value if no children or a smaller child node
@@ -232,6 +240,11 @@ class TreeScene(QGraphicsScene):
                 subtree_right_width < node.rect().width() / 2:
             subtree_left_width = subtree_right_width = node.rect().width() / 2
         return subtree_left_width, subtree_right_width
+
+    def switch_info_mode(self, info_mode: bool):
+        self.info_mode = info_mode
+        if self.root_ui_node:
+            self.root_ui_node.initiate_view(propagate=True)
 
     def mousePressEvent(self, m_event):
         """
@@ -258,9 +271,15 @@ class TreeScene(QGraphicsScene):
                 if isinstance(item, ViewNode):
                     self.dragging_node = item
                     item.dragging = True
+                    return
                 if isinstance(item.parentItem(), ViewNode):
                     self.dragging_node = item.parentItem()
                     item.parentItem().dragging = True
+                    return
+                if item.parentItem():
+                    if isinstance(item.parentItem().parentItem(), ViewNode):
+                        self.dragging_node = item.parentItem().parentItem()
+                        item.parentItem().parentItem().dragging = True
                 return
             # Remove property display window and save changes
             if self.view.parent().property_display is not None:
@@ -350,6 +369,7 @@ class TreeScene(QGraphicsScene):
         # create node based on model node
         node = ViewNode(*self.node_init_pos, scene=self, model_node=self.adding_node, title=self.adding_node.title,
                         node_types=self.gui.load_node_types)
+        self.nodes[self.adding_node.id] = node
         # adjust to correct position
         node.moveBy(x - self.node_init_pos[0], y - self.node_init_pos[1])
         self.addItem(node)

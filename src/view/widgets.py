@@ -1,10 +1,10 @@
 from functools import partial
 
 from PyQt5 import QtWidgets
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QIcon, QPainter, QPalette
+from PyQt5.QtCore import Qt, QRect
+from PyQt5.QtGui import QIcon, QPainter, QPalette, QKeySequence
 from PyQt5.QtWidgets import QGraphicsView, QTreeWidget, QTreeWidgetItem, QWidget, QVBoxLayout, QPushButton, QLabel, \
-    QLineEdit, QFormLayout, QApplication, QGridLayout, QHBoxLayout
+    QLineEdit, QFormLayout, QApplication, QGridLayout, QHBoxLayout, QComboBox, QAction
 
 import view.windows
 import view.scenes
@@ -16,6 +16,7 @@ from typing import Dict, Any, Tuple
 
 
 class NodeTypesWidget(QWidget):
+
     def __init__(self, gui):
         super(QWidget, self).__init__()
         self.gui: view.windows.MainWindow = gui
@@ -158,16 +159,30 @@ class TreeViewToolbar(QWidget):
         super(TreeViewToolbar, self).__init__(parent, Qt.Widget)
         self.scene = scene
         self.layout = QVBoxLayout(self)
+
         self.zoom_in_button = view.elements.ToolbarButton(QIcon("view/icon/zoom_in.svg"))
+        self.zoom_in_button.setToolTip("Zoom In (Ctrl++)")
+        self.zoom_in_action = QAction()
+        self.zoom_in_action.setShortcuts([QKeySequence.ZoomIn, QKeySequence(Qt.CTRL + Qt.Key_Equal)])
+        self.zoom_in_action.triggered.connect(self.zoom_in_button.animateClick)
+        self.zoom_in_button.addAction(self.zoom_in_action)
         self.zoom_in_button.clicked.connect(lambda: self.scene.zoom(1.25, 1.25))
+
         self.zoom_out_button = view.elements.ToolbarButton(QIcon("view/icon/zoom_out.svg"))
+        self.zoom_out_button.setToolTip("Zoom Out (Ctrl+-)")
+        self.zoom_out_button.setShortcut(QKeySequence.ZoomOut)
         self.zoom_out_button.clicked.connect(lambda: self.scene.zoom(0.75, 0.75))
-        # self.filter_button = ToolbarButton(QIcon("view/icon/filter.svg"))
+
         self.reset_button = view.elements.ToolbarButton(QIcon("view/icon/reset.svg"))
+        self.reset_button.setToolTip("Reset View (F5)")
+        self.reset_action = QAction()
+        self.reset_action.setShortcuts([QKeySequence.Refresh, QKeySequence(Qt.CTRL + Qt.Key_R)])
+        self.reset_action.triggered.connect(self.reset_button.animateClick)
+        self.reset_button.addAction(self.reset_action)
         self.reset_button.clicked.connect(self.scene.align_tree)
+
         self.layout.addWidget(self.zoom_in_button)
         self.layout.addWidget(self.zoom_out_button)
-        # self.layout.addWidget(self.filter_button)
         self.layout.addWidget(self.reset_button)
         self.setLayout(self.layout)
         self.setGeometry(10, 10, self.layout.sizeHint().width(), self.layout.sizeHint().height())
@@ -331,6 +346,14 @@ class ToolbarWidget(QWidget):
         self.layout = QHBoxLayout()
         self.setLayout(self.layout)
 
+        # overlay dropdown box
+        self.view_label = QLabel("View:")
+        self.view_dropdown = QComboBox()
+        self.view_dropdown.addItems(["Overview", "Info View", "Heatmap - Successes", "Heatmap - Runnings",
+                                     "Heatmap - Failures"])
+        self.view_dropdown.activated[str].connect(self.switch_views)
+        self.layout.addWidget(self.view_label)
+        self.layout.addWidget(self.view_dropdown)
         self.layout.addStretch(1)
 
         # verification button
@@ -339,6 +362,13 @@ class ToolbarWidget(QWidget):
         self.verify_button.setToolTip('Verify the current tree. Shortcut: Ctrl+E')
         self.layout.addWidget(self.verify_button)
         self.verify_button.clicked.connect(self.verify_tree)
+
+    def switch_views(self, new_view: str):
+        """
+        Switch view to the new view specified by the combo box
+        :param new_view: Selected view in the combo box
+        """
+        self.gui.tree_view_widget.graphics_scene.switch_info_mode(new_view == "Info View")
 
     def verify_tree(self):
         """
@@ -400,9 +430,8 @@ class TreeViewPropertyDisplay(QWidget):
         self.add_property_button = QPushButton("Add Property")
         self.add_property_button.clicked.connect(self.add_property)
         self.add_property_button.setContentsMargins(self.BUTTON_MARGINS, self.BUTTON_MARGINS, self.BUTTON_MARGINS, self.BUTTON_MARGINS)
-
-        # Add property button in current row, 0th column, spanning 1 row and 3 columns
-        self.layout.addWidget(self.add_property_button, self.layout.rowCount(), 0, 1, 3)
+        # Add property button in current row, 0th column, spanning 1 row and 2 columns
+        self.layout.addWidget(self.add_property_button, self.layout.rowCount(), 0, 1, 2)
 
         # resize the widget, so it will be placed at the correct location
         self.resize()
@@ -411,7 +440,7 @@ class TreeViewPropertyDisplay(QWidget):
         """
         Method that correctly places the widget on the treeViewWidget
         """
-        self.setGeometry(self.scene.view.width() - self.layout.sizeHint().width() - self.X_OFFSET, self.Y_OFFSET, self.layout.sizeHint().width(), self.layout.sizeHint().height())
+        self.setGeometry(self.scene.view.width() - self.layout.sizeHint().width() - self.X_OFFSET, self.Y_OFFSET, self.layout.sizeHint().width(), self.layout.sizeHint().height() + 25)
 
     def add_property(self):
         """
@@ -451,9 +480,10 @@ class TreeViewPropertyDisplay(QWidget):
             node_to_update.attributes["properties"] = {}
             for node_property in properties:
                 node_to_update.add_property(node_property[0], node_property[1])
-                # If we have a ROLE property, propagate that to its children
                 if node_property[0] == "ROLE":
                     self.propagate_role(self.node_id, node_property[1])
+        self.scene.nodes[self.node_id].model_node.attributes = node_to_update.attributes
+        self.scene.nodes[self.node_id].initiate_view()
 
     def propagate_role(self, current_node_id: str, to_propagate: str):
         """
@@ -532,9 +562,14 @@ class TreeViewPropertyDisplay(QWidget):
             current_row = self.layout.rowCount()
             key_line = QLineEdit(str(key))
             key_line.setMinimumSize(self.ROW_MIN_WIDTH, self.ROW_MIN_HEIGHT)
+            key_line.textChanged.connect(self.update_properties)
             value_line = QLineEdit(str(display_properties[key]))
             value_line.setMinimumSize(self.ROW_MIN_WIDTH, self.ROW_MIN_HEIGHT)
+            value_line.textChanged.connect(self.update_properties)
             remove_button = QPushButton(QIcon("view/icon/delete_icon.svg"), "", self)
+            remove_button.setMinimumHeight(value_line.minimumHeight())
+            remove_button.setStyleSheet("QPushButton {border: none; margin: 0px; padding: 0px;}")
+            remove_button.setCursor(Qt.PointingHandCursor)
             remove_button.clicked.connect(partial(self.remove_property, key))
             self.layout.addWidget(key_line, current_row, 0)
             self.layout.addWidget(value_line, current_row, 1)
