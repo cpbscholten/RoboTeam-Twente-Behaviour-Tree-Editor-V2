@@ -165,7 +165,7 @@ class TreeViewToolbar(QWidget):
         self.scene = scene
         self.layout = QVBoxLayout(self)
 
-        self.zoom_in_button = view.elements.ToolbarButton(QIcon("view/icon/zoom_in.svg"))
+        self.zoom_in_button = view.elements.ToolbarButton(QIcon("view/icon/plus.svg"))
         self.zoom_in_button.setToolTip("Zoom In (Ctrl++)")
         self.zoom_in_action = QAction()
         self.zoom_in_action.setShortcuts([QKeySequence.ZoomIn, QKeySequence(Qt.CTRL + Qt.Key_Equal)])
@@ -173,12 +173,12 @@ class TreeViewToolbar(QWidget):
         self.zoom_in_button.addAction(self.zoom_in_action)
         self.zoom_in_button.clicked.connect(lambda: self.scene.zoom(1.25, 1.25))
 
-        self.zoom_out_button = view.elements.ToolbarButton(QIcon("view/icon/zoom_out.svg"))
+        self.zoom_out_button = view.elements.ToolbarButton(QIcon("view/icon/minus.svg"))
         self.zoom_out_button.setToolTip("Zoom Out (Ctrl+-)")
         self.zoom_out_button.setShortcut(QKeySequence.ZoomOut)
         self.zoom_out_button.clicked.connect(lambda: self.scene.zoom(0.75, 0.75))
 
-        self.reset_button = view.elements.ToolbarButton(QIcon("view/icon/reset.svg"))
+        self.reset_button = view.elements.ToolbarButton(QIcon("view/icon/refresh-cw.svg"))
         self.reset_button.setToolTip("Reset View (F5)")
         self.reset_action = QAction()
         self.reset_action.setShortcuts([QKeySequence.Refresh, QKeySequence(Qt.CTRL + Qt.Key_R)])
@@ -365,8 +365,8 @@ class ToolbarWidget(QWidget):
         self.layout.addWidget(self.view_dropdown)
         self.layout.addStretch(1)
 
-        self.check_icon = QIcon('view/icon/check.svg')
-        self.cross_icon = QIcon('view/icon/cross.svg')
+        self.check_icon = QIcon('view/icon/check_green.svg')
+        self.cross_icon = QIcon('view/icon/x_red.svg')
 
         self.check_or_cross = QPushButton()
         self.check_or_cross.setFlat(True)
@@ -606,7 +606,7 @@ class TreeViewPropertyDisplay(QWidget):
             key_line.textChanged.connect(self.update_properties)
             value_line = QLineEdit(str(display_properties[key]))
             value_line.textChanged.connect(self.update_properties)
-            remove_button = QPushButton(QIcon("view/icon/delete_icon.svg"), "", self)
+            remove_button = QPushButton(QIcon("view/icon/x.svg"), "", self)
             remove_button.setMinimumHeight(value_line.minimumHeight())
             remove_button.setStyleSheet("QPushButton {border: none; margin: 0px; padding: 0px;}")
             remove_button.setCursor(Qt.PointingHandCursor)

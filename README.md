@@ -11,3 +11,7 @@
 
 ## Running the tests
 `pytest tests`
+
+
+## Credits
+Icons: [Feather Icons](https://github.com/feathericons/feather) - [License](https://github.com/feathericons/feather/blob/master/LICENSE)
