@@ -1049,6 +1049,7 @@ class Verification:
                 # If the name of the leaf does not match the current tree (to prevent cycles)
                 if tree.name != tree.nodes[current_node].title:
                     tree = collection.get_tree_by_name(current_node_name)
+                    # todo fix exception of NoneType has no attribute root when deleting node below Role
                     current_node = tree.root
         current_node_category = collection.get_category_from_node(current_node)
         if current_node_category == "strategies":

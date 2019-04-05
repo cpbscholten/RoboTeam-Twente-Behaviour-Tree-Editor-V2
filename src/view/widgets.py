@@ -12,7 +12,7 @@ import view.elements
 from controller.utils import singularize, capitalize
 from model.tree import NodeTypes, Node
 
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, Tuple, List
 
 
 class NodeTypesWidget(QWidget):
@@ -356,12 +356,29 @@ class ToolbarWidget(QWidget):
         self.layout.addWidget(self.view_dropdown)
         self.layout.addStretch(1)
 
+        self.check_icon = QIcon('view/icon/check.svg')
+        self.cross_icon = QIcon('view/icon/cross.svg')
+
+        self.check_or_cross = QPushButton()
+        self.check_or_cross.setFlat(True)
+        self.check_or_cross.setStyleSheet("QPushButton { border: none; margin: 0px; padding: 0px; }")
+        self.check_or_cross.setIcon(self.check_icon)
+        self.layout.addWidget(self.check_or_cross)
+
         # verification button
         self.verify_button = QPushButton("Verify")
         self.verify_button.setShortcut('Ctrl+E')
         self.verify_button.setToolTip('Verify the current tree. Shortcut: Ctrl+E')
         self.layout.addWidget(self.verify_button)
-        self.verify_button.clicked.connect(self.verify_tree)
+        self.verify_button.clicked.connect(partial(self.verify_tree, True))
+
+    def enable_verify_button(self, enable: bool=True):
+        """
+        Enable or disable the verify button and checkmark icon
+        :param enable: enable or disable
+        """
+        self.check_or_cross.setEnabled(enable)
+        self.verify_button.setEnabled(enable)
 
     def switch_views(self, new_view: str):
         """
@@ -370,21 +387,34 @@ class ToolbarWidget(QWidget):
         """
         self.gui.tree_view_widget.graphics_scene.switch_info_mode(new_view == "Info View")
 
-    def verify_tree(self):
+    def verify_tree(self, message: bool=False):
         """
         Slot that checks a tree when the verify button has been clicked
+        :param message: If a dialog should be shown, or only update the checkmark
         """
+        # todo auto update checkmark when changes to self.tree are done
         collection = self.gui.load_collection
         tree = self.gui.tree
         category = self.gui.category
-        # TODO add checkmark
         errors = collection.verify_tree(tree, category)
+
+        # update check or cross icon
         if len(errors) == 0:
-            view.windows.Dialogs.message_box("Success", "The Tree has been verified successfully. "
-                                             "No errors have been found.")
+            self.check_or_cross.setIcon(self.check_icon)
+            self.check_or_cross.setToolTip("No Errors were found during the last verification.")
         else:
-            view.windows.Dialogs.error_box("Error", "There were errors while verifying the tree, "
-                                                    "click more details for more info.", errors)
+            self.check_or_cross.setIcon(self.cross_icon)
+            errors_tooltip = ["Errors during last verification run:"]
+            errors_tooltip.extend(errors)
+            self.check_or_cross.setToolTip('\n'.join(errors_tooltip))
+
+        if message:
+            if len(errors) == 0:
+                view.windows.Dialogs.message_box("Success", "The Tree has been verified successfully. "
+                                                 "No errors have been found.")
+            else:
+                view.windows.Dialogs.error_box("Error", "There were errors while verifying the tree, "
+                                                        "click more details for more info.", errors)
 
 
 class TreeViewPropertyDisplay(QWidget):

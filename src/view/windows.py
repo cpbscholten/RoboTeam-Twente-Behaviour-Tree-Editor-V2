@@ -94,7 +94,7 @@ class MainWindow(QMainWindow):
         self.menubar.save_tree_act.setEnabled(enable)
         self.menubar.save_tree_as_act.setEnabled(enable)
         self.tree_view_widget.toolbar.setEnabled(enable)
-        self.toolbar_widget.verify_button.setEnabled(enable)
+        self.toolbar_widget.enable_verify_button(enable)
         self.node_types_widget.create_node_button.setEnabled(enable)
         self.node_types_widget.add_subtree_button.setEnabled(enable)
         # correctly enable or disable the add node from selected button
@@ -141,6 +141,8 @@ class MainWindow(QMainWindow):
         self.tree = deepcopy(tree)
         self.filename = filename
         self.enable_tree_actions(True)
+        # verify the tree to update the checkmark icon
+        self.toolbar_widget.verify_tree()
         self.tree_view_widget.graphics_scene.add_tree(tree)
         # set the window title to also show the path of the tree
         self.setWindowTitle(self.def_window_title + ' - ' + self.category + '/' + self.filename)
