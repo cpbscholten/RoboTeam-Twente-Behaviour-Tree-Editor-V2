@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, List
+from typing import List
 
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
 
@@ -69,6 +69,7 @@ class MainListener(QObject):
         self.open_node_types_signal.connect(self.worker.open_node_types)
         self.worker.open_node_types_finished_signal.connect(self.open_node_types_finished)
 
+    # noinspection PyArgumentList
     @pyqtSlot(Collection)
     def open_collection_finished(self, collection: Collection):
         """
@@ -81,6 +82,7 @@ class MainListener(QObject):
         self.gui.load_collection = collection
         self.gui.menubar.build_menu_bar(collection)
 
+    # noinspection PyArgumentList
     @pyqtSlot(list)
     def write_collection_finished(self, errors: List[str]):
         """
@@ -97,6 +99,7 @@ class MainListener(QObject):
             # show errors
             view.windows.Dialogs.error_box("ERROR", 'There were errors while writing the collection!')
 
+    # noinspection PyArgumentList
     @pyqtSlot(str, str, Tree, list)
     def write_tree_finished(self, category: str, filename: str, tree: Tree, errors: List[str]):
         """
@@ -117,6 +120,7 @@ class MainListener(QObject):
             self.gui.show_tree(category, filename, tree)
             view.windows.Dialogs.error_box("ERROR", 'There were errors while writing the tree', errors)
 
+    # noinspection PyArgumentList
     @pyqtSlot(Path, Tree, list)
     def write_tree_custom_path_finished(self, path: Path, tree: Tree, errors: List[str]):
         """
@@ -135,6 +139,7 @@ class MainListener(QObject):
             view.windows.Dialogs.error_box("ERROR", 'There were errors while writing tree {} to '.format(tree.name)
                                            + str(path) + '!', errors)
 
+    # noinspection PyArgumentList
     @pyqtSlot(NodeTypes)
     def open_node_types_finished(self, node_types: NodeTypes):
         """

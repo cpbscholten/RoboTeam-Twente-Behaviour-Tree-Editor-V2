@@ -22,6 +22,7 @@ class MainWindow(QMainWindow):
     Class to draw the main window of the editor
     """
 
+    # noinspection PyArgumentList
     def __init__(self, app: QApplication, parent=None):
         """
         Constructor for the main widget
@@ -454,6 +455,7 @@ class Dialogs:
             msg.setStandardButtons(QMessageBox.Ok)
             msg.exec()
 
+    # noinspection PyArgumentList
     @staticmethod
     def open_folder_dialog(title: str, start_path: Path) -> Union[Path, None]:
         """
@@ -469,6 +471,7 @@ class Dialogs:
             return None
         return Path(path)
 
+    # noinspection PyArgumentList
     @staticmethod
     def save_file_dialog(title: str, start_path: Path, json_only: bool=True) -> Union[Path, None]:
         """
@@ -489,6 +492,7 @@ class Dialogs:
             return None
         return Path(path)
 
+    # noinspection PyArgumentList
     @staticmethod
     def open_file_dialog(title: str, start_path: Path, json_only: bool=True) -> Union[Path, None]:
         """
@@ -509,6 +513,7 @@ class Dialogs:
             return None
         return Path(path)
 
+    # noinspection PyArgumentList
     @staticmethod
     def text_input_dialog(title: str, text: str, regex: str=None) -> Union[str, None]:
         """
@@ -533,6 +538,7 @@ class TreeSelectDialog(QDialog):
     Dialog for selecting a tree from the collection
     """
 
+    # noinspection PyArgumentList
     def __init__(self, collection: Collection):
         super(TreeSelectDialog, self).__init__()
         # set the default return values to None
@@ -640,6 +646,7 @@ class SettingsDialog(QDialog):
     requires MainWindow to interact with listener
     """
 
+    # noinspection PyArgumentList
     def __init__(self, gui: MainWindow):
         super(SettingsDialog, self).__init__()
         self.gui = gui
@@ -716,7 +723,7 @@ class SettingsDialog(QDialog):
         self.id_size_select.setValue(self.id_size_def)
         self.id_size_select.valueChanged.connect(self.select_id_size_changed)
         self.settings_layout.addWidget(self.id_size_label, 3, 0)
-        self.settings_layout.addWidget(self.id_size_select, 3, 1, 3, 2)
+        self.settings_layout.addWidget(self.id_size_select, 3, 1, 1, 2)
 
     def select_logfile(self):
         """

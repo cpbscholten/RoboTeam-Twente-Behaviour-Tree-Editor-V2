@@ -1,7 +1,7 @@
 from functools import partial
 
 from PyQt5 import QtWidgets
-from PyQt5.QtCore import Qt, QRect
+from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon, QPainter, QPalette, QKeySequence
 from PyQt5.QtWidgets import QGraphicsView, QTreeWidget, QTreeWidgetItem, QWidget, QVBoxLayout, QPushButton, QLabel, \
     QLineEdit, QFormLayout, QApplication, QGridLayout, QHBoxLayout, QComboBox, QAction
@@ -17,6 +17,7 @@ from typing import Dict, Any, Tuple, List
 
 class NodeTypesWidget(QWidget):
 
+    # noinspection PyArgumentList
     def __init__(self, gui):
         super(QWidget, self).__init__()
         self.gui: view.windows.MainWindow = gui
@@ -137,6 +138,9 @@ class NodeTypesWidget(QWidget):
         tree = self.gui.load_collection.collection.get(category).get(filename)
         category_singular = singularize(capitalize(category))
         node = Node(category_singular, attributes={"name": tree.name})
+        # special case for rules, which are defined differently as subtrees as other trees
+        if category_singular == 'Role':
+            node.attributes['properties'] = {'ROLE': tree.name}
         self.add_node_to_view(node)
 
     def add_node_to_view(self, node):
@@ -150,6 +154,7 @@ class NodeTypesWidget(QWidget):
 
 class TreeViewToolbar(QWidget):
 
+    # noinspection PyArgumentList
     def __init__(self, scene, parent=None):
         """
         The constructor for a tree view toolbar
@@ -190,6 +195,7 @@ class TreeViewToolbar(QWidget):
 
 class TreeViewWidget(QWidget):
 
+    # noinspection PyArgumentList
     def __init__(self, gui, parent: QWidget=None):
         """
         The constructor for a tree view widget
@@ -253,6 +259,7 @@ class NodeColorLegendWidget(QWidget):
         # initialize a collapsed or expanded version
         self.init()
 
+    # noinspection PyArgumentList
     def init(self):
         """
         Rebuilds the legend based on the expanded variable
@@ -340,6 +347,7 @@ class ToolbarWidget(QWidget):
     Widget with a button toolbar for a verification button
     """
 
+    # noinspection PyArgumentList
     def __init__(self, gui):
         super(ToolbarWidget, self).__init__()
         self.gui = gui
@@ -351,6 +359,7 @@ class ToolbarWidget(QWidget):
         self.view_dropdown = QComboBox()
         self.view_dropdown.addItems(["Overview", "Info View", "Heatmap - Successes", "Heatmap - Runnings",
                                      "Heatmap - Failures"])
+        # noinspection PyUnresolvedReferences
         self.view_dropdown.activated[str].connect(self.switch_views)
         self.layout.addWidget(self.view_label)
         self.layout.addWidget(self.view_dropdown)
@@ -424,9 +433,6 @@ class TreeViewPropertyDisplay(QWidget):
 
     Y_OFFSET = 10
     X_OFFSET = 10
-    ROW_MIN_HEIGHT = 25
-    ROW_MIN_WIDTH = 100
-    BUTTON_MARGINS = 6
 
     def __init__(self, scene, attributes: Dict[str, Any], parent=None, node_id=None, node_title=None):
         """
@@ -459,9 +465,8 @@ class TreeViewPropertyDisplay(QWidget):
         # Add buttons for saving and adding new properties and set some small margins so the buttons have space
         self.add_property_button = QPushButton("Add Property")
         self.add_property_button.clicked.connect(self.add_property)
-        self.add_property_button.setContentsMargins(self.BUTTON_MARGINS, self.BUTTON_MARGINS, self.BUTTON_MARGINS, self.BUTTON_MARGINS)
-        # Add property button in current row, 0th column, spanning 1 row and 2 columns
-        self.layout.addWidget(self.add_property_button, self.layout.rowCount(), 0, 1, 2)
+        # Add property button in current row, 0th column, spanning 1 whole row
+        self.layout.addWidget(self.add_property_button, self.layout.rowCount(), 0, 1, 0)
 
         # resize the widget, so it will be placed at the correct location
         self.resize()
@@ -470,7 +475,8 @@ class TreeViewPropertyDisplay(QWidget):
         """
         Method that correctly places the widget on the treeViewWidget
         """
-        self.setGeometry(self.scene.view.width() - self.layout.sizeHint().width() - self.X_OFFSET, self.Y_OFFSET, self.layout.sizeHint().width(), self.layout.sizeHint().height() + 25)
+        self.setGeometry(self.scene.view.width() - self.layout.sizeHint().width() - self.X_OFFSET, self.Y_OFFSET,
+                         self.layout.sizeHint().width(), self.layout.sizeHint().height() + 25)
 
     def add_property(self):
         """
@@ -481,7 +487,8 @@ class TreeViewPropertyDisplay(QWidget):
         node_to_update = root_window.tree.nodes[self.node_id]
         self.update_properties()
         node_to_update.add_property("", "")
-        updated_view = TreeViewPropertyDisplay(self.parent().graphics_scene, self.attributes, parent=self.parent(), node_id=self.node_id, node_title=self.node_title)
+        updated_view = TreeViewPropertyDisplay(self.parent().graphics_scene, self.attributes,
+                                               parent=self.parent(), node_id=self.node_id, node_title=self.node_title)
         if self.parent().property_display is not None:
             self.setParent(None)
             self.deleteLater()
@@ -500,7 +507,8 @@ class TreeViewPropertyDisplay(QWidget):
             if isinstance(self.layout.itemAt(item_index).widget(), QLineEdit):  # If it's an editable property
                 if not skip:
                     skip = True
-                    properties.append((self.layout.itemAt(item_index).widget().text(), self.layout.itemAt(item_index + 1 ).widget().text()))
+                    properties.append((self.layout.itemAt(item_index).widget().text(),
+                                       self.layout.itemAt(item_index + 1).widget().text()))
                 else:
                     skip = False
                     pass
@@ -550,11 +558,11 @@ class TreeViewPropertyDisplay(QWidget):
             self.deleteLater()
         self.scene.view.parent().property_display = updated_view
 
-    def add_properties(self, attributes: Dict, id=None, title=None):
+    def add_properties(self, attributes: Dict, node_id=None, title=None):
         """
         Show the properties of a node that was selected
         :param attributes: Attributes of selected node
-        :param id: Id of the node
+        :param node_id: Id of the node
         :param title: Title of the node
         """
         # self.remove_rows()
@@ -562,8 +570,8 @@ class TreeViewPropertyDisplay(QWidget):
         display_attributes = dict()
         display_properties = dict()
 
-        if id is not None:
-            display_attributes['id'] = id
+        if node_id is not None:
+            display_attributes['id'] = node_id
         if title is not None:
             display_attributes['title'] = title
 
@@ -576,25 +584,27 @@ class TreeViewPropertyDisplay(QWidget):
                     display_properties[prop_key] = attributes[key][prop_key]
 
         # Add attributes to the display (these are non-editable)
-        # TODO: Add heading to say these are attributes?
+        current_row = self.layout.rowCount()
+        attributes_label = QLabel('Attributes')
+        attributes_label.setStyleSheet('font-weight: bold')
+        self.layout.addWidget(attributes_label, current_row, 0, 1, 0, Qt.AlignCenter)
         for key in display_attributes:
             current_row = self.layout.rowCount()
             key_label = QLabel(str(key))
-            key_label.setMinimumSize(self.ROW_MIN_WIDTH, self.ROW_MIN_HEIGHT)
             value_label = QLabel(str(display_attributes[key]))
-            value_label.setMinimumSize(self.ROW_MIN_WIDTH, self.ROW_MIN_HEIGHT)
             self.layout.addWidget(key_label, current_row, 0)
             self.layout.addWidget(value_label, current_row, 1)
 
         # Add property to the display (these are editable)
-        # TODO: Add heading to say these are properties?
+        current_row = self.layout.rowCount()
+        properties_label = QLabel('Properties')
+        properties_label.setStyleSheet('font-weight: bold')
+        self.layout.addWidget(properties_label, current_row, 0, 1, 0, Qt.AlignCenter)
         for key in display_properties:
             current_row = self.layout.rowCount()
             key_line = QLineEdit(str(key))
-            key_line.setMinimumSize(self.ROW_MIN_WIDTH, self.ROW_MIN_HEIGHT)
             key_line.textChanged.connect(self.update_properties)
             value_line = QLineEdit(str(display_properties[key]))
-            value_line.setMinimumSize(self.ROW_MIN_WIDTH, self.ROW_MIN_HEIGHT)
             value_line.textChanged.connect(self.update_properties)
             remove_button = QPushButton(QIcon("view/icon/delete_icon.svg"), "", self)
             remove_button.setMinimumHeight(value_line.minimumHeight())
