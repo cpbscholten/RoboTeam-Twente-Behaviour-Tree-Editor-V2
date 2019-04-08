@@ -144,6 +144,8 @@ class TestTree(object):
     tree_wrong_name_type = read_json(Path('json/trees/invalid/DanceStrategyWrongNameType.json'))
     tree_wrong_root_type = read_json(Path('json/trees/invalid/DanceStrategyWrongRootType.json'))
     tree_wrong_title_type = read_json(Path('json/trees/invalid/DanceStrategyWrongTitleType.json'))
+    # trees with other wrong types
+    tree_wrong_trees0_type = read_json(Path('json/trees/invalid/DanceStrategyWrongTrees0Type.json'))
     # trees without nodes or trees
     tree_empty_trees = read_json(Path('json/trees/invalid/DanceStrategyEmptyTrees.json'))
     tree_empty_nodes = read_json(Path('json/trees/invalid/DanceStrategyEmptyNodes.json'))
@@ -165,6 +167,10 @@ class TestTree(object):
     def test_from_json_valid3(self):
         tree = Tree("SimpleTree", "1", {"1": Node("Sequence", "1")})
         assert tree == Tree.from_json(self.tree_simple_tree)
+
+    def test_from_json_invalid_trees0_type(self):
+        with pytest.raises(InvalidTreeJsonFormatException):
+            Tree.from_json(self.tree_wrong_trees0_type)
 
     def test_from_json_invalid_wrong_attribute_types(self):
         with pytest.raises(InvalidTreeJsonFormatException):
@@ -483,6 +489,10 @@ class TestVerification(object):
     simple_invalid_role_inheritance_tree_1 = Tree.from_json(read_json(Path('json/verification/InvalidRoleInheritanceTree1.json')))
     # 2 has a failing node without the properties key
     simple_invalid_role_inheritance_tree_2 = Tree.from_json(read_json(Path('json/verification/InvalidRoleInheritanceTree2.json')))
+    # 1 Has no root node defined
+    simple_invalid_root_node_tree1 = Tree.from_json(read_json(Path('json/verification/InvalidRootNodeTree1.json')))
+    # 2 Has a root node which doesn't exist in the list of nodes
+    simple_invalid_root_node_tree2 = Tree.from_json(read_json(Path('json/verification/InvalidRootNodeTree2.json')))
 
     # valid trees
     simple_non_cyclic_tree = Tree.from_json(read_json(Path('json/verification/SimpleNonCyclicTree.json')))
@@ -541,6 +551,13 @@ class TestVerification(object):
         collection = Collection(self.collection)
         tree = self.offensive_strategy_tree
         assert 0 is len(collection.verify_tree(tree, "strategies"))
+
+    def test_incorrect_root_nodes_by_writing(self):
+        collection = Collection(self.collection)
+        tree1 = self.simple_invalid_root_node_tree1
+        tree2 = self.simple_invalid_root_node_tree2
+        assert len(collection.write_tree(tree1, Path('json/verification/InvalidRootNodeTree1.json'), True)) != 0
+        assert len(collection.write_tree(tree2, Path('json/verification/InvalidRootNodeTree2.json'), True)) != 0
 
 
 class TestNodeTypes:

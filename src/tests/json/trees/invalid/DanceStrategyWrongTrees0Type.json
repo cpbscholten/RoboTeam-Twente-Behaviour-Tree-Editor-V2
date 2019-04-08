@@ -1,0 +1,8 @@
+{
+  "name": "DanceStrategy",
+  "data": {
+    "trees": [
+      "this is supposed to be a dict"
+    ]
+  }
+}

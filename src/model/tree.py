@@ -249,7 +249,6 @@ class Tree:
                     tree_name, str(trees_size)))
             raise InvalidTreeJsonFormatException
 
-        # TODO: Add case for tests to make coverage 100%
         # Manually check the type of trees[0] since the helper function does not support that.
         if not (type(trees[0]) == dict):
             Tree.logger.error("The \"trees[0]\" attribute in tree {} is of type {} instead "
@@ -790,7 +789,6 @@ class NodeTypes:
 class Verification:
     logger = logging.getLogger('verification')
 
-    # todo fix coverage for verification
     @staticmethod
     def verify_tree(collection: Collection, tree: Tree, category=None,
                     only_check_mathematical_properties=False) -> List[str]:
@@ -889,9 +887,9 @@ class Verification:
         errors = []
         if len(visited_nodes) < len(tree_nodes):
             # If there is an unconnected node find it so we can log detailed info
-            for visited_node in visited_nodes:
+            for tree_node in tree_nodes:
                 present = False
-                for tree_node in tree_nodes:
+                for visited_node in visited_nodes:
                     if tree_node == visited_node:
                         # If the node has been visited break from this loop
                         present = True
@@ -900,7 +898,7 @@ class Verification:
                     # The node was present continue checking
                     continue
                 else:
-                    error = "The node {} is unconnected in tree {}".format(visited_node, tree.title)
+                    error = "The node {} is unconnected in tree {}".format(tree_node, tree.name)
                     Verification.logger.error(error)
                     errors.append(error)
         return errors
@@ -1093,7 +1091,7 @@ class Verification:
             # If the current node is a sequence, we must only walk nodes that are not conditions
             if current_node_type_is_sequence:
                 child_node_type = node_types.get_node_type_by_name(tree.nodes[child].title)
-                # TODO: Are we sure the first entry in the list is always a condition?
+                # We are allowed to do child_node_type[0][0]
                 if len(child_node_type) > 0 and child_node_type[0][0] == "conditions":
                     # If the child of a sequence is a condition, then we don't walk it
                     continue
@@ -1142,7 +1140,7 @@ class Verification:
             # If the current node is a sequence, we must only walk nodes that are not conditions
             if current_node_type_is_sequence:
                 child_node_type = node_types.get_node_type_by_name(tree.nodes[child].title)
-                # TODO: Are we sure the first entry in the list is always a condition?
+                # We are allowed to do child_node_type[0][0]
                 if len(child_node_type) > 0 and child_node_type[0][0] == "conditions":
                     # If the child of a sequence is a condition, then we don't walk it
                     pass
