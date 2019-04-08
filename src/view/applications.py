@@ -18,7 +18,7 @@ class Application(QApplication):
         super(Application, self).__init__(sys_args)
         self.wait_for_click_filter = None
 
-    def add_node_cursor(self, scene: TreeScene):
+    def add_cross_cursor(self, scene: TreeScene):
         """
         Sets cross cursor and installs filter
         :param scene: Tree scene
@@ -57,7 +57,7 @@ class ResetCursorAfterClick(QObject):
         focus_widget = self.app.focusWidget()
         if isinstance(event, QMouseEvent) and not (isinstance(focus_widget, QGraphicsView)
                                                    or isinstance(focus_widget, QPushButton)):
-            if event.button() == Qt.LeftButton or event.button() == Qt.RightButton:
+            if self.scene.adding_node and (event.button() == Qt.LeftButton or event.button() == Qt.RightButton):
                 self.reset_event_filter()
                 return True
         return False

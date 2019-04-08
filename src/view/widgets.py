@@ -149,7 +149,7 @@ class NodeTypesWidget(QWidget):
         # setting this attribute starts node addition sequence in the scene
         scene.adding_node = node
         # set special cursor for node addition
-        self.app.add_node_cursor(scene)
+        self.app.add_cross_cursor(scene)
 
 
 class TreeViewToolbar(QWidget):

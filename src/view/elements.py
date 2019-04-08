@@ -1,13 +1,17 @@
+import logging
+
 from PyQt5.QtCore import pyqtSignal, Qt, QRectF, QPointF, QRect
 from PyQt5.QtGui import QPixmap, QFontMetrics, QBrush, QColor, QIcon, QPainter
 from PyQt5.QtWidgets import QGraphicsObject, QGraphicsScene, QGraphicsItem, \
-    QGraphicsSimpleTextItem, QGraphicsLineItem, QPushButton, QMenu, QAction, QGraphicsRectItem, QStyleOptionGraphicsItem
+    QGraphicsSimpleTextItem, QGraphicsLineItem, QPushButton, QMenu, QAction, QStyleOptionGraphicsItem, QGraphicsRectItem
 
 import view.widgets
 from model.tree import Node as ModelNode, NodeTypes
 
 
 class Node(QGraphicsItem):
+    logger = logging.getLogger('ViewNode')
+
     i = 0
     NODE_MIN_WIDTH = 100
     NODE_MAX_WIDTH = 150
@@ -45,8 +49,8 @@ class Node(QGraphicsItem):
         self.model_node = model_node
         self.children = []
         self.edges = []
-        # store node position when collapsing upwards
-        self.collapse_data = None
+        # store node positional data when detaching from parent
+        self.expand_data = None
         # add node name label centered in the eclipse, elide if title is too long
         self.node_text = QGraphicsSimpleTextItem()
         metrics = QFontMetrics(self.node_text.font())
@@ -134,11 +138,15 @@ class Node(QGraphicsItem):
         Creates the expand/collapse buttons of the node
         """
         # create the bottom collapse/expand button for this node
+        if self.bottom_collapse_expand_button:
+            bottom_collapsed = self.bottom_collapse_expand_button.isCollapsed
+        else:
+            bottom_collapsed = False
         self.bottom_collapse_expand_button = CollapseExpandButton(self)
         self.bottom_collapse_expand_button.setParentItem(self)
-        self.bottom_collapse_expand_button.setZValue(1)
         self.bottom_collapse_expand_button.collapse.connect(self.collapse_children)
         self.bottom_collapse_expand_button.expand.connect(self.expand_children)
+        self.bottom_collapse_expand_button.isCollapsed = bottom_collapsed
         # position the bottom button at the bottom-center of the node
         button_x = self.x - (self.bottom_collapse_expand_button.boundingRect().width() / 2)
         button_y = self.y + self.total_height / 2 - (self.bottom_collapse_expand_button.boundingRect().height() / 2)
@@ -147,12 +155,16 @@ class Node(QGraphicsItem):
         if not self.children:
             self.bottom_collapse_expand_button.hide()
         # create the top collapse/expand button for this node
+        if self.top_collapse_expand_button:
+            top_collapsed = self.top_collapse_expand_button.isCollapsed
+        else:
+            top_collapsed = False
         self.top_collapse_expand_button = CollapseExpandButton(self)
         self.top_collapse_expand_button.setParentItem(self)
-        self.top_collapse_expand_button.setZValue(1)
         self.top_collapse_expand_button.collapse.connect(self.collapse_upwards)
         self.top_collapse_expand_button.expand.connect(self.expand_upwards)
-        if not self.parentItem():
+        self.top_collapse_expand_button.isCollapsed = top_collapsed
+        if self.scene.root_ui_node == self or self.scene.reconnecting_node == self:
             self.top_collapse_expand_button.hide()
         # position the top button at the top-center of the node
         button_x = self.x - (self.top_collapse_expand_button.boundingRect().width() / 2)
@@ -270,6 +282,8 @@ class Node(QGraphicsItem):
         # show the expand/collapse button when the first child is added
         if not self.bottom_collapse_expand_button.isVisible():
             self.bottom_collapse_expand_button.show()
+        if not child.top_collapse_expand_button.isVisible():
+            child.top_collapse_expand_button.show()
 
     def moveBy(self, x, y):
         super(Node, self).moveBy(x, y)
@@ -321,48 +335,62 @@ class Node(QGraphicsItem):
     def rect(self):
         return self._rect
 
+    def detach_from_parent(self):
+        if not self.parentItem() or not self.parentItem().parentItem():
+            Node.logger.error("The node can't detach from parent, no parent")
+            return
+        # store attach data used to restore the state when attaching
+        xpos, ypos = self.xpos(), self.ypos()
+        root_item = self.scene.root_ui_node
+        parent_edge = self.parentItem()
+        parent_node = self.parentItem().parentItem()
+        attach_data = {
+            "abs_pos": QPointF(xpos, ypos),
+            "old_parent": parent_node,
+            "top_level_item": self.topLevelItem(),
+        }
+        # disconnect and remove parent edge
+        self.setParentItem(None)
+        parent_node.children.remove(self)
+        parent_node.edges.remove(parent_edge)
+        parent_edge.setParentItem(None)
+        self.scene.removeItem(parent_edge)
+        # move node to retain correct position
+        self.setPos(0, 0)
+        move_x = xpos - root_item.xpos() - (self.scene.node_init_pos[0] - root_item.xpos())
+        move_y = ypos - root_item.ypos() - (self.scene.node_init_pos[1] - root_item.ypos())
+        self.moveBy(move_x, move_y)
+        return attach_data
+
+    def attach_to_parent(self, data, parent=None):
+        if not parent:
+            parent = data['old_parent']
+        new_abs_pos = QPointF(self.xpos(), self.ypos())
+        # reset parent item
+        e = Edge(parent, self)
+        e.setParentItem(parent)
+        parent.children.append(self)
+        parent.edges.append(e)
+        parent.sort_children()
+        parent_abs_pos = QPointF(parent.xpos(), parent.ypos())
+        # reset relative position to parent
+        self.setPos(new_abs_pos - parent_abs_pos)
+
     def collapse_upwards(self):
         """
         Collapses the tree upwards only displaying this node and its children
         :return:
         """
-        # store collapse data used to restore the state when expanding
-        self.collapse_data = {
-            "abs_pos": (self.xpos(), self.ypos()),
-            "rel_pos": self.pos(),
-            "abs_top_level_pos": QPointF(self.topLevelItem().xoffset(), self.topLevelItem().yoffset()),
-            "parent": self.parentItem(),
-            "top_level_item": self.topLevelItem(),
-            "root_item": self.scene.root_ui_node
-        }
-        # disconnect parent this prevents the node from being hidden
-        self.setParentItem(None)
-        # move node to retain correct position
-        self.setPos(0, 0)
-        move_x = self.collapse_data["abs_pos"][0] - (self.collapse_data["root_item"].xpos()) - \
-            (self.scene.node_init_pos[0] - self.collapse_data["root_item"].xpos())
-        move_y = self.collapse_data["abs_pos"][1] - self.collapse_data["root_item"].ypos() - \
-            (self.scene.node_init_pos[1] - self.collapse_data["root_item"].ypos())
-        self.moveBy(move_x, move_y)
+        self.expand_data = self.detach_from_parent()
         # hide parent nodes
-        self.collapse_data['top_level_item'].hide()
+        self.expand_data['top_level_item'].hide()
 
     def expand_upwards(self):
         """
         Expands the tree upwards displaying all expanded parent nodes
         :return:
         """
-        new_abs_pos = QPointF(self.xoffset(), self.yoffset())
-        top_level_item = self.collapse_data['top_level_item']
-        new_abs_top_level_pos = QPointF(top_level_item.xoffset(), top_level_item.yoffset())
-        # reset parent item
-        self.setParentItem(self.collapse_data['parent'])
-        # reset relative position to parent
-        self.setPos(self.collapse_data['rel_pos'] + (
-                (new_abs_pos - QPointF(*self.collapse_data['abs_pos'])) -
-                (new_abs_top_level_pos - self.collapse_data['abs_top_level_pos'])
-            )
-        )
+        self.attach_to_parent(self.expand_data)
         # show expanded parent nodes
         self.topLevelItem().show()
 
@@ -462,6 +490,12 @@ class Node(QGraphicsItem):
         # remove node from internal tree structure
         del self.scene.gui.tree.nodes[self.model_node.id]
 
+    def reconnect_edge(self):
+        if not self.parentItem():
+            Node.logger.error("The edge trying to reconnext does not exist.")
+        else:
+            self.scene.start_reconnect_edge(self)
+
     def mousePressEvent(self, m_event):
         """
         Handles a mouse press on a node
@@ -499,6 +533,11 @@ class Node(QGraphicsItem):
 
     def contextMenuEvent(self, menu_event):
         menu = QMenu()
+        reconnect_edge_action = QAction("Reconnect Edge")
+        parent_exists = True if self.parentItem() else False
+        reconnect_edge_action.setEnabled(parent_exists)
+        reconnect_edge_action.triggered.connect(self.reconnect_edge)
+        menu.addAction(reconnect_edge_action)
         delete_node_action = QAction("Delete Node")
         delete_node_action.setShortcut('Ctrl+D')
         delete_node_action.setToolTip('Delete node and all its children.')
@@ -520,6 +559,7 @@ class Edge(QGraphicsLineItem):
         self.end_node = end_node
         super(Edge, self).__init__(*self.get_position())
         end_node.setParentItem(self)
+        self.setFlag(QGraphicsItem.ItemStacksBehindParent)
 
     def get_position(self):
         """
@@ -578,6 +618,7 @@ class CollapseExpandButton(QGraphicsObject):
         :param parent: The parent node where the button belongs to
         """
         self.node = parent
+        self.scene = self.node.scene
         # TODO: Use a global resource directory
         self.expand_icon = QPixmap("view/icon/expand.png")
         self.collapse_icon = QPixmap("view/icon/collapse.png")

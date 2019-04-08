@@ -1,6 +1,6 @@
 import math
 
-from PyQt5.QtCore import QRectF, Qt
+from PyQt5.QtCore import QRectF, Qt, QPoint
 from PyQt5.QtWidgets import QGraphicsScene, QGraphicsLineItem
 
 from model.tree import Tree
@@ -9,7 +9,6 @@ from view.elements import Node as ViewNode, CollapseExpandButton
 
 
 class TreeScene(QGraphicsScene):
-
     NODE_X_OFFSET = 100
     NODE_Y_OFFSET = 100
     ZOOM_SENSITIVITY = 0.05
@@ -39,6 +38,9 @@ class TreeScene(QGraphicsScene):
         self.connecting_line = None
         # Indicates the node being dragged
         self.dragging_node = None
+        # Position data for node reconnection
+        self.reconnecting_node = None
+        self.reconnect_edge_data = None
         # start position of every node
         self.node_init_pos = None
         # root of the tree
@@ -251,46 +253,52 @@ class TreeScene(QGraphicsScene):
         Handles a mouse press on the scene
         :param m_event: The mouse press event and its details
         """
-        super(TreeScene, self).mousePressEvent(m_event)
         item = self.itemAt(m_event.scenePos(), self.view.transform())
         if self.adding_node:
             x = int(m_event.scenePos().x())
             y = int(m_event.scenePos().y())
             self.start_node_addition(x, y)
             self.adding_node = None
+            return
         elif self.connecting_node:
-            if isinstance(item, ViewNode) or isinstance(item.parentItem(), ViewNode):
+            if item and (isinstance(item, ViewNode) or (item.parentItem() and isinstance(item.parentItem(), ViewNode))):
                 clicked_node = item if isinstance(item, ViewNode) else item.parentItem()
-                self.finish_node_addition(clicked_node)
-                self.connecting_node = None
-                self.connecting_line = None
+                if clicked_node == self.connecting_node:
+                    return
+                self.finish_connect_edge(clicked_node)
+                return
+        elif self.reconnecting_node:
+            if item and (isinstance(item, ViewNode) or (item.parentItem() and isinstance(item.parentItem(), ViewNode))):
+                clicked_node = item if isinstance(item, ViewNode) else item.parentItem()
+                if clicked_node == self.reconnecting_node:
+                    return
+                self.finish_reconnect_edge(clicked_node)
+                return
         else:
             if m_event.button() == Qt.LeftButton and item:
                 if isinstance(item, CollapseExpandButton):
-                    return
-                if isinstance(item, ViewNode):
+                    pass
+                elif isinstance(item, ViewNode):
                     self.dragging_node = item
                     item.dragging = True
-                    return
-                if isinstance(item.parentItem(), ViewNode):
+                elif isinstance(item.parentItem(), ViewNode):
                     self.dragging_node = item.parentItem()
                     item.parentItem().dragging = True
-                    return
-                if item.parentItem():
+                elif item.parentItem():
                     if isinstance(item.parentItem().parentItem(), ViewNode):
                         self.dragging_node = item.parentItem().parentItem()
                         item.parentItem().parentItem().dragging = True
-                return
             # Remove property display window and save changes
-            if self.view.parent().property_display is not None:
+            elif self.view.parent().property_display is not None:
                 self.view.parent().property_display.update_properties()
                 self.view.parent().property_display.setParent(None)
                 self.view.parent().property_display.deleteLater()
                 self.view.parent().property_display = None
             # Set dragging state of the scene
-            if m_event.button() == Qt.LeftButton:
+            elif m_event.button() == Qt.LeftButton:
                 self.dragging = True
                 self.view.setCursor(Qt.ClosedHandCursor)
+        super(TreeScene, self).mousePressEvent(m_event)
 
     def mouseReleaseEvent(self, m_event):
         """
@@ -319,9 +327,9 @@ class TreeScene(QGraphicsScene):
             self.dragging_node.mouseMoveEvent(m_event)
             return
         # adjust connection line when connecting node
-        if self.connecting_node:
+        if self.connecting_line:
             line = self.connecting_line.line()
-            line.setP2(m_event.scenePos())
+            line.setP2(m_event.scenePos() - QPoint(-1, 1))
             self.connecting_line.setLine(line)
         # pass mouse move event to top item that accepts hover events
         item = self.itemAt(m_event.scenePos(), self.view.transform())
@@ -369,16 +377,18 @@ class TreeScene(QGraphicsScene):
         # create node based on model node
         node = ViewNode(*self.node_init_pos, scene=self, model_node=self.adding_node, title=self.adding_node.title,
                         node_types=self.gui.load_node_types)
+        node.top_collapse_expand_button.hide()
         self.nodes[self.adding_node.id] = node
         # adjust to correct position
         node.moveBy(x - self.node_init_pos[0], y - self.node_init_pos[1])
+        self.addItem(node)
         self.addItem(node)
         # initiate connection state if tree has a root
         if self.gui.tree and self.gui.tree.root != '':
             self.connecting_node = node
             self.connecting_line = QGraphicsLineItem(x, y - node.rect().height() / 2, x, y)
             # keep connection line on top
-            self.connecting_line.setZValue(-1)
+            self.connecting_line.setZValue(1)
             self.addItem(self.connecting_line)
         else:
             # top root node can not collapse upwards
@@ -389,16 +399,22 @@ class TreeScene(QGraphicsScene):
             # reset back to normal cursor
             self.app.restoreOverrideCursor()
 
-    def finish_node_addition(self, parent_node):
+    def finish_connect_edge(self, parent_node):
+        # add node to model of the tree
+        if self.connecting_node.model_node.id not in self.gui.tree.nodes:
+            self.gui.tree.add_node(self.connecting_node.model_node)
+            # check for cycles in subtree
+        elif TreeScene.check_for_cycles_when_connecting(self.connecting_node.model_node,
+                                                        parent_node.model_node, self.gui.tree):
+            return
         # remember current node position
         node_pos = (self.connecting_node.xpos(), self.connecting_node.ypos())
         # add child to parent ViewNode
         parent_node.add_child(self.connecting_node)
+
         # move node back to original position
         self.connecting_node.moveBy(node_pos[0] - self.connecting_node.xpos(),
                                     node_pos[1] - self.connecting_node.ypos())
-        # add node to model of the tree
-        self.gui.tree.add_node(self.connecting_node.model_node)
         # sort the children in the UI and get correct model node order
         sorted_children = parent_node.sort_children()
         # set correct child order
@@ -409,3 +425,41 @@ class TreeScene(QGraphicsScene):
         self.app.restoreOverrideCursor()
         # remove reset cursor filter (cursor already reset)
         self.app.removeEventFilter(self.app.wait_for_click_filter)
+        self.connecting_node = None
+        self.connecting_line = None
+
+    def start_reconnect_edge(self, node):
+        self.reconnecting_node = node
+        self.connecting_line = QGraphicsLineItem(node.xpos(), node.ypos() - node.rect().height() / 2,
+                                                 node.xpos(), node.ypos())
+        self.connecting_line.setZValue(1)
+        self.addItem(self.connecting_line)
+        self.reconnect_edge_data = node.detach_from_parent()
+        self.gui.tree.nodes[self.reconnect_edge_data['old_parent'].id].children.remove(node.id)
+        node.top_collapse_expand_button.hide()
+        self.app.add_cross_cursor(self)
+
+    def finish_reconnect_edge(self, parent_node):
+        if TreeScene.check_for_cycles_when_connecting(self.reconnecting_node.model_node,
+                                                      parent_node.model_node, self.gui.tree):
+            return
+        self.reconnecting_node.attach_to_parent(self.reconnect_edge_data, parent_node)
+        self.reconnecting_node.top_collapse_expand_button.show()
+        sorted_children = parent_node.sort_children()
+        self.gui.tree.nodes[parent_node.id].children = [c.id for c in sorted_children]
+        self.removeItem(self.connecting_line)
+        # reset back to normal cursor
+        self.app.restoreOverrideCursor()
+        # remove reset cursor filter (cursor already reset)
+        self.app.removeEventFilter(self.app.wait_for_click_filter)
+        self.reconnecting_node = None
+        self.reconnect_edge_data = None
+
+    @staticmethod
+    def check_for_cycles_when_connecting(subtree_node, parent_node: ModelNode, tree: Tree) -> bool:
+        cycles = False
+        cycles |= True if parent_node.id is subtree_node.id else False
+        cycles |= True if parent_node.id in subtree_node.children else False
+        for child_id in subtree_node.children:
+            cycles |= TreeScene.check_for_cycles_when_connecting(tree.nodes.get(child_id), parent_node, tree)
+        return cycles
