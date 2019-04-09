@@ -71,6 +71,7 @@ class MainWindow(QMainWindow):
         self.load_collection: Collection = None
         self.load_node_types: NodeTypes = None
         self.load_tree = None
+        self.collection = None
         # details about the tree currently shown
         # at start no tree is shown
         self.tree = None
@@ -161,12 +162,12 @@ class MainWindow(QMainWindow):
             errors = self.load_collection.verify_tree(self.tree, self.category)
             if len(errors) == 0:
                 save = Dialogs.yes_no_cancel_message_box('Unsaved changes',
-                                                         'There are some unsaved changes, do you want to save them?')
+                                                         'There are some unsaved changes, do you want to save it?')
 
             else:
                 save = Dialogs.yes_no_cancel_message_box('Unsaved changes',
                                                          'The tree currently is invalid and cannot be used '
-                                                         'by the simulator. Do you want to save them?')
+                                                         'by the simulator. Do you want to save it?')
             if save is DialogEnum.Yes:
                 if len(errors) == 0:
                     self.main_listener.write_tree_signal.emit(self.category, self.filename, self.tree)
@@ -174,13 +175,50 @@ class MainWindow(QMainWindow):
         # empty list as errors, as the errors are only relevant when saving
         return DialogEnum.No, []
 
+    def check_unsaved_changes_collection(self) -> Tuple[DialogEnum, List[str]]:
+        """
+        Method that checks for unsaved changes in the collection. Asks for yes, no, cancel
+        :return DialogEnum: Which button was clicked
+        :return errors: the errors while verifying before saving
+                """
+        if not self.load_collection:
+            # empty list as errors, as the errors are only relevant when saving
+            return DialogEnum.No, []
+        elif self.load_collection != self.collection:
+            errors = []
+            for category, trees in self.collection.collection.items():
+                for filename, tree in trees.items():
+                    # todo disable only mathematical properties when errors are fixed
+                    errors.extend(self.collection.verify_tree(tree, category, only_check_mathematical_properties=True))
+            if len(errors) == 0:
+                save = Dialogs.yes_no_cancel_message_box('Unsaved changes',
+                                                         'There are some unsaved changes in the collection, '
+                                                         'do you want to save them?')
+
+            else:
+                save = Dialogs.yes_no_cancel_message_box('Unsaved changes',
+                                                         'The collection has errors and might not be able to be used '
+                                                         'by the simulator. Do you want to save them?')
+            if save is DialogEnum.Yes:
+                if len(errors) == 0:
+                    self.main_listener.write_collection_signal.emit()
+            return save, errors
+        # empty list as errors, as the errors are only relevant when saving
+        return DialogEnum.No, []
+
+    def update_tree(self):
+        """
+        Method that needs to be called when updating self.tree. Will automatically run the verification
+        """
+        self.toolbar_widget.verify_tree()
+
     def closeEvent(self, event):
         """
         Event that is called when closing the window
         check for unsaved changes
         :param event: the event
         """
-        save, errors = self.check_unsaved_changes()
+        save, errors = self.check_unsaved_changes_collection()
         if save is DialogEnum.Cancel:
             event.ignore()
             return
@@ -217,7 +255,7 @@ class MenuBar:
         # collection actions
         self.open_collection_act = QAction('Open', self.main_window)
         self.open_collection_act.setShortcut('Ctrl+O')
-        self.open_collection_act.setStatusTip('Open JSOn files Collection folder')
+        self.open_collection_act.setStatusTip('Open JSON files Collection folder')
         self.open_collection_act.triggered.connect(self.open_collection_custom_path)
 
         self.save_collection_as_act = QAction('Save as', self.main_window)
@@ -325,7 +363,7 @@ class MenuBar:
         """
         opens a tree from the collection and show it on screen
         """
-        tree = self.main_window.load_collection.collection.get(category).get(filename)
+        tree = self.main_window.collection.collection.get(category).get(filename)
         self.main_window.close_tree()
         self.main_window.show_tree(category, filename, tree)
 
@@ -357,14 +395,6 @@ class MenuBar:
         # do a call to the controller to write the collection
         if path is not None:
             self.main_window.main_listener.write_collection_custom_path_signal.emit(path)
-
-    def open_tree_from_collection(self, category: str, filename: str):
-        """
-        Emit signal to open tree from collection
-        :param category: the category of the tree
-        :param filename: the filename of the tree
-        """
-        self.main_window.main_listener.open_tree_from_collection_signal.emit(category, filename)
 
     def save_tree(self):
         """
@@ -792,7 +822,6 @@ class SettingsDialog(QDialog):
     def ok(self):
         """
         Applies the settings and closes the window
-        :return:
         """
         self.apply()
         self.accept()

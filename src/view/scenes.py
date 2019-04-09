@@ -382,7 +382,6 @@ class TreeScene(QGraphicsScene):
         # adjust to correct position
         node.moveBy(x - self.node_init_pos[0], y - self.node_init_pos[1])
         self.addItem(node)
-        self.addItem(node)
         # initiate connection state if tree has a root
         if self.gui.tree and self.gui.tree.root != '':
             self.connecting_node = node
@@ -394,18 +393,14 @@ class TreeScene(QGraphicsScene):
             # top root node can not collapse upwards
             node.top_collapse_expand_button.hide()
             # add root to model of the tree
-            self.gui.tree.add_node(node.model_node)
             self.gui.tree.root = node.model_node.id
             # reset back to normal cursor
             self.app.restoreOverrideCursor()
 
     def finish_connect_edge(self, parent_node):
-        # add node to model of the tree
-        if self.connecting_node.model_node.id not in self.gui.tree.nodes:
-            self.gui.tree.add_node(self.connecting_node.model_node)
-            # check for cycles in subtree
-        elif TreeScene.check_for_cycles_when_connecting(self.connecting_node.model_node,
-                                                        parent_node.model_node, self.gui.tree):
+        # check for cycles in subtree
+        if TreeScene.check_for_cycles_when_connecting(self.connecting_node.model_node,
+                                                      parent_node.model_node, self.gui.tree):
             return
         # remember current node position
         node_pos = (self.connecting_node.xpos(), self.connecting_node.ypos())
@@ -427,6 +422,7 @@ class TreeScene(QGraphicsScene):
         self.app.removeEventFilter(self.app.wait_for_click_filter)
         self.connecting_node = None
         self.connecting_line = None
+        self.gui.update_tree()
 
     def start_reconnect_edge(self, node):
         self.reconnecting_node = node
@@ -454,6 +450,7 @@ class TreeScene(QGraphicsScene):
         self.app.removeEventFilter(self.app.wait_for_click_filter)
         self.reconnecting_node = None
         self.reconnect_edge_data = None
+        self.gui.update_tree()
 
     @staticmethod
     def check_for_cycles_when_connecting(subtree_node, parent_node: ModelNode, tree: Tree) -> bool:

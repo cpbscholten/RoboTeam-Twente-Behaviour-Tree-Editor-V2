@@ -65,7 +65,6 @@ class TestNode(object):
         node.add_child("4")
         assert ["2", "3", "4"] == node.children
 
-        # TODO add boolean checks for removes
     def test_remove_child_existent(self):
         node = Node.from_json(self.node_attributes_children_json)
         node.remove_child("2")
@@ -104,6 +103,18 @@ class TestNode(object):
         node.add_property("c", "1")
         assert {"b": False, "c": "1"} == node.attributes.get("properties")
 
+    def test_update_properties(self):
+        node = Node.from_json(self.node_attributes_no_children_json)
+        node.update_properties({"b": 'false'})
+        assert 'properties' in node.attributes
+        assert 'b' in node.attributes['properties']
+        assert 'false' is node.attributes['properties']['b']
+        node.update_properties({})
+        assert 'properties' not in node.attributes
+        node = Node.from_json(self.node_attributes_no_children_json)
+        node.update_properties({})
+        assert 'properties' not in node.attributes
+
     def test_remove_property(self):
         node = Node.from_json(self.node_attributes_children_json)
         assert "properties" not in node.attributes
@@ -124,6 +135,7 @@ class TestNode(object):
     def test_str(self):
         node = Node('b', 'a', {'a': "b"}, ["c"])
         assert str(node) == str(node.create_json())
+        assert repr(node) == str(node)
 
 
 class TestTree(object):
@@ -210,7 +222,6 @@ class TestTree(object):
         assert "1"in tree.nodes.keys()
 
     def test_remove_node(self):
-        # TODO add boolean checks for removes
         tree = Tree.from_json(self.tree_dance_strategy)
         assert True is tree.remove_node(tree.nodes.get("sftlsc94h3q1p"))
         assert "sftlsc94h3q1p" not in tree.nodes.keys()
@@ -218,6 +229,51 @@ class TestTree(object):
         tree = Tree.from_json(self.tree_dance_strategy)
         assert True is tree.remove_node(tree.nodes.get(tree.root))
         assert tree.root == ''
+
+    def test_add_subtree(self):
+        tree = Tree.from_json(self.tree_simple_tree)
+        subtree = Tree.from_json(self.tree_demo_twente_strategy)
+        main_node = tree.nodes.get('1')
+        tree.add_subtree(subtree, main_node.id)
+        assert len(main_node.children) == 1
+        repeater_node = tree.nodes.get(main_node.children[0])
+        assert repeater_node.title == 'Repeater'
+        assert len(repeater_node.children) == 1
+        parallel_sequence_node = tree.nodes.get(repeater_node.children[0])
+        assert 'ParallelSequence' == parallel_sequence_node.title
+        assert 2 == len(parallel_sequence_node.children)
+
+    def test_update_subtree(self):
+        tree = Tree.from_json(self.tree_demo_twente_strategy)
+        subtree = Tree.from_json(self.tree_simple_tree)
+        tree.update_subtree(subtree, tree.root, subtree.root)
+        assert 2 == len(tree.nodes)
+        tree.update_subtree(subtree, tree.root)
+        assert 2 == len(tree.nodes)
+
+    def test_update_subtree_invalid(self):
+        tree = Tree.from_json(self.tree_demo_twente_strategy)
+        subtree = Tree.from_json(self.tree_simple_tree)
+        tree.update_subtree(subtree, 'abcd')
+        tree.update_subtree(subtree, tree.root, 'abcd')
+        assert 4 == len(tree.nodes)
+
+    def test_add_subtree_invalid(self):
+        tree = Tree.from_json(self.tree_simple_tree)
+        tree.add_subtree(tree, "abc")
+        tree.add_subtree(tree, tree.nodes.get(tree.root).id, "def")
+        assert 1 == len(tree.nodes)
+
+    def test_remove_subtree(self):
+        tree = Tree.from_json(self.tree_demo_twente_strategy)
+        tree.remove_subtree(tree.root)
+        assert list() == tree.nodes.get(tree.root).children
+        assert 1 == len(tree.nodes)
+
+    def test_remove_subtree_invalid(self):
+        tree = Tree.from_json(self.tree_demo_twente_strategy)
+        tree.remove_subtree('abcd')
+        assert 4 == len(tree.nodes)
 
     def test_remove_node_not_existent(self):
         tree = Tree.from_json(self.tree_dance_strategy)
@@ -232,6 +288,21 @@ class TestTree(object):
         tree = Tree.from_json(self.tree_dance_strategy)
         assert True is tree.remove_node_by_id(tree.root)
         assert tree.root == ''
+
+    def test_propagate_role(self):
+        tree = Tree.from_json(self.tree_demo_twente_strategy)
+        tree.propagate_role(tree.root, "t")
+        for node_id, node in tree.nodes.items():
+            if node_id != tree.root:
+                assert 'properties' in node.attributes
+                assert 'ROLE' in node.attributes['properties']
+                assert 't' in node.attributes['properties']['ROLE']
+
+    def test_propagate_role_invalid(self):
+        tree = Tree.from_json(self.tree_demo_twente_strategy)
+        tree.propagate_role("abcd", "t")
+        for node_id, node in tree.nodes.items():
+            assert 'properties' not in node.attributes
 
     def test_remove_node_by_id_not_existent(self):
         tree = Tree.from_json(self.tree_dance_strategy)
@@ -268,6 +339,7 @@ class TestTree(object):
     def test_str(self):
         tree = Tree.from_json(self.tree_simple_tree)
         assert str(tree.create_json()) == str(tree)
+        assert str(tree.create_json()) == repr(tree)
 
 
 class TestCollection(object):
@@ -321,7 +393,7 @@ class TestCollection(object):
     def test_write_collection_default_path1(self, tmpdir):
         def_path = Settings.default_json_folder()
         Settings.alter_default_json_folder(tmpdir)
-        collection = Collection.from_path(verify=False)
+        collection = Collection.from_path()
         collection.write_collection()
         read = Collection.from_path(tmpdir)
         Settings.alter_default_json_folder(def_path)
@@ -330,16 +402,15 @@ class TestCollection(object):
         read.path = None
         assert collection == read
 
-    #TODO: Comment back in
-    # def test_write_collection_default_path2(self, tmpdir):
-    #     collection = Collection.from_path(verify=False)
-    #     collection.path = tmpdir
-    #     collection.write_collection()
-    #     read = Collection.from_path(tmpdir, verify=False)
-    #     # sets path equal, so objects are equal
-    #     collection.path = None
-    #     read.path = None
-    #     assert collection == read
+    def test_write_collection_default_path2(self, tmpdir):
+        collection = Collection.from_path()
+        collection.path = tmpdir
+        collection.write_collection()
+        read = Collection.from_path(tmpdir)
+        # sets path equal, so objects are equal
+        collection.path = None
+        read.path = None
+        assert collection == read
 
     def test_write_collection_new_file(self, tmpdir):
         collection = Collection.from_path(self.path)
@@ -401,6 +472,11 @@ class TestCollection(object):
         collection.remove_tree_by_name('roles', "Assister")
         assert "Assister.json" not in collection.collection.get('roles')
 
+    def test_get_tree_by_name(self):
+        collection = Collection.from_path(self.path)
+        assert None is collection.get_tree_by_name('abcdefgh')
+        assert collection.get_tree_by_name('Assister') == TestCollection.assister_role
+
     def test_remove_tree_by_name_dir_not_exists(self):
         collection = Collection.from_path(self.path)
         collection.remove_tree_by_name("test", "Assister")
@@ -450,7 +526,7 @@ class TestCollection(object):
         assert result is None
 
     def test_verify_trees(self):
-        collection = Collection.from_path(Settings.default_json_folder(), verify=False)
+        collection = Collection.from_path(Settings.default_json_folder(), only_verify_mathematical_properties=False)
         for category in collection.collection:
             for file in collection.collection[category]:
                 # TODO: Remove this if else after we figure out what to do with 2 children under decorator
@@ -704,3 +780,4 @@ class TestNodeTypes:
     def test_str(self):
         node_types = NodeTypes.from_csv()
         assert str(node_types.node_types) == str(node_types)
+        assert repr(node_types) == str(node_types)

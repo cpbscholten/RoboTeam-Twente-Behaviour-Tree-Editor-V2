@@ -1,3 +1,4 @@
+import logging
 from functools import partial
 
 from PyQt5 import QtWidgets
@@ -12,7 +13,7 @@ import view.elements
 from controller.utils import singularize, capitalize
 from model.tree import NodeTypes, Node
 
-from typing import Dict, Any, Tuple, List
+from typing import Dict, Any, Tuple
 
 
 class NodeTypesWidget(QWidget):
@@ -42,7 +43,7 @@ class NodeTypesWidget(QWidget):
         # button for creating a new custom node type
         self.create_node_button = QPushButton('New Node', self)
         self.create_node_button.setShortcut('Ctrl+N')
-        self.setToolTip('Create a new custom node. Shortcut: Ctrl+N')
+        self.create_node_button.setToolTip('Create a new custom node. Shortcut: Ctrl+N')
         self.create_node_button.clicked.connect(self.create_node_button_clicked)
         self.layout.addWidget(self.create_node_button)
 
@@ -116,6 +117,7 @@ class NodeTypesWidget(QWidget):
         if title is not None or '':
             node = Node(title)
             self.add_node_to_view(node)
+            # todo correctly display subtree
 
     def node_from_selected_type(self):
         """
@@ -141,13 +143,18 @@ class NodeTypesWidget(QWidget):
         # special case for rules, which are defined differently as subtrees as other trees
         if category_singular == 'Role':
             node.attributes['properties'] = {'ROLE': tree.name}
-        self.add_node_to_view(node)
+            node.attributes['role'] = tree.name
+            self.add_node_to_view(node)
+            self.gui.tree.add_subtree(self.gui.load_collection.collection.get('roles').get(filename), node.id)
+        else:
+            self.add_node_to_view(node)
 
     def add_node_to_view(self, node):
         # transfer new node to the scene
         scene = self.gui.tree_view_widget.graphics_scene
         # setting this attribute starts node addition sequence in the scene
         scene.adding_node = node
+        self.gui.tree.add_node(node)
         # set special cursor for node addition
         self.app.add_cross_cursor(scene)
 
@@ -401,7 +408,6 @@ class ToolbarWidget(QWidget):
         Slot that checks a tree when the verify button has been clicked
         :param message: If a dialog should be shown, or only update the checkmark
         """
-        # todo auto update checkmark when changes to self.tree are done
         collection = self.gui.load_collection
         tree = self.gui.tree
         category = self.gui.category
@@ -430,7 +436,7 @@ class TreeViewPropertyDisplay(QWidget):
     """
     Widget for viewing and editing properties of a node
     """
-
+    logger = logging.getLogger('TreeViewPropertyDisplay')
     Y_OFFSET = 10
     X_OFFSET = 10
 
@@ -444,6 +450,8 @@ class TreeViewPropertyDisplay(QWidget):
         :param node_title: Title of the node to be displayed
         """
         super(TreeViewPropertyDisplay, self).__init__(parent, Qt.Widget)
+
+        # set enabled to false to prevent a flicker
         self.scene = scene
         self.layout = QGridLayout(self)
         self.attributes = attributes
@@ -460,7 +468,6 @@ class TreeViewPropertyDisplay(QWidget):
         background = QtWidgets.QApplication.instance().palette().brush(QPalette.Background).color()
         palette.setColor(self.backgroundRole(), background)
         self.setPalette(palette)
-        self.show()
 
         # Add buttons for saving and adding new properties and set some small margins so the buttons have space
         self.add_property_button = QPushButton("Add Property")
@@ -470,6 +477,9 @@ class TreeViewPropertyDisplay(QWidget):
 
         # resize the widget, so it will be placed at the correct location
         self.resize()
+
+        # show at the end before resizing to prevent a flicker
+        self.show()
 
     def resize(self):
         """
@@ -499,42 +509,34 @@ class TreeViewPropertyDisplay(QWidget):
         Update the properties of the node according to the properties in the property display window
         :return: Nothing
         """
-        # TODO: Add logging if two entries have the same key
-        properties = []
+        properties = {}
         # Skip variable indicates if we're at the first entry of our rows or not.
         skip = False
         for item_index in range(0, self.layout.count()):
             if isinstance(self.layout.itemAt(item_index).widget(), QLineEdit):  # If it's an editable property
                 if not skip:
                     skip = True
-                    properties.append((self.layout.itemAt(item_index).widget().text(),
-                                       self.layout.itemAt(item_index + 1).widget().text()))
+                    key = self.layout.itemAt(item_index).widget().text()
+                    value = self.layout.itemAt(item_index + 1).widget().text()
+                    if key in properties.keys():
+                        TreeViewPropertyDisplay.logger.warning('There are two properties with key {}. '
+                                                               'The first one will be stored.'.format(key))
+                    properties[key] = value
                 else:
                     skip = False
                     pass
         root_window = self.scene.gui
-        node_to_update = root_window.tree.nodes[self.node_id]
-        if len(properties) > 0:
-            node_to_update.attributes["properties"] = {}
-            for node_property in properties:
-                node_to_update.add_property(node_property[0], node_property[1])
-                if node_property[0] == "ROLE":
-                    self.propagate_role(self.node_id, node_property[1])
+        node_to_update: Node = root_window.tree.nodes[self.node_id]
+        # remove empty line property
+        if '' in properties.keys():
+            properties.pop('')
+        # optional propagate ROLE
+        if "ROLE" in properties.keys():
+            self.scene.gui.tree.propagate_role(self.node_id, properties.get("ROLE"))
+        node_to_update.update_properties(properties)
         self.scene.nodes[self.node_id].model_node.attributes = node_to_update.attributes
+        self.scene.gui.update_tree()
         self.scene.nodes[self.node_id].initiate_view()
-
-    def propagate_role(self, current_node_id: str, to_propagate: str):
-        """
-        Function to recursively go through children to propagate ROLE property.
-        :param current_node_id: id of the current node.
-        :param to_propagate: the value of the ROLE property to propagate
-        """
-        root_window = self.scene.gui
-        children = root_window.tree.nodes[current_node_id].children
-        for child in children:
-            current_child = root_window.tree.nodes[child]
-            current_child.add_property("ROLE", to_propagate)
-            self.propagate_role(child, to_propagate)
 
     def remove_rows(self):
         """

@@ -2,6 +2,7 @@ import logging
 import os
 import random
 import string
+from copy import deepcopy
 from pathlib import Path
 from typing import Dict, Any, List, Tuple, Union
 
@@ -125,6 +126,19 @@ class Node:
             return
         self.attributes.get("properties").pop(key)
 
+    def update_properties(self, properties: Dict[str, str]):
+        """
+        Helper method to update properties of a node to a given dict
+        :param properties: the list to update properties to
+        """
+        if len(properties) > 0:
+            self.attributes["properties"] = {}
+            for key, value in properties.items():
+                self.add_property(key, value)
+        elif "properties" in self.attributes:
+            # remove properties if an empty list is encountered
+            self.attributes.pop('properties')
+
     def properties(self) -> Union[Dict[str, Any], None]:
         """
         Returns the properties dictionary in attributes if it exists
@@ -155,9 +169,9 @@ class Node:
         return (isinstance(other, self.__class__)
                 and self.__dict__ == other.__dict__)
 
-    def __str__(self):
+    def __repr__(self):
         """
-        string representation of the node
+        Internal representation of the object
         """
         return str(self.create_json())
 
@@ -313,6 +327,63 @@ class Tree:
         self.nodes.pop(node_id)
         return True
 
+    def add_subtree(self, tree, node_id: str, start_node_id: str=None):
+        """
+        Adds a subtree recursively to the tree below a specified node
+        :param tree: the subtree to add
+        :param node_id: the id of the node to add the subtree below
+        :param start_node_id: optional specify the starting root node of the tree to add
+        """
+        if node_id not in self.nodes.keys():
+            Tree.logger.error("Node {} from subtree {} to does not exist".format(node_id, tree.name))
+            return
+        if start_node_id and start_node_id not in tree.nodes.keys():
+            Tree.logger.error("Node {} from subtree {} does not exist".format(start_node_id, tree.name))
+            return
+        if start_node_id is None:
+            start_node_id = tree.root
+        node = self.nodes.get(node_id)
+        subtree_node: Node = tree.nodes.get(start_node_id)
+        copy_subtree_node: Node = deepcopy(subtree_node)
+        copy_subtree_node.id = Node.generate_id()
+        copy_subtree_node.children = list()
+        self.add_node(copy_subtree_node)
+        node.add_child(copy_subtree_node.id)
+        for child_id in subtree_node.children:
+            self.add_subtree(tree, copy_subtree_node.id, child_id)
+
+    def update_subtree(self, tree, node_id: str, start_node_id: str=None):
+        """
+        Method that updates the subtree below a specified node to a given subtree
+        :param tree: the tree containing the subtree
+        :param node_id: the node to replace the subtree below of
+        :param start_node_id: the id of the first node of the subtree
+        """
+        if node_id not in self.nodes.keys():
+            return Tree.logger.error("Node {} from subtree {} to does not exist".format(node_id, tree.name))
+        if start_node_id and start_node_id not in tree.nodes.keys():
+            return Tree.logger.error("Node {} from subtree {} does not exist".format(start_node_id, tree.name))
+        if start_node_id is None:
+            start_node_id = tree.root
+        self.remove_subtree(node_id)
+        self.add_subtree(tree, node_id, start_node_id)
+
+    def remove_subtree(self, node_id: str, first_run=True):
+        """
+        Removes all nodes recursively below a specified node
+        :param node_id: the nodes to remove below this node
+        :param first_run: If this is the first step or the recursive step
+        """
+        if node_id not in self.nodes.keys():
+            return Tree.logger.error("Node {} to delete subtree from does not exist".format(node_id))
+        node = self.nodes.get(node_id)
+        if len(node.children) > 0:
+            for child_id in node.children:
+                self.remove_subtree(child_id, first_run=False)
+            node.children = list()
+        if not first_run:
+            self.nodes.pop(node_id, None)
+
     def remove_node_and_children_by_id(self, node_id: str) -> bool:
         """
         Removes a node and all of its children recursively
@@ -327,11 +398,23 @@ class Tree:
             self.root = ''
         children = self.nodes.get(node_id).children
         success = True
-        if len(children) >= 0:
-            for child_id in children:
-                success &= self.remove_node_and_children_by_id(child_id)
+        for child_id in children:
+            success &= self.remove_node_and_children_by_id(child_id)
         self.nodes.pop(node_id, None)
         return success
+
+    def propagate_role(self, current_node_id: str, to_propagate: str):
+        """
+        Function to recursively go through children to propagate ROLE property.
+        :param current_node_id: id of the current node.
+        :param to_propagate: the value of the ROLE property to propagate
+        """
+        if current_node_id not in self.nodes:
+            return Tree.logger.error("Node with id {} does not exist in tree {}.".format(current_node_id, self.name))
+        for child_id in self.nodes[current_node_id].children:
+            current_child = self.nodes[child_id]
+            current_child.add_property("ROLE", to_propagate)
+            self.propagate_role(child_id, to_propagate)
 
     def create_json(self) -> Dict[str, Any]:
         """
@@ -346,9 +429,9 @@ class Tree:
         file = {"name": self.name, "data": {"trees": [tree]}}
         return file
 
-    def __str__(self) -> str:
+    def __repr__(self):
         """
-        String representation of the tree
+        internal representation
         """
         return str(self.create_json())
 
@@ -373,21 +456,23 @@ class Collection:
         self.collection: Dict[str, Dict[str, Tree]] = dict(collection) if collection is not None else {}
 
     @classmethod
-    def from_path(cls, path: Path=None, verify: bool=True):
+    def from_path(cls, path: Path=None, only_verify_mathematical_properties: bool=True):
         """
         Constructor creating a collection from a given location
         :param path: the path containing the directories with jsons
-        :param verify: boolean to tell if we should verify the tree while building the collection
+        :param only_verify_mathematical_properties: boolean to tell if
+                we should verify the tree while building the collection
         :return: the generated collection object
         """
         collection = cls(None, path)
-        collection.build_collection(path, verify)
+        collection.build_collection(path, only_verify_mathematical_properties)
         return collection
 
-    def build_collection(self, path: Path=None, verify: bool=True):
+    def build_collection(self, path: Path=None, only_verify_mathematical_properties: bool=True):
         """
         Reads all the json files in the first subdirectories and creates Tree objects from them
-        :param verify: boolean to tell if we should verify the tree while building the collection
+        :param only_verify_mathematical_properties: boolean to tell if we should
+                        verify the tree while building the collection
         :param path: the path of the main JSON folder
         """
         # set the path to the path specified in settings if None
@@ -422,10 +507,7 @@ class Collection:
                                 json_file: Dict[str, Any] = read_json(Path(sub_root) / file)
                                 tree: Tree = Tree.from_json(json_file)
                                 # Verify if the tree is valid
-                                if not verify:
-                                    collection[directory][file] = tree
-                                    continue
-                                elif len(self.verify_tree(tree)) == 0:
+                                if len(self.verify_tree(tree, None, only_verify_mathematical_properties)) == 0:
                                     collection[directory][file] = tree
                                 else:
                                     # say that tree x in folder y wasn't added
@@ -510,11 +592,18 @@ class Collection:
         Collection.logger.warning("The requested tree {} to be removed could not be found".format(name))
         return False
 
-    def get_tree_by_name(self, name: str) -> Tree:
+    def get_tree_by_name(self, name: str) -> Union[Tree, None]:
+        """
+        Returns the first tree with the corresponding name
+        :param name: the name of the tree to find
+        :return: the tree object
+        """
         for directory in self.collection.keys():
             for key, value in self.collection[directory].items():
                 if value.name == name:
                     return value
+        Collection.logger.warning('The requested tree {} does not exist'.format(name))
+        return None
 
     def verify_tree(self, tree, category=None, only_check_mathematical_properties=False) -> List[str]:
         """
@@ -551,15 +640,15 @@ class Collection:
                 if self.collection[category][tree].root == node:
                     return category
 
-    def write_tree(self, tree: Tree, path: Path, verify=False) -> List[str]:
+    def write_tree(self, tree: Tree, path: Path, only_verify_mathematical_properties=True) -> List[str]:
         """
         Method that writes a tree to a file
         :param tree: the tree to write
         :param path: the path to write to
-        :param verify: verify mathematical properties (False) or full verification (True)
+        :param only_verify_mathematical_properties: verify mathematical properties (False) or full verification (True)
         :return: a list with errors during writing of verification
         """
-        errors = self.verify_tree(tree, only_check_mathematical_properties=verify)
+        errors = self.verify_tree(tree, only_check_mathematical_properties=only_verify_mathematical_properties)
         if len(errors) == 0:
             try:
                 write_json(path, Tree.create_json(tree))
@@ -779,9 +868,9 @@ class NodeTypes:
         return (isinstance(other, self.__class__)
                 and self.node_types == other.node_types)
 
-    def __str__(self):
+    def __repr__(self):
         """
-        String representation of the node types class
+        internal representation
         """
         return str(self.node_types)
 
@@ -1059,7 +1148,7 @@ class Verification:
                         "a strategy node twice".format(tree.name, current_node)
                 Verification.logger.error(error)
                 errors.append(error)
-                raise errors
+                return errors
         elif current_node_category == "tactics" or tree.nodes[current_node].title == "Tactic":
             # We check if it's still false, because we can't pass the same node type twice.
             if passed_nodes[1] is False:
@@ -1069,7 +1158,7 @@ class Verification:
                         "encountered a tactic node twice".format(tree.name, current_node)
                 Verification.logger.error(error)
                 errors.append(error)
-                raise errors
+                return errors
         elif current_node_category == "roles" or tree.nodes[current_node].title == "Role":
             # We check if it's still false, because we can't pass the same node type twice.
             if passed_nodes[2] is False:

@@ -83,7 +83,7 @@ class Node(QGraphicsItem):
                 else:
                     self.color = QColor(*self.OTHER_NODE_TYPES_COLOR)
             # check for a strategy, role, tactic or keeper
-            if 'name' in model_node.attributes.keys():
+            if 'name' in model_node.attributes.keys() or 'role' in model_node.attributes.keys():
                 if model_node.title == 'Tactic':
                     self.color = QColor(*self.TACTIC_COLOR)
                 elif model_node.title == 'Strategy':

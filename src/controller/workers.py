@@ -46,7 +46,6 @@ class MainWorker(QObject):
         :param path: the path to open from, None if the user
                         wants to open from the default settings path
         """
-        # todo error handling when reading
         self.collection = Collection.from_path(path)
         self.open_collection_finished_signal.emit(self.collection)
 

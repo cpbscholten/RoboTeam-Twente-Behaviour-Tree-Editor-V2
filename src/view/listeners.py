@@ -1,3 +1,4 @@
+from copy import deepcopy
 from pathlib import Path
 from typing import List
 
@@ -25,10 +26,6 @@ class MainListener(QObject):
     # without path will write to the path in Settings or collection
     write_collection_signal = pyqtSignal(Collection)
     write_collection_custom_path_signal = pyqtSignal(Collection, Path)
-
-    # opens a tree from collection
-    # param: category and filename
-    open_tree_from_collection_signal = pyqtSignal(str, str)
 
     # writes a tree
     # one with category and filename to write to the current collection
@@ -78,9 +75,9 @@ class MainListener(QObject):
         Redraws the menu bar
         :param collection: the collection object
         """
-        # todo error handling
         self.gui.load_collection = collection
-        self.gui.menubar.build_menu_bar(collection)
+        self.gui.collection = deepcopy(collection)
+        self.gui.menubar.build_menu_bar(self.gui.collection)
 
     # noinspection PyArgumentList
     @pyqtSlot(list)
