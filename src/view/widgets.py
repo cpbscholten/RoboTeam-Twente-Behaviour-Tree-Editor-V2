@@ -526,6 +526,7 @@ class TreeViewPropertyDisplay(QWidget):
                     skip = False
                     pass
         root_window = self.scene.gui
+        # todo: fix key error that occurs when deleting and adding nodes and stuff
         node_to_update: Node = root_window.tree.nodes[self.node_id]
         # remove empty line property
         if '' in properties.keys():
