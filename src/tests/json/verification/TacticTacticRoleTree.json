@@ -1,0 +1,25 @@
+{
+  "data": {
+    "trees": [
+      {
+        "nodes": {
+          "57mrxn20qviax5ec": {
+            "children": [
+              "hawoks13kj9jfs"
+            ],
+            "id": "57mrxn20qviax5ec",
+            "title": "UntilSuccess"
+          },
+          "hawoks13kj9jfs": {
+            "id": "jnzwvf620oa6haae",
+            "name": "Attactic",
+            "title": "Tactic"
+          }
+        },
+        "root": "57mrxn20qviax5ec",
+        "title": "TacticTacticRole"
+      }
+    ]
+  },
+  "name": "TacticTacticRole"
+}

@@ -522,8 +522,12 @@ class TreeViewPropertyDisplay(QWidget):
     def update_properties(self):
         """
         Update the properties of the node according to the properties in the property display window
-        :return: Nothing
+        :return: True if success, False if the node of the property display does not exist anymore
         """
+        root_window = self.scene.gui
+        if self.node_id not in root_window.tree.nodes:
+            return False
+        node_to_update: Node = root_window.tree.nodes[self.node_id]
         properties = {}
         # Skip variable indicates if we're at the first entry of our rows or not.
         skip = False
@@ -540,8 +544,6 @@ class TreeViewPropertyDisplay(QWidget):
                 else:
                     skip = False
                     pass
-        root_window = self.scene.gui
-        node_to_update: Node = root_window.tree.nodes[self.node_id]
         # remove empty line property
         if '' in properties.keys():
             properties.pop('')
@@ -552,6 +554,7 @@ class TreeViewPropertyDisplay(QWidget):
         self.scene.nodes[self.node_id].model_node.attributes = node_to_update.attributes
         self.scene.gui.update_tree()
         self.scene.nodes[self.node_id].initiate_view()
+        return True
 
     def remove_rows(self):
         """

@@ -1,0 +1,25 @@
+{
+  "data": {
+    "trees": [
+      {
+        "nodes": {
+          "sx6fvrxlaoudhmaae": {
+            "id": "sx6fvrxlaoudhmaae",
+            "title": "Pass",
+            "children": [
+                "sx6fvrxlaoudhlmao"
+            ]
+          },
+          "sx6fvrxlaoudhlmao": {
+            "id": "sx6fvrxlaoudhlmao",
+            "name": "Assister",
+            "title": "Role"
+          }
+        },
+        "root": "sx6fvrxlaoudhmaae",
+        "title": "RoleRole"
+      }
+    ]
+  },
+  "name": "RoleRole"
+}

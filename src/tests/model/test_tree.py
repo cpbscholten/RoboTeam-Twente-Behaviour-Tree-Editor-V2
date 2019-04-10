@@ -570,15 +570,26 @@ class TestVerification(object):
     # 2 Has a root node which doesn't exist in the list of nodes
     simple_invalid_root_node_tree2 = Tree.from_json(read_json(Path('json/verification/InvalidRootNodeTree2.json')))
 
+    # SSR-Tree
+    ssr_tree = Tree.from_json(read_json(Path('json/verification/StrategyStrategyRoleTree.json')))
+    # TTR-Tree
+    ttr_tree = Tree.from_json(read_json(Path('json/verification/TacticTacticRoleTree.json')))
+    # RR-Tree
+    rr_tree = Tree.from_json(read_json(Path('json/verification/RoleRoleTree.json')))
+
     # valid trees
     simple_non_cyclic_tree = Tree.from_json(read_json(Path('json/verification/SimpleNonCyclicTree.json')))
     complex_tree = Tree.from_json(read_json(Path('json/verification/SimpleDefendTactic.json')))
     offensive_strategy_tree = Tree.from_json(read_json(Path('json/verification/OffensiveStrategy.json')))
+    keeper_strategy_tree = Tree.from_json(read_json(Path('json/jsons/strategies/KeeperStrategy.json')))
 
     collection: Dict[str, Dict[str, Tree]] = {
-        "roles": {"Assister.json": assister_role, "InvalidCompositesTree.json": simple_invalid_composites_tree},
-        "strategies": {"AttackStrategy.json": attack_strategy, "OffensiveStrategy.json": offensive_strategy_tree},
-        "tactics": {"Attactic.json": attactic_tactic, "SimpleDefendTactic.json": complex_tree, "InvalidRoleInheritanceTree1": simple_invalid_role_inheritance_tree_1}
+        "roles": {"Assister.json": assister_role, "InvalidCompositesTree.json": simple_invalid_composites_tree,
+                  "RoleRoleTree.json": rr_tree},
+        "strategies": {"AttackStrategy.json": attack_strategy, "OffensiveStrategy.json": offensive_strategy_tree, "KeeperStrategy.json": keeper_strategy_tree,
+                       "StrategyStrategyRole.json": ssr_tree},
+        "tactics": {"Attactic.json": attactic_tactic, "SimpleDefendTactic.json": complex_tree, "InvalidRoleInheritanceTree1": simple_invalid_role_inheritance_tree_1,
+                    "TacticTacticRole.json": ttr_tree}
     }
 
     def test_simple_tree_with_cycle(self):
@@ -634,6 +645,21 @@ class TestVerification(object):
         tree2 = self.simple_invalid_root_node_tree2
         assert len(collection.write_tree(tree1, Path('json/verification/InvalidRootNodeTree1.json'), True)) != 0
         assert len(collection.write_tree(tree2, Path('json/verification/InvalidRootNodeTree2.json'), True)) != 0
+
+    def test_ssr_tree(self):
+        collection = Collection(self.collection)
+        tree = self.ssr_tree
+        assert 1 is len(collection.verify_tree(tree, "strategies"))
+
+    def test_ttr_tree(self):
+        collection = Collection(self.collection)
+        tree = self.ttr_tree
+        assert 1 is len(collection.verify_tree(tree, "tactics"))
+
+    def test_rr_tree(self):
+        collection = Collection(self.collection)
+        tree = self.rr_tree
+        assert 1 is len(collection.verify_tree(tree, "roles"))
 
 
 class TestNodeTypes:
