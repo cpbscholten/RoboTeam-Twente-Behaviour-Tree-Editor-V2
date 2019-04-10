@@ -489,6 +489,10 @@ class Node(QGraphicsItem):
             self.scene.gui.tree.root = ''
         # remove node from internal tree structure
         del self.scene.gui.tree.nodes[self.model_node.id]
+        # remove the property display
+        self.scene.view.parent().property_display.setParent(None)
+        self.scene.view.parent().property_display.deleteLater()
+        self.scene.view.parent().property_display = None
 
     def reconnect_edge(self):
         if not self.parentItem():

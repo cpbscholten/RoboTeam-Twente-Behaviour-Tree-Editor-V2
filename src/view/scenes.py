@@ -290,7 +290,8 @@ class TreeScene(QGraphicsScene):
                         item.parentItem().parentItem().dragging = True
             # Remove property display window and save changes
             elif self.view.parent().property_display is not None:
-                self.view.parent().property_display.update_properties()
+                if self.view.parent().property_display.node_id in self.nodes:
+                    self.view.parent().property_display.update_properties()
                 self.view.parent().property_display.setParent(None)
                 self.view.parent().property_display.deleteLater()
                 self.view.parent().property_display = None
