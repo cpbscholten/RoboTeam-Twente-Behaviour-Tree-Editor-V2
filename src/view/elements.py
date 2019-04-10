@@ -26,6 +26,7 @@ class Node(QGraphicsItem):
     DECORATOR_COLOR = (51, 51, 255)             # DARK BLUE
     COMPOSITE_COLOR = (255, 153, 0)             # ORANGE
     OTHER_NODE_TYPES_COLOR = (255, 102, 153)    # PINK
+    DEFAULT_SIMULATOR_COLOR = Qt.white
 
     def __init__(self, x: float, y: float, scene: QGraphicsScene, model_node: ModelNode, title: str = None,
                  parent: QGraphicsItem = None, node_types: NodeTypes = None):
@@ -69,7 +70,8 @@ class Node(QGraphicsItem):
         self.setCursor(Qt.PointingHandCursor)
         self.setAcceptHoverEvents(True)
         # give the node a default color
-        self.color = QColor(*self.NODE_COLOR)
+        self.brush = QBrush(QColor(*self.NODE_COLOR))
+        self.simulator_brush = QBrush(self.DEFAULT_SIMULATOR_COLOR)
         # give node another color
         if node_types is not None:
             # check for node types and color them
@@ -77,23 +79,23 @@ class Node(QGraphicsItem):
             if len(types) > 0:
                 category, node_type = types[0]
                 if category == 'decorators':
-                    self.color = QColor(*self.DECORATOR_COLOR)
+                    self.brush.setColor(QColor(*self.DECORATOR_COLOR))
                 elif category == 'composites':
-                    self.color = QColor(*self.COMPOSITE_COLOR)
+                    self.brush.setColor(QColor(*self.COMPOSITE_COLOR))
                 else:
-                    self.color = QColor(*self.OTHER_NODE_TYPES_COLOR)
+                    self.brush.setColor(QColor(*self.OTHER_NODE_TYPES_COLOR))
             # check for a strategy, role, tactic or keeper
             if 'name' in model_node.attributes.keys() or 'role' in model_node.attributes.keys():
                 if model_node.title == 'Tactic':
-                    self.color = QColor(*self.TACTIC_COLOR)
+                    self.brush.setColor(QColor(*self.TACTIC_COLOR))
                 elif model_node.title == 'Strategy':
-                    self.color = QColor(*self.STRATEGY_COLOR)
+                    self.brush.setColor(QColor(*self.STRATEGY_COLOR))
                 elif model_node.title == 'Keeper':
-                    self.color = QColor(*self.KEEPER_COLOR)
+                    self.brush.setColor(QColor(*self.KEEPER_COLOR))
                 elif model_node.title == 'Role':
-                    self.color = QColor(*self.ROLE_COLOR)
+                    self.brush.setColor(QColor(*self.ROLE_COLOR))
                 else:
-                    self.color = QColor(*self.OTHER_SUBTREE_COLOR)
+                    self.brush.setColor(QColor(*self.OTHER_SUBTREE_COLOR))
         self.info_display = []
         self.max_width = 0
         self.total_height = 0
@@ -261,7 +263,11 @@ class Node(QGraphicsItem):
         :param widget: The widget being painted
         """
         painter.setPen(Qt.SolidLine)
-        painter.setBrush(QBrush(self.color))
+        if self.scene.simulator_mode:
+            brush = self.simulator_brush
+        else:
+            brush = self.brush
+        painter.setBrush(brush)
         if self.scene.info_mode:
             painter.drawRect(self.rect().x(), self.rect().y(), self.rect().width(), self.NODE_HEIGHT)
         else:

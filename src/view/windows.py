@@ -99,6 +99,7 @@ class MainWindow(QMainWindow):
         self.toolbar_widget.enable_verify_button(enable)
         self.node_types_widget.create_node_button.setEnabled(enable)
         self.node_types_widget.add_subtree_button.setEnabled(enable)
+        self.toolbar_widget.view_dropdown.setEnabled(enable)
         # correctly enable or disable the add node from selected button
         current_selected = self.node_types_widget.node_types_widget.currentItem()
         if self.node_types_widget.node_from_type_button.isEnabled():

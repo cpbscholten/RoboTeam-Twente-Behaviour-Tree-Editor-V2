@@ -28,6 +28,8 @@ class TreeScene(QGraphicsScene):
         self.nodes = {}
         # Indicates if the scene is in info mode
         self.info_mode = False
+        # Indicates if the scene is in simulator mode
+        self.simulator_mode = False
         # Indicates if the TreeScene is dragged around
         self.dragging = False
         # The tree ModelNode being added to the scene
@@ -452,6 +454,12 @@ class TreeScene(QGraphicsScene):
         self.reconnecting_node = None
         self.reconnect_edge_data = None
         self.gui.update_tree()
+
+    def change_colors(self, node_colors: dict):
+        for node in self.nodes:
+            if node in node_colors:
+                self.nodes[node].simulator_brush.setColor(node_colors[node])
+        self.update()
 
     @staticmethod
     def check_for_cycles_when_connecting(subtree_node, parent_node: ModelNode, tree: Tree) -> bool:

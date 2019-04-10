@@ -364,8 +364,8 @@ class ToolbarWidget(QWidget):
         # overlay dropdown box
         self.view_label = QLabel("View:")
         self.view_dropdown = QComboBox()
-        self.view_dropdown.addItems(["Overview", "Info View", "Heatmap - Successes", "Heatmap - Runnings",
-                                     "Heatmap - Failures"])
+        self.view_dropdown.addItems(["Overview", "Info View", "Heatmap - Success", "Heatmap - Waiting",
+                                     "Heatmap - Running", "Heatmap - Failure"])
         # noinspection PyUnresolvedReferences
         self.view_dropdown.activated[str].connect(self.switch_views)
         self.layout.addWidget(self.view_label)
@@ -402,6 +402,17 @@ class ToolbarWidget(QWidget):
         :param new_view: Selected view in the combo box
         """
         self.gui.tree_view_widget.graphics_scene.switch_info_mode(new_view == "Info View")
+        if new_view.startswith("Heatmap"):
+            self.gui.tree_view_widget.graphics_scene.simulator_mode = True
+            if self.gui.tree:
+                mode = new_view.split()[-1]
+                signal = self.gui.main_listener.create_heatmap_signal
+                timer = self.gui.main_listener.heatmap_timer
+                timer.timeout.connect(lambda: signal.emit(self.gui.tree.name, mode))
+                timer.start(500)
+        else:
+            self.gui.tree_view_widget.graphics_scene.simulator_mode = False
+            self.gui.main_listener.heatmap_timer.stop()
 
     def verify_tree(self, message: bool=False):
         """

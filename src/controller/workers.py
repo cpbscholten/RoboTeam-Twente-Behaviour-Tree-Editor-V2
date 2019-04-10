@@ -4,6 +4,8 @@ from PyQt5.QtCore import pyqtSignal, QObject, pyqtSlot
 
 from model.tree import NodeTypes, Tree, Collection
 
+from database.tree_data import *
+
 
 class MainWorker(QObject):
     """
@@ -28,6 +30,9 @@ class MainWorker(QObject):
     # signal when opening node_types is finished
     # returns the node types dictionary with list of lists for each type
     open_node_types_finished_signal = pyqtSignal(NodeTypes)
+    # signal when DB query is finished
+    # sends a dictionary with node ids as keys and heatmap values as vals to the view
+    db_query_finished_signal = pyqtSignal(dict, str)
 
     def __init__(self):
         super().__init__()
@@ -95,3 +100,34 @@ class MainWorker(QObject):
         """
         self.node_types = NodeTypes.from_csv()
         self.open_node_types_finished_signal.emit(self.node_types)
+
+    @pyqtSlot(str, str)
+    def create_heatmap(self, tid: str, status_type: str):
+        """
+        Fetches data necessary for heatmap, calculates heatmap values, and tells view to display it.
+        """
+        node_dict = {}
+
+        # Setup DB connection
+        session = Setup.get_session()
+        query = session.query(TreeNode).filter_by(tree_id=tid)
+
+        # Determine which status we're interested in
+        if not query:
+            query = []
+        for node in query:
+            if status_type == "Success":
+                node_dict[node.id] = node.successes
+            elif status_type == "Running":
+                node_dict[node.id] = node.runnings
+            elif status_type == "Waiting":
+                node_dict[node.id] = node.waitings
+            else:
+                node_dict[node.id] = node.failures
+        total_count = sum(node_dict.values())
+        heatmap_dict = {}
+
+        # Calculate the percentage (node's status count divided by total status count) for each node
+        for key in node_dict.keys():
+            heatmap_dict[key] = node_dict[key] / total_count
+        self.db_query_finished_signal.emit(heatmap_dict, status_type)

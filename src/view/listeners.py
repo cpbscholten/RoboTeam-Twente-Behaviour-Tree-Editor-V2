@@ -1,8 +1,9 @@
 from copy import deepcopy
 from pathlib import Path
-from typing import List
+from typing import Dict, List
 
-from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
+from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot, Qt, QTimer
+from PyQt5.QtGui import QColor
 
 from controller.workers import MainWorker
 from model.tree import Tree, Collection, NodeTypes
@@ -36,6 +37,8 @@ class MainListener(QObject):
     # reads the node types json files
     open_node_types_signal = pyqtSignal()
 
+    create_heatmap_signal = pyqtSignal(str, str)
+
     def __init__(self, gui):
         super().__init__()
         self.gui: view.windows.MainWindow = gui
@@ -65,6 +68,12 @@ class MainListener(QObject):
         # signals for reading node types
         self.open_node_types_signal.connect(self.worker.open_node_types)
         self.worker.open_node_types_finished_signal.connect(self.open_node_types_finished)
+
+        # signals/slots for DB work
+        self.worker.db_query_finished_signal.connect(self.db_query_finished)
+
+        self.create_heatmap_signal.connect(self.worker.create_heatmap)
+        self.heatmap_timer = QTimer()
 
     # noinspection PyArgumentList
     @pyqtSlot(Collection)
@@ -146,3 +155,32 @@ class MainListener(QObject):
         """
         self.gui.load_node_types = node_types
         self.gui.node_types_widget.set_up_node_types(node_types)
+
+    @pyqtSlot(dict, str)
+    def db_query_finished(self, heatmap_dict: dict, status_type: str):
+        """
+        Method that handles the calculation of node colors for heatmap display
+        :param heatmap_dict: An array with node IDs as keys and percentages (i.e. how much of the total
+        running/failure/waiting/success statuses the node is responsible for) as values
+        :param status_type: Which status we're interested in (running, waiting, success, or failure)
+        """
+        heatmap_color_dict = {}
+
+        # Determine base color based on the chosen status
+        if status_type == "Success":
+            start_color = Qt.green
+        elif status_type == "Waiting":
+            start_color = Qt.yellow
+        elif status_type == "Running":
+            start_color = QColor(255, 153, 0)   # Orange
+        else:
+            start_color = Qt.red
+
+        # Calculate the color intensity for each node based on the dictionary values
+        for node_id, percentage in heatmap_dict.items():
+            color = QColor(start_color)
+            # skip the lower (dark) part of the spectrum and keep the lightness between 0.5 and 0.9
+            lightness = ((1 - percentage) * 0.4) + 0.5
+            color.setHslF(color.hslHue() / 360, color.hslSaturation() / 255, lightness)
+            heatmap_color_dict[node_id] = color
+        self.gui.tree_view_widget.graphics_scene.change_colors(heatmap_color_dict)
