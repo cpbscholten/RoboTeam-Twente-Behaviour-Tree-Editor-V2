@@ -2,7 +2,7 @@ import logging
 from functools import partial
 
 from PyQt5 import QtWidgets
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QIcon, QPainter, QPalette, QKeySequence
 from PyQt5.QtWidgets import QGraphicsView, QTreeWidget, QTreeWidgetItem, QWidget, QVBoxLayout, QPushButton, QLabel, \
     QLineEdit, QFormLayout, QApplication, QGridLayout, QHBoxLayout, QComboBox, QAction
@@ -408,6 +408,10 @@ class ToolbarWidget(QWidget):
                 mode = new_view.split()[-1]
                 signal = self.gui.main_listener.create_heatmap_signal
                 timer = self.gui.main_listener.heatmap_timer
+                if timer.isActive():
+                    timer.stop()
+                    timer = QTimer()
+                    self.gui.main_listener.heatmap_timer = timer
                 timer.timeout.connect(lambda: signal.emit(self.gui.tree.name, mode))
                 timer.start(500)
         else:
