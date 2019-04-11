@@ -500,10 +500,10 @@ class Node(QGraphicsItem):
             # todo fix display issues
             self.scene.gui.update_tree(parent_node.model_node)
         # remove the property display
-        # todo fix nonetupe has no attribute setparent when deleting node
-        self.scene.view.parent().property_display.setParent(None)
-        self.scene.view.parent().property_display.deleteLater()
-        self.scene.view.parent().property_display = None
+        if self.scene.view.parent().property_display:
+            self.scene.view.parent().property_display.setParent(None)
+            self.scene.view.parent().property_display.deleteLater()
+            self.scene.view.parent().property_display = None
 
     def reconnect_edge(self):
         if not self.parentItem():
