@@ -122,8 +122,8 @@ class Node:
         :param key: the key of the attribute to remove
         """
         if "properties" not in self.attributes or key not in self.attributes.get("properties"):
-            Node.logger.warning("Attempted to remove non-existent attribute {} from node {}".format(key, self.id))
-            return
+            return Node.logger.warning("Attempted to remove non-existent "
+                                       "attribute {} from node {}".format(key, self.id))
         self.attributes.get("properties").pop(key)
 
     def update_properties(self, properties: Dict[str, str]):
@@ -335,11 +335,9 @@ class Tree:
         :param start_node_id: optional specify the starting root node of the tree to add
         """
         if node_id not in self.nodes.keys():
-            Tree.logger.error("Node {} from subtree {} to does not exist".format(node_id, tree.name))
-            return
+            return Tree.logger.error("Node {} from subtree {} to does not exist".format(node_id, tree.name))
         if start_node_id and start_node_id not in tree.nodes.keys():
-            Tree.logger.error("Node {} from subtree {} does not exist".format(start_node_id, tree.name))
-            return
+            return Tree.logger.error("Node {} from subtree {} does not exist".format(start_node_id, tree.name))
         if start_node_id is None:
             start_node_id = tree.root
         node = self.nodes.get(node_id)
@@ -384,6 +382,44 @@ class Tree:
         if not first_run:
             self.nodes.pop(node_id, None)
 
+    def find_role_subtree_node_above_node(self, node: Node) -> Union[Node, None]:
+        """
+        Finds if there is a role subtree node somewhere above this node. Used for updating trees with the same role
+        :return: the subtree node if it exists else None.
+        """
+
+        while node is not None:
+            node = self.find_parent_node_if_exists(node)
+            if node and node.title == 'Role' and 'role' in node.attributes:
+                return node
+        return None
+
+    def find_parent_node_if_exists(self, node: Node) -> Union[Node, None]:
+        """
+        Finds the node that has the provided node as a child
+        :param node: the node to find the parent of
+        :return: The parent node or None
+        """
+        id_to_look_for = node.id
+        for node_id, tree_node in self.nodes.items():
+            for child in tree_node.children:
+                if child == id_to_look_for:
+                    return tree_node
+        return None
+
+    def find_role_subtree_nodes_if_exist(self, role: str) -> List[Node]:
+        """
+        Finds all nodes with a requested role subtree if it exists.
+        :param role: the role subtree to look for
+        :return: a list with the nodes
+        """
+        result = []
+        for node_id, node in sorted(self.nodes.items()):
+            if node.title == 'Role' and 'role' in node.attributes and \
+                    node.attributes.get('role') == role:
+                result.append(node)
+        return result
+
     def remove_node_and_children_by_id(self, node_id: str) -> bool:
         """
         Removes a node and all of its children recursively
@@ -415,6 +451,19 @@ class Tree:
             current_child = self.nodes[child_id]
             current_child.add_property("ROLE", to_propagate)
             self.propagate_role(child_id, to_propagate)
+
+    def remove_propagation(self, current_node_id):
+        """
+        Removes Role Propagation from the current node and all nodes below it
+        :param current_node_id: the node to remove propagation of
+        """
+        if current_node_id not in self.nodes:
+            return Tree.logger.error("Node with id {} does not exist in tree {}.".format(current_node_id, self.name))
+        for child_id in self.nodes[current_node_id].children:
+            current_child = self.nodes[child_id]
+            if 'properties' in current_child.attributes and 'ROLE' in current_child.attributes['properties']:
+                current_child.remove_property("ROLE")
+            self.remove_propagation(child_id)
 
     def create_json(self) -> Dict[str, Any]:
         """
@@ -604,6 +653,54 @@ class Collection:
                     return value
         Collection.logger.warning('The requested tree {} does not exist'.format(name))
         return None
+
+    def update_subtrees_in_collection(self, tree: Tree, role_node: Node=None):
+        """
+        Helper method to automatically update the subtrees in other trees
+        :param tree: the tree containing the new subtree
+        :param role_node: the node to update from
+        """
+        if role_node is None:
+            role_name = tree.name
+            start_node_id = tree.root
+        else:
+            if 'role' not in role_node.attributes:
+                return Collection.logger.error('Attribute role does not exist in node {}'.format(role_node.title))
+            if len(role_node.children) == 0:
+                return Collection.logger.error('Role subtree {} with id {} does not have'
+                                               ' children'.format(role_node.title, role_node.id))
+            role_name = role_node.attributes.get('role')
+            start_node_id = role_node.children[0]
+        for category, trees in self.collection.items():
+            for _, loop_tree in trees.items():
+                if category == 'roles' and loop_tree.name == role_name:
+                    # only continue if the tree we are updating from is not this role
+                    if tree != loop_tree:
+                        old_root = loop_tree.root
+                        loop_tree.update_subtree(tree, old_root, start_node_id)
+                        # remove the old root and change root to new subtree
+                        loop_tree.root = loop_tree.nodes.get(old_root).children[0]
+                        loop_tree.nodes.pop(old_root)
+                        loop_tree.remove_propagation(tree.root)
+                else:
+                    # update all subtrees below the given role node
+                    role_nodes = loop_tree.find_role_subtree_nodes_if_exist(role_name)
+                    for node in role_nodes:
+                        if tree == loop_tree and role_node is not None and node.id == role_node.id:
+                            # skip the node we're currently at
+                            pass
+                        elif node in loop_tree.nodes.values() and None \
+                                is tree.find_role_subtree_node_above_node(node):
+                            loop_tree.update_subtree(tree, node.id, start_node_id)
+                            # propagate ROLE attribute again
+                            if 'properties' in node.attributes and 'ROLE' in \
+                                    node.attributes.get('properties'):
+                                loop_tree.propagate_role(node.id, node.attributes['properties']['ROLE'])
+                            else:
+                                loop_tree.remove_propagation(node.id)
+                        else:
+                            # todo add test for circles
+                            Collection.logger.warning('Prevented a circle when updating the tree')
 
     def verify_tree(self, tree, category=None, only_check_mathematical_properties=False) -> List[str]:
         """

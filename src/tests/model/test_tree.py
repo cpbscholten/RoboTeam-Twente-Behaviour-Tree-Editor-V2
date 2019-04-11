@@ -1,4 +1,5 @@
 import string
+from copy import deepcopy
 from pathlib import Path
 from typing import Dict
 
@@ -143,6 +144,7 @@ class TestTree(object):
     tree_dance_strategy = read_json(Path('json/trees/valid/DanceStrategy.json'))
     tree_demo_twente_strategy = read_json(Path('json/trees/valid/DemoTeamTwenteStrategy.json'))
     tree_simple_tree = read_json(Path('json/trees/valid/SimpleTree.json'))
+    tree_enter_formation_tactic = read_json(Path('json/trees/valid/EnterFormationTactic.json'))
 
     # invalid trees
     # trees with missing required attributes
@@ -304,6 +306,14 @@ class TestTree(object):
         for node_id, node in tree.nodes.items():
             assert 'properties' not in node.attributes
 
+    def test_remove_propogate(self):
+        tree = Tree.from_json(self.tree_demo_twente_strategy)
+        tree.propagate_role(tree.root, "t")
+        tree.remove_propagation(tree.root)
+        for node_id, node in tree.nodes.items():
+            if node_id != tree.root:
+                assert 'ROLE' not in node.attributes['properties']
+
     def test_remove_node_by_id_not_existent(self):
         tree = Tree.from_json(self.tree_dance_strategy)
         tree.remove_node_by_id("non existent node")
@@ -341,9 +351,32 @@ class TestTree(object):
         assert str(tree.create_json()) == str(tree)
         assert str(tree.create_json()) == repr(tree)
 
+    def test_find_parent_node_if_exists(self):
+        tree = Tree.from_json(self.tree_demo_twente_strategy)
+        assert None is tree.find_parent_node_if_exists(tree.nodes.get(tree.root))
+        assert tree.nodes.get(tree.root) == tree.find_parent_node_if_exists(tree.nodes.get('abcdefgh314'))
+
+    def test_find_role_subtree_node_above_node(self):
+        tree = Tree.from_json(self.tree_demo_twente_strategy)
+        assert None is tree.find_role_subtree_node_above_node(tree.nodes.get('abcdefgh314'))
+        tree = Tree.from_json(self.tree_enter_formation_tactic)
+        assert tree.nodes.get('0ia3adfsyai4m') == \
+            tree.find_role_subtree_node_above_node(tree.nodes.get('3j1eplzumct1ky2l'))
+
+    def test_find_role_subtree_nodes_if_exist(self):
+        tree = Tree.from_json(self.tree_demo_twente_strategy)
+        assert [] == tree.find_role_subtree_nodes_if_exist('abcd')
+        tree = tree.from_json(self.tree_enter_formation_tactic)
+        nodes = tree.find_role_subtree_nodes_if_exist('EnterFormationRole')
+        assert 7 == len(nodes)
+        assert tree.nodes.get('0ia3adfsyai4m') in nodes
+        assert tree.nodes.get('mz9t0qn1r1brww') in nodes
+        assert tree.nodes.get('3j1eplzumct1ky2l') not in nodes
+
 
 class TestCollection(object):
     path = Path("json/collection/")
+    complete_path = Path('json/jsons/')
     assister_role = Tree.from_json(read_json(Path('json/collection/roles/Assister.json')))
     attack_strategy = Tree.from_json(read_json(Path('json/collection/strategies/AttackStrategy.json')))
     attactic_tactic = Tree.from_json(read_json(Path('json/collection/tactics/Attactic.json')))
@@ -548,6 +581,65 @@ class TestCollection(object):
         collection = Collection.from_path()
         assert collection.jsons_path() == Settings.default_json_folder()
 
+    def test_update_subtrees_in_collection_from_main_tree(self):
+        collection = Collection.from_path(self.complete_path)
+        collection_copy = deepcopy(collection)
+        collection_copy.update_subtrees_in_collection(collection_copy.get_tree_by_name('EnterFormationRole'))
+        tree = collection_copy.get_tree_by_name('EnterFormationTactic')
+        assert collection_copy.get_tree_by_name('EnterFormationTactic') != \
+            collection.get_tree_by_name('EnterFormationTactic')
+        old_tree = collection.get_tree_by_name('EnterFormationTactic')
+        role_nodes = tree.find_role_subtree_nodes_if_exist('EnterFormationRole')
+        for role_node in role_nodes:
+            child = role_node.children[0]
+            assert child not in old_tree.nodes
+            child_node = tree.nodes.get(child)
+            old_child_id = old_tree.nodes.get(role_node.id).children[0]
+            old_child_node = old_tree.nodes.get(old_child_id)
+            assert old_child_node.title == child_node.title
+            assert old_child_node.id != child_node.id
+            assert len(old_child_node.children) == len(child_node.children)
+
+    def test_update_subtrees_in_collection_from_subtree(self):
+        collection = Collection.from_path(self.complete_path)
+        tree = collection.get_tree_by_name('EnterFormationTactic')
+        tree.nodes.get('x988e2xb3y8h0hmxq').title = 'TestChange'
+        collection.update_subtrees_in_collection(tree, tree.nodes.get('l795jdit0tls4k52'))
+        role_tree = collection.get_tree_by_name('EnterFormationRole')
+        assert len(role_tree.nodes.items()) == 2
+        root_node = role_tree.nodes.get(role_tree.root)
+        assert root_node.title == 'TestChange'
+        assert len(root_node.children) == 1
+        assert role_tree.nodes.get(root_node.children[0]).title == 'EnterFormation'
+
+    def test_update_subtrees_in_collection_role_propagation(self):
+        # check if role propagation is skipped
+        collection = Collection.from_path(self.complete_path)
+        node = Node('Role', attributes={'role': 'EnterFormationRole'})
+        tree = collection.get_tree_by_name('DemoTeamTwenteStrategy')
+        tree.add_node(node)
+        tree.nodes.get(tree.root).add_child(node.id)
+        other_tree = collection.get_tree_by_name('EnterFormationRole')
+        collection.update_subtrees_in_collection(other_tree)
+        child = tree.nodes.get(node.children[0])
+        assert 'properties' not in child.attributes
+
+    def test_update_subtrees_in_collection_invalid(self):
+        # no role subtree
+        collection = Collection.from_path(self.complete_path)
+        collection_copy = deepcopy(collection)
+        tree = collection.get_tree_by_name('DemoTeamTwenteStrategy')
+        collection.update_subtrees_in_collection(tree, tree.nodes.get(tree.root))
+        assert collection_copy == collection
+        # role subtree no children
+        node = Node('Role', attributes={'role': 'EnterFormationRole'})
+        tree_copy = deepcopy(tree)
+        tree.add_node(node)
+        tree.nodes.get(tree.root).add_child(node.id)
+        collection.update_subtrees_in_collection(tree, node)
+        collection.collection['strategies']['DemoTeamTwenteStrategy.json'] = tree_copy
+        assert collection == collection_copy
+
 
 class TestVerification(object):
 
@@ -562,13 +654,17 @@ class TestVerification(object):
     simple_invalid_composites_tree = Tree.from_json(read_json(Path('json/verification/InvalidCompositesTree.json')))
     simple_invalid_decorator_tree = Tree.from_json(read_json(Path('json/verification/InvalidDecoratorTree.json')))
     # 1 has a failing node with a non matching property
-    simple_invalid_role_inheritance_tree_1 = Tree.from_json(read_json(Path('json/verification/InvalidRoleInheritanceTree1.json')))
+    simple_invalid_role_inheritance_tree_1 = Tree.from_json(read_json(
+        Path('json/verification/InvalidRoleInheritanceTree1.json')))
     # 2 has a failing node without the properties key
-    simple_invalid_role_inheritance_tree_2 = Tree.from_json(read_json(Path('json/verification/InvalidRoleInheritanceTree2.json')))
+    simple_invalid_role_inheritance_tree_2 = Tree.from_json(read_json(
+        Path('json/verification/InvalidRoleInheritanceTree2.json')))
     # 1 Has no root node defined
-    simple_invalid_root_node_tree1 = Tree.from_json(read_json(Path('json/verification/InvalidRootNodeTree1.json')))
+    simple_invalid_root_node_tree1 = Tree.from_json(read_json(Path(
+        'json/verification/InvalidRootNodeTree1.json')))
     # 2 Has a root node which doesn't exist in the list of nodes
-    simple_invalid_root_node_tree2 = Tree.from_json(read_json(Path('json/verification/InvalidRootNodeTree2.json')))
+    simple_invalid_root_node_tree2 = Tree.from_json(read_json(Path(
+        'json/verification/InvalidRootNodeTree2.json')))
 
     # SSR-Tree
     ssr_tree = Tree.from_json(read_json(Path('json/verification/StrategyStrategyRoleTree.json')))
@@ -586,9 +682,11 @@ class TestVerification(object):
     collection: Dict[str, Dict[str, Tree]] = {
         "roles": {"Assister.json": assister_role, "InvalidCompositesTree.json": simple_invalid_composites_tree,
                   "RoleRoleTree.json": rr_tree},
-        "strategies": {"AttackStrategy.json": attack_strategy, "OffensiveStrategy.json": offensive_strategy_tree, "KeeperStrategy.json": keeper_strategy_tree,
+        "strategies": {"AttackStrategy.json": attack_strategy, "OffensiveStrategy.json": offensive_strategy_tree,
+                       "KeeperStrategy.json": keeper_strategy_tree,
                        "StrategyStrategyRole.json": ssr_tree},
-        "tactics": {"Attactic.json": attactic_tactic, "SimpleDefendTactic.json": complex_tree, "InvalidRoleInheritanceTree1": simple_invalid_role_inheritance_tree_1,
+        "tactics": {"Attactic.json": attactic_tactic, "SimpleDefendTactic.json": complex_tree,
+                    "InvalidRoleInheritanceTree1": simple_invalid_role_inheritance_tree_1,
                     "TacticTacticRole.json": ttr_tree}
     }
 

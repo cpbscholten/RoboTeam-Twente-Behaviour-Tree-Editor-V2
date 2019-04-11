@@ -6,11 +6,12 @@ from typing import Union, List, Tuple
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QAction, QMainWindow, QFileDialog, QMessageBox, QInputDialog, QLineEdit, QWidget, \
-    QHBoxLayout, QDialog, QFormLayout, QLabel, QComboBox, QPushButton, QVBoxLayout, QApplication, QGridLayout, QSpinBox
+    QHBoxLayout, QDialog, QFormLayout, QLabel, QComboBox, QPushButton, QVBoxLayout, QApplication, QGridLayout, QSpinBox, \
+    QCheckBox
 
 from controller.utils import singularize, capitalize
 from model.config import Settings
-from model.tree import Tree, Collection, NodeTypes
+from model.tree import Tree, Collection, NodeTypes, Node
 from view.enums import DialogEnum
 from view.listeners import MainListener
 
@@ -115,6 +116,9 @@ class MainWindow(QMainWindow):
         save, errors = self.check_unsaved_changes()
         if save is DialogEnum.Cancel:
             return
+        elif save is DialogEnum.No and self.tree is not None:
+            # revert tree to original in collection
+            self.collection.collection[self.category][self.filename] = self.load_tree
         if self.app.wait_for_click_filter:
             self.app.wait_for_click_filter.reset_event_filter()
         # reset the changes in the loaded tree
@@ -141,7 +145,7 @@ class MainWindow(QMainWindow):
         """
         self.category = category
         self.load_tree = deepcopy(tree)
-        self.tree = deepcopy(tree)
+        self.tree = tree
         self.filename = filename
         self.enable_tree_actions(True)
         # verify the tree to update the checkmark icon
@@ -156,11 +160,12 @@ class MainWindow(QMainWindow):
         :return DialogEnum: Which button was clicked
         :return errors: the errors while verifying before saving
         """
+        # todo combine both checks in one method
         if not self.load_tree:
             # empty list as errors, as the errors are only relevant when saving
             return DialogEnum.No, []
         elif self.load_tree != self.tree:
-            errors = self.load_collection.verify_tree(self.tree, self.category)
+            errors = self.collection.verify_tree(self.tree, self.category)
             if len(errors) == 0:
                 save = Dialogs.yes_no_cancel_message_box('Unsaved changes',
                                                          'There are some unsaved changes, do you want to save it?')
@@ -172,6 +177,9 @@ class MainWindow(QMainWindow):
             if save is DialogEnum.Yes:
                 if len(errors) == 0:
                     self.main_listener.write_tree_signal.emit(self.category, self.filename, self.tree)
+            elif save is DialogEnum.No:
+                if self.collection and self.filename in self.collection.collection.get(self.category):
+                    self.collection.collection[self.category].pop(self.filename)
             return save, errors
         # empty list as errors, as the errors are only relevant when saving
         return DialogEnum.No, []
@@ -189,8 +197,7 @@ class MainWindow(QMainWindow):
             errors = []
             for category, trees in self.collection.collection.items():
                 for filename, tree in trees.items():
-                    # todo disable only mathematical properties when errors are fixed
-                    errors.extend(self.collection.verify_tree(tree, category, only_check_mathematical_properties=True))
+                    errors.extend(self.collection.verify_tree(tree, category))
             if len(errors) == 0:
                 save = Dialogs.yes_no_cancel_message_box('Unsaved changes',
                                                          'There are some unsaved changes in the collection, '
@@ -203,15 +210,24 @@ class MainWindow(QMainWindow):
             if save is DialogEnum.Yes:
                 if len(errors) == 0:
                     self.main_listener.write_collection_signal.emit()
+            elif save is DialogEnum.No:
+                if self.collection and self.filename in self.collection.collection.get(self.category):
+                    self.collection.collection[self.category].pop(self.filename)
             return save, errors
         # empty list as errors, as the errors are only relevant when saving
         return DialogEnum.No, []
 
-    def update_tree(self):
+    def update_tree(self, node: Node = None):
         """
         Method that needs to be called when updating self.tree. Will automatically run the verification
         """
         self.toolbar_widget.verify_tree()
+        if node is not None and Settings.auto_update_roles():
+            node = self.tree.find_role_subtree_node_above_node(node)
+            if node:
+                self.collection.update_subtrees_in_collection(self.tree, node)
+            elif 'roles' is self.category:
+                self.collection.update_subtrees_in_collection(self.tree)
 
     def closeEvent(self, event):
         """
@@ -259,8 +275,14 @@ class MenuBar:
         self.open_collection_act.setStatusTip('Open JSON files Collection folder')
         self.open_collection_act.triggered.connect(self.open_collection_custom_path)
 
+        # save collection
+        self.save_collection_act = QAction('Save', self.main_window)
+        self.save_collection_act.setShortcut('Ctrl+W')
+        self.save_collection_act.setStatusTip('Save the current collection')
+        self.save_collection_act.triggered.connect(self.save_collection)
+
         self.save_collection_as_act = QAction('Save as', self.main_window)
-        self.save_collection_as_act.setShortcut('Ctrl+Shift+Alt+S')
+        self.save_collection_as_act.setShortcut('Ctrl+Shift+W')
         self.save_collection_as_act.setToolTip('Save current collection as.')
         self.save_collection_as_act.triggered.connect(self.save_collection_as)
 
@@ -299,6 +321,7 @@ class MenuBar:
         # creates a collection menu
         collection_menu = menubar.addMenu('&Collection')
         collection_menu.addAction(self.open_collection_act)
+        collection_menu.addAction(self.save_collection_act)
         collection_menu.addAction(self.save_collection_as_act)
 
         # creates a tree menu
@@ -358,6 +381,7 @@ class MenuBar:
         calls the emit signal for opening a collection
         :return:
         """
+        self.main_window.check_unsaved_changes_collection()
         self.main_window.main_listener.open_collection_signal.emit()
 
     def open_tree(self, category: str, filename: str):
@@ -384,7 +408,8 @@ class MenuBar:
         """
         emits a signal to write the collection to the default path
         """
-        self.main_window.main_listener.write_collection_signal.emit()
+        self.main_window.load_tree = self.main_window.tree
+        self.main_window.main_listener.write_collection_signal.emit(self.main_window.collection)
 
     def save_collection_as(self):
         """
@@ -395,7 +420,9 @@ class MenuBar:
         path = Dialogs.open_folder_dialog('Save collection folder', json_path)
         # do a call to the controller to write the collection
         if path is not None:
-            self.main_window.main_listener.write_collection_custom_path_signal.emit(path)
+            self.main_window.load_tree = self.main_window.tree
+            self.main_window.main_listener.write_collection_custom_path_signal.emit(self.main_window.collection,
+                                                                                    path)
 
     def save_tree(self):
         """
@@ -427,6 +454,8 @@ class MenuBar:
             filename = name + '.json'
             tree = Tree(name, '')
             self.main_window.show_tree(category, filename, tree)
+            # add to collection
+            self.main_window.collection.collection[category][filename] = tree
 
 
 class Dialogs:
@@ -716,6 +745,7 @@ class SettingsDialog(QDialog):
         # settings for the jsons folder
         self.jsons_label = QLabel("JSONS:")
         self.jsons_path = Settings.default_json_folder()
+        self.jsons_path_new = self.jsons_path
         self.jsons_edit = QLineEdit(str(self.jsons_path))
         self.jsons_edit.setEnabled(False)
         self.jsons_select = QPushButton("Select")
@@ -727,6 +757,7 @@ class SettingsDialog(QDialog):
         # settings for the node types folder
         self.node_types_label = QLabel("Node Types:")
         self.node_types_path = Settings.default_node_types_folder()
+        self.node_types_path_new = self.node_types_path
         self.node_types_edit = QLineEdit(str(self.node_types_path))
         self.node_types_edit.setEnabled(False)
         self.node_types_select = QPushButton("Select")
@@ -738,6 +769,7 @@ class SettingsDialog(QDialog):
         # settings for selecting logfile
         self.logfile_label = QLabel("Logfile:")
         self.logfile_path = Settings.default_logfile_name()
+        self.logfile_path_new = self.logfile_path
         self.logfile_edit = QLineEdit(str(self.logfile_path))
         self.logfile_edit.setEnabled(False)
         self.logfile_select = QPushButton("Select")
@@ -749,12 +781,23 @@ class SettingsDialog(QDialog):
         # settings for selecting the id size
         self.id_size_label = QLabel("Node id size:")
         self.id_size_def = Settings.default_id_size()
+        self.id_size_def_new = self.id_size_def
         self.id_size_select = QSpinBox()
         self.id_size_select.setMinimum(1)
         self.id_size_select.setValue(self.id_size_def)
         self.id_size_select.valueChanged.connect(self.select_id_size_changed)
         self.settings_layout.addWidget(self.id_size_label, 3, 0)
         self.settings_layout.addWidget(self.id_size_select, 3, 1, 1, 2)
+
+        # checkbox for enabling auto updating of roles
+        self.auto_update_roles = Settings.auto_update_roles()
+        self.auto_update_roles_new = self.auto_update_roles
+        print(self.auto_update_roles)
+        self.auto_update_roles_check = QCheckBox()
+        self.auto_update_roles_check.setChecked(self.auto_update_roles)
+        self.auto_update_roles_check.setText('Automatically update roles subtrees')
+        self.auto_update_roles_check.stateChanged.connect(self.auto_update_roles_changed)
+        self.settings_layout.addWidget(self.auto_update_roles_check, 4, 0, 1, 0)
 
     def select_logfile(self):
         """
@@ -764,7 +807,7 @@ class SettingsDialog(QDialog):
         if path is None:
             return
         self.enable_apply(True)
-        self.logfile_path = path
+        self.logfile_path_new = path
         self.logfile_edit.setText(str(self.logfile_path))
 
     def select_node_types_folder(self):
@@ -775,7 +818,7 @@ class SettingsDialog(QDialog):
         if path is None:
             return
         self.enable_apply(True)
-        self.node_types_path = path
+        self.node_types_path_new = path
         self.node_types_edit.setText(str(self.node_types_path))
 
     def select_jsons_folder(self):
@@ -786,12 +829,16 @@ class SettingsDialog(QDialog):
         if path is None:
             return
         self.enable_apply(True)
-        self.jsons_path = path
+        self.jsons_path_new = path
         self.jsons_edit.setText(str(self.jsons_path))
 
     def select_id_size_changed(self):
         self.enable_apply(True)
-        self.id_size_def = self.id_size_select.value()
+        self.id_size_def_new = self.id_size_select.value()
+
+    def auto_update_roles_changed(self):
+        self.enable_apply(True)
+        self.auto_update_roles_new = self.auto_update_roles_check.isChecked()
 
     def enable_apply(self, enable: bool):
         """
@@ -804,18 +851,27 @@ class SettingsDialog(QDialog):
         """
         Applies the settings, stores them and keeps the window open
         """
-        Settings.alter_default_id_size(self.id_size_def)
+        # update id size when changed
+        if self.id_size_def != self.id_size_def_new:
+            Settings.alter_default_id_size(self.id_size_def_new)
+
+        # auto update roles when changed
+        if self.auto_update_roles != self.auto_update_roles_new:
+            Settings.alter_auto_update_roles(self.auto_update_roles_new)
 
         # update the logfile location and update the logging
-        Settings.alter_default_logfile_name(self.logfile_path)
+        if self.logfile_path != self.logfile_path_new:
+            Settings.alter_default_logfile_name(self.logfile_path_new)
 
         # update the node types folder and reset the node types
-        Settings.alter_default_node_types_folder(self.node_types_path)
-        self.gui.main_listener.open_node_types_signal.emit()
+        if self.node_types_path != self.node_types_path_new:
+            Settings.alter_default_node_types_folder(self.node_types_path_new)
+            self.gui.main_listener.open_node_types_signal.emit()
 
         # update the jsons folder and open it as a collection
-        Settings.alter_default_json_folder(self.jsons_path)
-        self.gui.main_listener.open_collection_signal.emit()
+        if self.jsons_path != self.jsons_path_new:
+            Settings.alter_default_json_folder(self.jsons_path_new)
+            self.gui.menubar.open_collection()
 
         # disable the apply button
         self.enable_apply(False)

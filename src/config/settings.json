@@ -3,5 +3,6 @@
   "default_json_folder": "jsons",
   "logfile_name": "log",
   "default_node_types_folder": "config/node_types",
-  "default_collection_categories": ["keeper", "roles", "strategies", "tactics"]
+  "default_collection_categories": ["keeper", "roles", "strategies", "tactics"],
+  "auto_update_roles": true
 }

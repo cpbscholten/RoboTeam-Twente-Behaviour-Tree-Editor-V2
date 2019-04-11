@@ -552,7 +552,7 @@ class TreeViewPropertyDisplay(QWidget):
             self.scene.gui.tree.propagate_role(self.node_id, properties.get("ROLE"))
         node_to_update.update_properties(properties)
         self.scene.nodes[self.node_id].model_node.attributes = node_to_update.attributes
-        self.scene.gui.update_tree()
+        self.scene.gui.update_tree(self.scene.nodes[self.node_id].model_node)
         self.scene.nodes[self.node_id].initiate_view()
         return True
 

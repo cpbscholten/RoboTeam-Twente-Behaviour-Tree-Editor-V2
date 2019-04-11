@@ -62,8 +62,7 @@ class Settings:
         Reads the default_node_types setting and returns a path variable from it
         :return: a path variable containing the path to node_types
         """
-        path = Settings.query_setting('default_node_types_folder', 'settings')
-        return Path(path)
+        return Path(Settings.query_setting('default_node_types_folder', 'settings'))
 
     @staticmethod
     def alter_default_node_types_folder(path: Path):
@@ -79,8 +78,7 @@ class Settings:
         Reads the default_jsons_folder setting and returns a path variable from it
         :return: a path variable containing the path to the jsons fodler
         """
-        path = Settings.query_setting("default_json_folder", "settings")
-        return Path(path)
+        return Path(Settings.query_setting("default_json_folder", "settings"))
 
     @staticmethod
     def alter_default_json_folder(path: Path):
@@ -89,6 +87,18 @@ class Settings:
         :param path: path object containing the location of the json directory
         """
         Settings.alter_setting("default_json_folder", PurePosixPath(path).as_posix(), "settings")
+
+    @staticmethod
+    def auto_update_roles() -> bool:
+        return Settings.query_setting('auto_update_roles', 'settings')
+
+    @staticmethod
+    def alter_auto_update_roles(enable: bool):
+        """
+        Method to update the setting if the roles should be updated automatically.
+        :param enable: enable or disable the setting
+        """
+        Settings.alter_setting("auto_update_roles", enable, 'settings')
 
     @staticmethod
     def default_collection_categories():

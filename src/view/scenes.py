@@ -423,9 +423,10 @@ class TreeScene(QGraphicsScene):
         self.app.restoreOverrideCursor()
         # remove reset cursor filter (cursor already reset)
         self.app.removeEventFilter(self.app.wait_for_click_filter)
+        node = self.connecting_node
         self.connecting_node = None
         self.connecting_line = None
-        self.gui.update_tree()
+        self.gui.update_tree(node)
 
     def start_reconnect_edge(self, node):
         self.reconnecting_node = node
@@ -451,9 +452,10 @@ class TreeScene(QGraphicsScene):
         self.app.restoreOverrideCursor()
         # remove reset cursor filter (cursor already reset)
         self.app.removeEventFilter(self.app.wait_for_click_filter)
+        node = self.reconnecting_node
         self.reconnecting_node = None
         self.reconnect_edge_data = None
-        self.gui.update_tree()
+        self.gui.update_tree(node)
 
     def change_colors(self, node_colors: dict):
         for node in self.nodes:

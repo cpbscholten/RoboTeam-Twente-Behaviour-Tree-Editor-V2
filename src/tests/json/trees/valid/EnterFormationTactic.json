@@ -1,0 +1,229 @@
+{
+  "data": {
+    "trees": [
+      {
+        "nodes": {
+          "0ia3adfsyai4m": {
+            "children": [
+              "ersjskezaqqix"
+            ],
+            "id": "0ia3adfsyai4m",
+            "name": "formation7",
+            "properties": {
+              "ROLE": "formation7"
+            },
+            "role": "EnterFormationRole",
+            "title": "Role"
+          },
+          "2ew9z5sft3k4tq": {
+            "id": "2ew9z5sft3k4tq",
+            "properties": {
+              "ROLE": "formation1"
+            },
+            "title": "EnterFormation"
+          },
+          "3j1eplzumct1ky2l": {
+            "id": "3j1eplzumct1ky2l",
+            "properties": {
+              "ROLE": "formation7"
+            },
+            "title": "EnterFormation"
+          },
+          "5zpty5rp3sxxq": {
+            "children": [
+              "yhm3q5z3zgpx9qmg"
+            ],
+            "id": "5zpty5rp3sxxq",
+            "name": "formation5",
+            "properties": {
+              "ROLE": "formation5"
+            },
+            "role": "EnterFormationRole",
+            "title": "Role"
+          },
+          "8f7ffgm70v7rvmk": {
+            "children": [
+              "g67mrk9qaxow93l1a"
+            ],
+            "id": "8f7ffgm70v7rvmk",
+            "name": "formation3",
+            "properties": {
+              "ROLE": "formation3"
+            },
+            "role": "EnterFormationRole",
+            "title": "Role"
+          },
+          "ersjskezaqqix": {
+            "children": [
+              "3j1eplzumct1ky2l"
+            ],
+            "id": "ersjskezaqqix",
+            "properties": {
+              "ROLE": "formation7"
+            },
+            "title": "UntilSuccess"
+          },
+          "f014ums72tco3eg": {
+            "id": "f014ums72tco3eg",
+            "properties": {
+              "ROLE": "formation6"
+            },
+            "title": "EnterFormation"
+          },
+          "g67mrk9qaxow93l1a": {
+            "children": [
+              "ypypigfllfeaxi"
+            ],
+            "id": "g67mrk9qaxow93l1a",
+            "properties": {
+              "ROLE": "formation3"
+            },
+            "title": "UntilSuccess"
+          },
+          "g9gsvw6wt70qa8": {
+            "children": [
+              "vu38p3fmvedsws5"
+            ],
+            "id": "g9gsvw6wt70qa8",
+            "name": "formation2",
+            "properties": {
+              "ROLE": "formation2"
+            },
+            "role": "EnterFormationRole",
+            "title": "Role"
+          },
+          "glr51h2z0xaaa3": {
+            "children": [
+              "l795jdit0tls4k52",
+              "g9gsvw6wt70qa8",
+              "8f7ffgm70v7rvmk",
+              "j2e5pewc46b2ni9fv",
+              "5zpty5rp3sxxq",
+              "mz9t0qn1r1brww",
+              "0ia3adfsyai4m"
+            ],
+            "id": "glr51h2z0xaaa3",
+            "title": "ParallelSequence"
+          },
+          "h1ycz9vcs69y19c9": {
+            "id": "h1ycz9vcs69y19c9",
+            "properties": {
+              "ROLE": "formation4"
+            },
+            "title": "EnterFormation"
+          },
+          "j2e5pewc46b2ni9fv": {
+            "children": [
+              "jy0w55ikm2wy5"
+            ],
+            "id": "j2e5pewc46b2ni9fv",
+            "name": "formation4",
+            "properties": {
+              "ROLE": "formation4"
+            },
+            "role": "EnterFormationRole",
+            "title": "Role"
+          },
+          "jy0w55ikm2wy5": {
+            "children": [
+              "h1ycz9vcs69y19c9"
+            ],
+            "id": "jy0w55ikm2wy5",
+            "properties": {
+              "ROLE": "formation4"
+            },
+            "title": "UntilSuccess"
+          },
+          "l795jdit0tls4k52": {
+            "children": [
+              "x988e2xb3y8h0hmxq"
+            ],
+            "id": "l795jdit0tls4k52",
+            "name": "formation1",
+            "properties": {
+              "ROLE": "formation1"
+            },
+            "role": "EnterFormationRole",
+            "title": "Role"
+          },
+          "mz9t0qn1r1brww": {
+            "children": [
+              "u3as84na49xkapoea"
+            ],
+            "id": "mz9t0qn1r1brww",
+            "name": "formation6",
+            "properties": {
+              "ROLE": "formation6"
+            },
+            "role": "EnterFormationRole",
+            "title": "Role"
+          },
+          "u3as84na49xkapoea": {
+            "children": [
+              "f014ums72tco3eg"
+            ],
+            "id": "u3as84na49xkapoea",
+            "properties": {
+              "ROLE": "formation6"
+            },
+            "title": "UntilSuccess"
+          },
+          "vlkfpnwtudxwe60d9": {
+            "id": "vlkfpnwtudxwe60d9",
+            "properties": {
+              "ROLE": "formation2"
+            },
+            "title": "EnterFormation"
+          },
+          "vu38p3fmvedsws5": {
+            "children": [
+              "vlkfpnwtudxwe60d9"
+            ],
+            "id": "vu38p3fmvedsws5",
+            "properties": {
+              "ROLE": "formation2"
+            },
+            "title": "UntilSuccess"
+          },
+          "x54syinb1y5ub10": {
+            "id": "x54syinb1y5ub10",
+            "properties": {
+              "ROLE": "formation5"
+            },
+            "title": "EnterFormation"
+          },
+          "x988e2xb3y8h0hmxq": {
+            "children": [
+              "2ew9z5sft3k4tq"
+            ],
+            "id": "x988e2xb3y8h0hmxq",
+            "properties": {
+              "ROLE": "formation1"
+            },
+            "title": "UntilSuccess"
+          },
+          "yhm3q5z3zgpx9qmg": {
+            "children": [
+              "x54syinb1y5ub10"
+            ],
+            "id": "yhm3q5z3zgpx9qmg",
+            "properties": {
+              "ROLE": "formation5"
+            },
+            "title": "UntilSuccess"
+          },
+          "ypypigfllfeaxi": {
+            "id": "ypypigfllfeaxi",
+            "properties": {
+              "ROLE": "formation3"
+            },
+            "title": "EnterFormation"
+          }
+        },
+        "root": "glr51h2z0xaaa3",
+        "title": "EnterFormationTactic"
+      }
+    ]
+  },
+  "name": "EnterFormationTactic"
+}

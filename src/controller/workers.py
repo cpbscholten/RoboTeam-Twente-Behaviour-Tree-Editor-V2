@@ -41,6 +41,7 @@ class MainWorker(QObject):
         # create node types variable and initialize from settings
         self.node_types = NodeTypes.from_csv()
 
+    # noinspection PyArgumentList
     @pyqtSlot()
     @pyqtSlot(Path)
     def open_collection(self, path: Path=None):
@@ -54,6 +55,7 @@ class MainWorker(QObject):
         self.collection = Collection.from_path(path)
         self.open_collection_finished_signal.emit(self.collection)
 
+    # noinspection PyArgumentList
     @pyqtSlot(Collection)
     @pyqtSlot(Collection, Path)
     def write_collection(self, collection: Collection, path: Path=None):
@@ -68,6 +70,7 @@ class MainWorker(QObject):
         errors = self.collection.write_collection(path)
         self.write_collection_finished_signal.emit(errors)
 
+    # noinspection PyArgumentList
     @pyqtSlot(str, str, Tree)
     def write_tree(self, category: str, filename: str, tree: Tree):
         """
@@ -81,6 +84,7 @@ class MainWorker(QObject):
         errors = self.collection.write_tree(tree, self.collection.jsons_path() / category / filename)
         self.write_tree_finished_signal.emit(category, filename, tree, errors)
 
+    # noinspection PyArgumentList
     @pyqtSlot(Path, Tree)
     def write_tree_custom_path(self, path: Path, tree: Tree):
         """
@@ -93,6 +97,7 @@ class MainWorker(QObject):
         errors = self.collection.write_tree(tree, path)
         self.write_tree_custom_path_finished_signal.emit(path, tree, errors)
 
+    # noinspection PyArgumentList
     @pyqtSlot()
     def open_node_types(self):
         """
@@ -101,6 +106,7 @@ class MainWorker(QObject):
         self.node_types = NodeTypes.from_csv()
         self.open_node_types_finished_signal.emit(self.node_types)
 
+    # noinspection PyArgumentList
     @pyqtSlot(str, str)
     def create_heatmap(self, tid: str, status_type: str):
         """

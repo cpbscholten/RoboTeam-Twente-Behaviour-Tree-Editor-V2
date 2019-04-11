@@ -478,6 +478,7 @@ class Node(QGraphicsItem):
         for c in self.children:
             c.delete_self()
         # remove child reference from parent
+        parent_node = None
         if self.parentItem():
             parent_node: Node = self.parentItem().parentItem()
             parent_node.children.remove(self)
@@ -495,7 +496,11 @@ class Node(QGraphicsItem):
             self.scene.gui.tree.root = ''
         # remove node from internal tree structure
         del self.scene.gui.tree.nodes[self.model_node.id]
+        if parent_node:
+            # todo fix display issues
+            self.scene.gui.update_tree(parent_node.model_node)
         # remove the property display
+        # todo fix nonetupe has no attribute setparent when deleting node
         self.scene.view.parent().property_display.setParent(None)
         self.scene.view.parent().property_display.deleteLater()
         self.scene.view.parent().property_display = None

@@ -86,3 +86,13 @@ class TestSettings(object):
     def test_set_up_logging(self):
         # check that it runs without exceptions
         Settings.set_up_logging()
+
+    def test_auto_update_roles(self):
+        assert True is Settings.auto_update_roles()
+
+    def test_alter_auto_update_roles(self):
+        val = Settings.auto_update_roles()
+        Settings.alter_auto_update_roles(not val)
+        assert not val is Settings.auto_update_roles()
+        # revert to original value
+        Settings.alter_auto_update_roles(val)
