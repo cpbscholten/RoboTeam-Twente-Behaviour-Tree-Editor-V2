@@ -1,5 +1,5 @@
 from PyQt5.QtCore import QObject, Qt
-from PyQt5.QtGui import QMouseEvent
+from PyQt5.QtGui import QMouseEvent, QIcon
 from PyQt5.QtWidgets import QApplication, QGraphicsView, QPushButton
 
 from view.scenes import TreeScene
@@ -16,6 +16,10 @@ class Application(QApplication):
         :param sys_args: System arguments given on start
         """
         super(Application, self).__init__(sys_args)
+        self.setApplicationName('RoboTeam Behaviour Tree Editor')
+        self.setApplicationDisplayName('RoboTeam Behaviour Tree Editor')
+        self.setApplicationVersion('2.0')
+        self.setWindowIcon(QIcon('view/icon/appicon.png'))
         self.wait_for_click_filter = None
 
     def add_cross_cursor(self, scene: TreeScene):

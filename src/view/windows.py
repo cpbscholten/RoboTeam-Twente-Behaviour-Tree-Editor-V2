@@ -80,7 +80,6 @@ class MainWindow(QMainWindow):
         self.menubar = MenuBar(self)
 
         # set the window title and build the menu bar
-        self.def_window_title = 'RoboTeam Behaviour Tree Editor V2'
         self.update_window_title_and_menu_bar()
 
         # call to collection to create a collection from the default path
@@ -228,11 +227,11 @@ class MainWindow(QMainWindow):
         # update menu bar with asterisk and filename if changes happened
         if self.collection and self.filename and self.filename in self.load_collection.collection[self.category] and \
                 self.tree == self.load_collection.collection[self.category][self.filename]:
-            self.setWindowTitle(self.def_window_title + ' - ' + self.category + '/' + self.filename)
+            self.setWindowTitle(self.category + '/' + self.filename)
         elif self.tree is not None:
-            self.setWindowTitle(self.def_window_title + ' - ' + self.category + '/' + self.filename + '*')
+            self.setWindowTitle(self.category + '/' + self.filename + '*')
         else:
-            self.setWindowTitle(self.def_window_title)
+            self.setWindowTitle('')
         # update menu bar
         self.menubar.build_menu_bar()
 
