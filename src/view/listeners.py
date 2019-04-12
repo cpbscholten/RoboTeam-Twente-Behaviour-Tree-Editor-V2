@@ -116,10 +116,7 @@ class MainListener(QObject):
         :param tree: tree we were trying to write
         :param errors: a list with errors
         """
-        # update the collection
-        if len(errors) == 0:
-            self.open_collection_signal.emit()
-        else:
+        if not len(errors) == 0:
             # show the failed tree on the screen
             self.gui.show_tree(category, filename, tree)
             view.windows.Dialogs.error_box("ERROR", 'There were errors while writing the tree', errors)
@@ -135,7 +132,6 @@ class MainListener(QObject):
         :param tree: the tree we were trying to write
         :param errors: a list with errors
         """
-        # update the collection
         if not len(errors) == 0:
             view.windows.Dialogs.error_box("ERROR", 'There were errors while writing tree {} to '.format(tree.name)
                                            + str(path) + '!', errors)
