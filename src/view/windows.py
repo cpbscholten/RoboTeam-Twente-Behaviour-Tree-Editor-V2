@@ -192,12 +192,12 @@ class MainWindow(QMainWindow):
                 if collection:
                     save = Dialogs.error_box('Errors', 'There are errors in the mathematical properties of the '
                                                        'collection. The collection can therefore not be saved.'
-                                                       'Do you want to close without saving.',
+                                                       'Do you want to close without saving?',
                                              detailed_text=errors, cancel=True)
                 else:
                     save = Dialogs.error_box('Errors', 'There are errors in the mathematical properties of the tree. '
                                                        'Therefore the tree cannot be saved. '
-                                                       'Do you want to close without saving.',
+                                                       'Do you want to close without saving?',
                                              detailed_text=errors, cancel=True)
                 return save, errors
         # empty list as errors, as the errors are only relevant when saving

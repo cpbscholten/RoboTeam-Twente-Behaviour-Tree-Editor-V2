@@ -8,7 +8,7 @@ import pytest
 from controller.utils import read_json
 from model.config import Settings
 from model.exceptions import InvalidTreeJsonFormatException, InvalidNodeTypeException
-from model.tree import Node, Tree, Collection, NodeTypes
+from model.tree import Node, Tree, Collection, NodeTypes, Verification
 
 
 class TestNode(object):
@@ -562,12 +562,11 @@ class TestCollection(object):
         collection = Collection.from_path(Settings.default_json_folder(), only_verify_mathematical_properties=False)
         for category in collection.collection:
             for file in collection.collection[category]:
-                # TODO: Remove this if else after we figure out what to do with 2 children under decorator
+                # skip these two files as there is a decorator with two children
                 if not (file == "GetBallTestTactic.json" or file == "GetBallTestStrategy.json"):
                     assert 0 is len(collection.verify_tree(collection.collection[category][file], category))
 
     def test_write_tree(self, tmpdir):
-        # TODO add case when not valid
         collection = Collection.from_path(self.path)
         tree = self.attack_strategy
         collection.write_tree(tree, Path(tmpdir) / "test.json")
@@ -691,9 +690,8 @@ class TestVerification(object):
     }
 
     def test_simple_tree_with_cycle(self):
-        collection = Collection(self.collection)
         tree = self.simple_cyclic_tree
-        assert 0 is not len(collection.verify_tree(tree))
+        assert 1 is len(Verification.contains_cycles(tree, {}))
 
     def test_simple_valid_tree(self):
         collection = Collection(self.collection)
@@ -701,9 +699,8 @@ class TestVerification(object):
         assert 0 is len(collection.verify_tree(tree))
 
     def test_simple_unconnected_tree(self):
-        collection = Collection(self.collection)
         tree = self.simple_unconnected_tree
-        assert 0 is not len(collection.verify_tree(tree))
+        assert 1 is len(Verification.has_unconnected_nodes(tree))
 
     def test_invalid_role_inheritance_tree_1(self):
         collection = Collection(self.collection)
@@ -758,6 +755,14 @@ class TestVerification(object):
         collection = Collection(self.collection)
         tree = self.rr_tree
         assert 1 is len(collection.verify_tree(tree, "roles"))
+
+    def test_walk_tree(self):
+        tree = self.simple_non_cyclic_tree
+        assert 3 == len(Verification.walk_tree(tree, tree.nodes.get(tree.root)))
+        tree.nodes.get(tree.root).add_child('abcdeffg')
+        assert 3 == len(Verification.walk_tree(tree, tree.nodes.get(tree.root)))
+        tree.nodes.get(tree.root).add_child(tree.root)
+        assert 3 == len(Verification.walk_tree(tree, tree.nodes.get(tree.root)))
 
 
 class TestNodeTypes:

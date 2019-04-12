@@ -497,7 +497,7 @@ class Node(QGraphicsItem):
         # remove node from internal tree structure
         del self.scene.gui.tree.nodes[self.model_node.id]
         if parent_node:
-            # todo fix display issues
+            # todo fix view not being updated
             self.scene.gui.update_tree(parent_node.model_node)
         # remove the property display
         self.scene.parent().remove_property_display()
@@ -522,7 +522,6 @@ class Node(QGraphicsItem):
         self.scene.view.parent().property_display = view.widgets.TreeViewPropertyDisplay(
             self.scene.view.parent().graphics_scene, tree.attributes, parent=self.scene.view.parent(), node_id=tree.id,
             node_title=tree.title)
-        # TODO: Sort children when moving nodes and removes this function
         self.sort_children()
 
     def mouseMoveEvent(self, m_event):
@@ -631,7 +630,6 @@ class CollapseExpandButton(QGraphicsObject):
         """
         self.node = parent
         self.scene = self.node.scene
-        # TODO: Use a global resource directory
         self.expand_icon = QPixmap("view/icon/expand.png")
         self.collapse_icon = QPixmap("view/icon/collapse.png")
         super(CollapseExpandButton, self).__init__(parent)

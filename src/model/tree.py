@@ -44,8 +44,6 @@ class Node:
         if not ('id' in attributes and type(attributes.get('id')) == str
                 and 'title' in attributes and type(attributes.get('title')) == str) \
                 or ('children' in attributes and not type(attributes.get('children')) == list):
-            # TODO: check if children are string?
-            # TODO: provide more elaborate error logging (why is it invalid?)
             Node.logger.error("Attempted to process invalid tree.")
             raise InvalidTreeJsonFormatException
         attributes.pop('id')
@@ -699,8 +697,7 @@ class Collection:
                             else:
                                 loop_tree.remove_propagation(node.id)
                         else:
-                            # todo add test for circles
-                            Collection.logger.warning('Prevented a circle when updating the tree')
+                            Collection.logger.warning('Prevented a cycle when updating the tree')
 
     def verify_tree(self, tree, category=None, only_check_mathematical_properties=False) -> List[str]:
         """
@@ -1020,11 +1017,6 @@ class Verification:
         # Check for cycles
         visited_nodes = {}
         errors.extend(Verification.contains_cycles(tree, visited_nodes))
-        if len(errors) is not 0:
-            return errors
-
-        # Check for unconnected nodes (and if there's only one root)
-        errors.extend(Verification.has_unconnected_nodes(visited_nodes, tree.nodes, tree))
         return errors
 
     @staticmethod
@@ -1037,6 +1029,7 @@ class Verification:
         :return: a list with errors, empty if no errors
         """
         errors = []
+        errors.extend(Verification.has_unconnected_nodes(tree))
         errors.extend(Verification.check_category_structure(collection, category, tree))
         errors.extend(Verification.check_composites_and_decorators(tree, tree.root))
         errors.extend(Verification.check_role_inheritance(tree, tree.root))
@@ -1061,16 +1054,17 @@ class Verification:
         return errors
 
     @staticmethod
-    def has_unconnected_nodes(visited_nodes, tree_nodes, tree) -> List[str]:
+    def has_unconnected_nodes(tree) -> List[str]:
         """
         Helper function to compare two lists of nodes to see if all the visited nodes are within a list of tree nodes,
         if there are unconnected nodes then go through the list to log which ones are unconnected.
-        :param visited_nodes: List of visited nodes.
-        :param tree_nodes: List of nodes in the tree.
         :param tree: the tree object verifying
         :return: True if there are no unconnected nodes
         """
         errors = []
+        tree_nodes = tree.nodes.values()
+        visited_nodes = Verification.walk_tree(tree, tree.nodes.get(tree.root))
+        print(visited_nodes)
         if len(visited_nodes) < len(tree_nodes):
             # If there is an unconnected node find it so we can log detailed info
             for tree_node in tree_nodes:
@@ -1080,14 +1074,33 @@ class Verification:
                         # If the node has been visited break from this loop
                         present = True
                         break
-                if present:
-                    # The node was present continue checking
-                    continue
-                else:
+                if not present:
                     error = "The node {} is unconnected in tree {}".format(tree_node, tree.name)
                     Verification.logger.error(error)
                     errors.append(error)
         return errors
+
+    @staticmethod
+    def walk_tree(tree: Tree, start_node: Node) -> List[Node]:
+        """
+        Method to walk the tree to see which nodes are connected to the root
+        :param tree:
+        :param start_node:
+        :return:
+        """
+        visited_nodes = [start_node]
+        for child in start_node.children:
+            if child in tree.nodes:
+                child_node = tree.nodes.get(child)
+                if child_node not in visited_nodes:
+                    visited_nodes.extend(Verification.walk_tree(tree, child_node))
+                else:
+                    Verification.logger.error('Encountered a cycle in tree {}'.format(tree.name))
+            else:
+                Verification.logger.error('Child {} from node {} in tree {} does not exist.'
+                                          .format(child, start_node.id, tree.name))
+                continue
+        return visited_nodes
 
     @staticmethod
     def contains_cycles(tree: Tree, visited_nodes) -> List[str]:
@@ -1104,7 +1117,7 @@ class Verification:
             if node_to_visit in visited_nodes:
                 error = "Cycle found in tree {} at node {} while verifying.".format(tree.name, node_to_visit)
                 Verification.logger.error(error)
-                return list(error)
+                return [error]
             visited_nodes[node_to_visit] = tree.nodes[node_to_visit]
             for node in tree.nodes[node_to_visit].children:
                 to_visit.append(node)
