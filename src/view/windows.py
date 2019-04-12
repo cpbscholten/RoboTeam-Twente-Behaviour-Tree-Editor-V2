@@ -93,6 +93,7 @@ class MainWindow(QMainWindow):
         :param enable: enable or not
         """
         self.menubar.close_tree_act.setEnabled(enable)
+        self.menubar.discard_tree_changes_act.setEnabled(enable)
         self.menubar.save_tree_act.setEnabled(enable)
         self.menubar.save_tree_as_act.setEnabled(enable)
         self.tree_view_widget.toolbar.setEnabled(enable)
@@ -111,13 +112,6 @@ class MainWindow(QMainWindow):
         """
         Closes the tree that currently is displayed
         """
-        # ask if there are changes that need to be saved
-        save, errors = self.check_unsaved_changes()
-        if save is DialogEnum.Cancel:
-            return
-        elif save is DialogEnum.No and self.load_tree is not None:
-            # revert tree to original in collection
-            self.collection.collection[self.category][self.filename] = self.load_tree
         if self.app.wait_for_click_filter:
             self.app.wait_for_click_filter.reset_event_filter()
         # reset the changes in the loaded tree
@@ -139,6 +133,7 @@ class MainWindow(QMainWindow):
         :param filename: filename
         :param tree: tree object to display
         """
+        self.close_tree()
         self.category = category
         self.load_tree = deepcopy(tree)
         self.tree = tree
@@ -148,39 +143,29 @@ class MainWindow(QMainWindow):
         # set the window title to also show the path of the tree
         self.update_tree()
 
-    def check_unsaved_changes(self, collection: bool = False) -> Tuple[DialogEnum, List[str]]:
+    def check_unsaved_changes(self, write=True) -> Tuple[DialogEnum, List[str]]:
         """
-        Method that checks for unsaved changes asks for yes, no, cancel
-        :param collection: if only the tree or the whole collection should be checked
+        Method that checks the collection for unsaved changes asks for yes, no, cancel
+        :param write: if the check should write the collection or only check for changes
         :return DialogEnum: Which button was clicked
         :return errors: the errors while verifying before saving
         """
-        if (not collection and not self.tree) or (collection and not self.load_collection):
+        if not self.load_collection:
             # empty list as errors, as the errors are only relevant when saving
             return DialogEnum.No, []
-        elif self.load_tree != self.tree:
+        elif self.load_collection != self.collection:
             # only check for errors in the mathematical properties
-            if not collection:
-                errors = self.collection.verify_tree(self.tree, self.category, only_check_mathematical_properties=True)
-            else:
-                errors = []
-                for category, trees in self.collection.collection.items():
-                    for filename, tree in trees.items():
-                        errors.extend(self.collection.verify_tree(tree, category,
-                                                                  only_check_mathematical_properties=True))
+            errors = []
+            for category, trees in self.collection.collection.items():
+                for filename, tree in trees.items():
+                    errors.extend(self.collection.verify_tree(tree, category,
+                                                              only_check_mathematical_properties=True))
             if len(errors) == 0:
-                message_title = 'Unsaved changes'
-                # show a message box with a yes, no and cancel button
-                if collection:
-                    message = 'There are some unsaved changes in the collection, do you want to save them?'
-                else:
-                    message = 'There are some unsaved changes in the current tree, do you want to save it?'
-                save = Dialogs.yes_no_cancel_message_box(message_title, message)
+                message = 'There are some unsaved changes in the collection, do you want to save them?'
+                save = Dialogs.yes_no_cancel_message_box('Unsaved changes', message)
                 # act depending on the user's choice
                 if save is DialogEnum.Yes:
-                    if not collection:
-                        self.main_listener.write_tree_signal.emit(self.category, self.filename, self.tree)
-                    else:
+                    if write:
                         self.main_listener.write_collection_signal.emit(self.load_collection)
                 elif save is DialogEnum.No:
                     if self.collection and self.filename in self.collection.collection.get(self.category):
@@ -189,16 +174,10 @@ class MainWindow(QMainWindow):
                     return DialogEnum.Cancel, []
                 return save, []
             else:
-                if collection:
-                    save = Dialogs.error_box('Errors', 'There are errors in the mathematical properties of the '
-                                                       'collection. The collection can therefore not be saved.'
-                                                       'Do you want to close without saving?',
-                                             detailed_text=errors, cancel=True)
-                else:
-                    save = Dialogs.error_box('Errors', 'There are errors in the mathematical properties of the tree. '
-                                                       'Therefore the tree cannot be saved. '
-                                                       'Do you want to close without saving?',
-                                             detailed_text=errors, cancel=True)
+                save = Dialogs.error_box('Errors', 'There are errors in the mathematical properties of one of the '
+                                                   'trees in the collection. The collection can therefore '
+                                                   'not be saved. Do you want to close without saving?',
+                                         detailed_text=errors, cancel=True)
                 return save, errors
         # empty list as errors, as the errors are only relevant when saving
         return DialogEnum.No, []
@@ -228,12 +207,34 @@ class MainWindow(QMainWindow):
         if self.collection and self.filename and self.filename in self.load_collection.collection[self.category] and \
                 self.tree == self.load_collection.collection[self.category][self.filename]:
             self.setWindowTitle(self.category + '/' + self.filename)
+            self.menubar.discard_tree_changes_act.setEnabled(False)
         elif self.tree is not None:
-            self.setWindowTitle(self.category + '/' + self.filename + '*')
+            self.setWindowTitle('*' + self.category + '/' + self.filename)
+            self.menubar.discard_tree_changes_act.setEnabled(True)
         else:
             self.setWindowTitle('')
+            self.menubar.discard_tree_changes_act.setEnabled(False)
         # update menu bar
         self.menubar.build_menu_bar()
+
+    def discard_tree_changes(self):
+        """
+        Method to discard changes to the current tree.
+        """
+        discard = Dialogs.yes_no_message_box('Discard changes', 'Are you sure you want to discard '
+                                                                'the changes to the current tree?')
+        if discard:
+            if self.load_tree and self.filename in self.load_collection.collection[self.category]:
+                # not a new file, discard and reload
+                self.collection.collection[self.category][self.filename] = self.load_tree
+                self.show_tree(self.category, self.filename, self.load_tree)
+            else:
+                # new file, discard and
+                self.collection.collection.get(self.category).pop(self.filename, None)
+                self.close_tree()
+        else:
+            # do nothing, as changes should not be discarded
+            pass
 
     def closeEvent(self, event):
         """
@@ -241,13 +242,15 @@ class MainWindow(QMainWindow):
         check for unsaved changes
         :param event: the event
         """
-        save, errors = self.check_unsaved_changes(collection=True)
+        save, errors = self.check_unsaved_changes(write=False)
         if save is DialogEnum.Cancel:
             return event.ignore()
         elif save is DialogEnum.No:
             return event.accept()
         elif save is DialogEnum.Yes:
             if len(errors) == 0:
+                # written here to prevent exceptions from thread when closing window
+                self.collection.write_collection()
                 return event.accept()
         return event.ignore()
 
@@ -295,6 +298,11 @@ class MenuBar:
         self.close_tree_act.setStatusTip('Close the current tree from the view')
         self.close_tree_act.triggered.connect(self.main_window.close_tree)
 
+        self.discard_tree_changes_act = QAction('Discard changes', self.main_window)
+        self.discard_tree_changes_act.setShortcut('Ctrl+D')
+        self.discard_tree_changes_act.setToolTip('Discard changes of current tree')
+        self.discard_tree_changes_act.triggered.connect(self.main_window.discard_tree_changes)
+
         self.save_tree_act = QAction('Save', self.main_window)
         self.save_tree_act.setShortcut('Ctrl+S')
         self.save_tree_act.setStatusTip('Save the current tree')
@@ -330,14 +338,9 @@ class MenuBar:
         # creates a tree menu
         tree_menu = menubar.addMenu('&Tree')
         tree_menu.addAction(self.close_tree_act)
+        tree_menu.addAction(self.discard_tree_changes_act)
         tree_menu.addAction(self.save_tree_act)
         tree_menu.addAction(self.save_tree_as_act)
-
-        # enable tree actions if a tree is displayed, disable if not
-        if self.main_window.tree is not None:
-            self.main_window.enable_tree_actions(True)
-        else:
-            self.main_window.enable_tree_actions(False)
 
         # counter for collection categories shortcut. First one will be Ctrl+1, second Ctrl+2, etc.
         shortcut_count = 0
@@ -366,7 +369,7 @@ class MenuBar:
                         self.main_window.load_collection.collection[category][filename] == \
                         self.main_window.collection.collection[category][filename] else True
                     if changed:
-                        category_file_act = QAction(filename + "*", self.main_window)
+                        category_file_act = QAction('*' + filename, self.main_window)
                     else:
                         category_file_act = QAction(filename, self.main_window)
                     category_file_act.setStatusTip('Open ' + filename + ' in editor')
@@ -390,7 +393,6 @@ class MenuBar:
         calls the emit signal for opening a collection
         :return:
         """
-        self.main_window.check_unsaved_changes(collection=True)
         self.main_window.main_listener.open_collection_signal.emit()
 
     def open_tree(self, category: str, filename: str):
@@ -398,7 +400,6 @@ class MenuBar:
         opens a tree from the collection and show it on screen
         """
         tree = self.main_window.collection.collection.get(category).get(filename)
-        self.main_window.close_tree()
         self.main_window.show_tree(category, filename, tree)
 
     def open_collection_custom_path(self):
@@ -411,13 +412,13 @@ class MenuBar:
         path = Dialogs.open_folder_dialog('Open collection folder', json_path)
         # do a call to the controller to open the collection
         if path is not None:
+            self.main_window.check_unsaved_changes(write=True)
             self.main_window.main_listener.open_collection_custom_path_signal.emit(path)
 
     def save_collection(self):
         """
         emits a signal to write the collection to the default path
         """
-        self.main_window.load_tree = self.main_window.tree
         self.main_window.main_listener.write_collection_signal.emit(self.main_window.collection)
 
     def save_collection_as(self):
@@ -429,7 +430,6 @@ class MenuBar:
         path = Dialogs.open_folder_dialog('Save collection folder', json_path)
         # do a call to the controller to write the collection
         if path is not None:
-            self.main_window.load_tree = self.main_window.tree
             self.main_window.main_listener.write_collection_custom_path_signal.emit(self.main_window.collection,
                                                                                     path)
 
@@ -437,7 +437,6 @@ class MenuBar:
         """
         Save the tree currently displayed to the collection
         """
-        self.main_window.load_tree = self.main_window.tree
         self.main_window.main_listener.write_tree_signal.emit(self.main_window.category, self.main_window.filename,
                                                               self.main_window.tree)
 
@@ -451,11 +450,9 @@ class MenuBar:
         path = Dialogs.save_file_dialog('Save tree as', json_path / self.main_window.filename, )
         # do a call to the controller to write the collection
         if path is not None:
-            self.main_window.load_tree = self.main_window.tree
             self.main_window.main_listener.write_tree_custom_path_signal.emit(path, self.main_window.tree)
 
     def create_tree(self, category: str):
-        self.main_window.check_unsaved_changes()
         name = Dialogs.text_input_dialog('Choose Tree name', 'Choose a name for the tree', "[A-Za-z0-9_+-]+")
         if name is None:
             return

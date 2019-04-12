@@ -86,7 +86,7 @@ class MainListener(QObject):
         """
         self.gui.load_collection = collection
         self.gui.collection = deepcopy(collection)
-        self.gui.menubar.build_menu_bar()
+        self.gui.update_window_title_and_menu_bar()
 
     # noinspection PyArgumentList
     @pyqtSlot(list)
@@ -97,12 +97,13 @@ class MainListener(QObject):
         if it failed show an error message
         :param errors: a list with errors
         """
-        # update the collection
-        if len(errors) == 0:
-            self.open_collection_signal.emit()
-        else:
+        if not len(errors) == 0:
             # show errors
             view.windows.Dialogs.error_box("ERROR", 'There were errors while writing the collection!')
+        else:
+            self.gui.load_tree = deepcopy(self.gui.tree)
+            self.gui.load_collection = deepcopy(self.gui.collection)
+            self.gui.update_window_title_and_menu_bar()
 
     # noinspection PyArgumentList
     @pyqtSlot(str, str, Tree, list)
@@ -120,6 +121,10 @@ class MainListener(QObject):
             # show the failed tree on the screen
             self.gui.show_tree(category, filename, tree)
             view.windows.Dialogs.error_box("ERROR", 'There were errors while writing the tree', errors)
+        else:
+            self.gui.load_tree = deepcopy(self.gui.tree)
+            self.gui.load_collection.collection[category][filename] = self.gui.load_tree
+            self.gui.update_window_title_and_menu_bar()
 
     # noinspection PyArgumentList
     @pyqtSlot(Path, Tree, list)

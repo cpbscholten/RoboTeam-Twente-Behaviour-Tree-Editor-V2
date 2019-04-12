@@ -1064,7 +1064,6 @@ class Verification:
         errors = []
         tree_nodes = tree.nodes.values()
         visited_nodes = Verification.walk_tree(tree, tree.nodes.get(tree.root))
-        print(visited_nodes)
         if len(visited_nodes) < len(tree_nodes):
             # If there is an unconnected node find it so we can log detailed info
             for tree_node in tree_nodes:
