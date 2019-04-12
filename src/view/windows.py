@@ -33,9 +33,6 @@ class MainWindow(QMainWindow):
         # create listener that interacts with the controller workers
         self.main_listener = MainListener(self)
 
-        self.def_window_title = 'RoboTeam Behaviour Tree Editor V2'
-        self.setWindowTitle(self.def_window_title)
-
         # create a main widget with a HBoxLayout for each widget
         self.main_widget = QWidget()
         self.setMinimumHeight(800)
@@ -81,7 +78,10 @@ class MainWindow(QMainWindow):
 
         # create a menubar instance
         self.menubar = MenuBar(self)
-        self.menubar.build_menu_bar()
+
+        # set the window title and build the menu bar
+        self.def_window_title = 'RoboTeam Behaviour Tree Editor V2'
+        self.update_window_title_and_menu_bar()
 
         # call to collection to create a collection from the default path
         # which initializes the menu bar
@@ -116,7 +116,7 @@ class MainWindow(QMainWindow):
         save, errors = self.check_unsaved_changes()
         if save is DialogEnum.Cancel:
             return
-        elif save is DialogEnum.No and self.tree is not None:
+        elif save is DialogEnum.No and self.load_tree is not None:
             # revert tree to original in collection
             self.collection.collection[self.category][self.filename] = self.load_tree
         if self.app.wait_for_click_filter:
@@ -128,13 +128,10 @@ class MainWindow(QMainWindow):
         self.category = None
         self.filename = None
         self.enable_tree_actions(False)
-        self.tree_view_widget.graphics_scene.clear()
-        # clear the pah of the tree from the window title
-        self.setWindowTitle(self.def_window_title)
-        if self.tree_view_widget.property_display is not None:
-            self.tree_view_widget.property_display.setParent(None)
-            self.tree_view_widget.property_display.deleteLater()
-        self.tree_view_widget.property_display = None
+        # remove tree and property display from widget
+        self.tree_view_widget.remove_tree()
+        # update window title and menu bar
+        self.update_window_title_and_menu_bar()
 
     def show_tree(self, category, filename, tree):
         """
@@ -148,72 +145,62 @@ class MainWindow(QMainWindow):
         self.tree = tree
         self.filename = filename
         self.enable_tree_actions(True)
-        # verify the tree to update the checkmark icon
-        self.toolbar_widget.verify_tree()
         self.tree_view_widget.graphics_scene.add_tree(tree)
         # set the window title to also show the path of the tree
-        self.setWindowTitle(self.def_window_title + ' - ' + self.category + '/' + self.filename)
+        self.update_tree()
 
-    def check_unsaved_changes(self) -> Tuple[DialogEnum, List[str]]:
+    def check_unsaved_changes(self, collection: bool = False) -> Tuple[DialogEnum, List[str]]:
         """
         Method that checks for unsaved changes asks for yes, no, cancel
+        :param collection: if only the tree or the whole collection should be checked
         :return DialogEnum: Which button was clicked
         :return errors: the errors while verifying before saving
         """
-        # todo combine both checks in one method
-        if not self.load_tree:
+        if (not collection and not self.tree) or (collection and not self.load_collection):
             # empty list as errors, as the errors are only relevant when saving
             return DialogEnum.No, []
         elif self.load_tree != self.tree:
-            errors = self.collection.verify_tree(self.tree, self.category)
-            if len(errors) == 0:
-                save = Dialogs.yes_no_cancel_message_box('Unsaved changes',
-                                                         'There are some unsaved changes, do you want to save it?')
-
+            # only check for errors in the mathematical properties
+            if not collection:
+                errors = self.collection.verify_tree(self.tree, self.category, only_check_mathematical_properties=True)
             else:
-                save = Dialogs.yes_no_cancel_message_box('Unsaved changes',
-                                                         'The tree currently is invalid and cannot be used '
-                                                         'by the simulator. Do you want to save it?')
-            if save is DialogEnum.Yes:
-                if len(errors) == 0:
-                    self.main_listener.write_tree_signal.emit(self.category, self.filename, self.tree)
-            elif save is DialogEnum.No:
-                if self.collection and self.filename in self.collection.collection.get(self.category):
-                    self.collection.collection[self.category].pop(self.filename)
-            return save, errors
-        # empty list as errors, as the errors are only relevant when saving
-        return DialogEnum.No, []
-
-    def check_unsaved_changes_collection(self) -> Tuple[DialogEnum, List[str]]:
-        """
-        Method that checks for unsaved changes in the collection. Asks for yes, no, cancel
-        :return DialogEnum: Which button was clicked
-        :return errors: the errors while verifying before saving
-                """
-        if not self.load_collection:
-            # empty list as errors, as the errors are only relevant when saving
-            return DialogEnum.No, []
-        elif self.load_collection != self.collection:
-            errors = []
-            for category, trees in self.collection.collection.items():
-                for filename, tree in trees.items():
-                    errors.extend(self.collection.verify_tree(tree, category))
+                errors = []
+                for category, trees in self.collection.collection.items():
+                    for filename, tree in trees.items():
+                        errors.extend(self.collection.verify_tree(tree, category,
+                                                                  only_check_mathematical_properties=True))
             if len(errors) == 0:
-                save = Dialogs.yes_no_cancel_message_box('Unsaved changes',
-                                                         'There are some unsaved changes in the collection, '
-                                                         'do you want to save them?')
-
+                message_title = 'Unsaved changes'
+                # show a message box with a yes, no and cancel button
+                if collection:
+                    message = 'There are some unsaved changes in the collection, do you want to save them?'
+                else:
+                    message = 'There are some unsaved changes in the current tree, do you want to save it?'
+                save = Dialogs.yes_no_cancel_message_box(message_title, message)
+                # act depending on the user's choice
+                if save is DialogEnum.Yes:
+                    if not collection:
+                        self.main_listener.write_tree_signal.emit(self.category, self.filename, self.tree)
+                    else:
+                        self.main_listener.write_collection_signal.emit(self.load_collection)
+                elif save is DialogEnum.No:
+                    if self.collection and self.filename in self.collection.collection.get(self.category):
+                        self.collection.collection[self.category].pop(self.filename)
+                else:
+                    return DialogEnum.Cancel, []
+                return save, []
             else:
-                save = Dialogs.yes_no_cancel_message_box('Unsaved changes',
-                                                         'The collection has errors and might not be able to be used '
-                                                         'by the simulator. Do you want to save them?')
-            if save is DialogEnum.Yes:
-                if len(errors) == 0:
-                    self.main_listener.write_collection_signal.emit()
-            elif save is DialogEnum.No:
-                if self.collection and self.filename in self.collection.collection.get(self.category):
-                    self.collection.collection[self.category].pop(self.filename)
-            return save, errors
+                if collection:
+                    save = Dialogs.error_box('Errors', 'There are errors in the mathematical properties of the '
+                                                       'collection. The collection can therefore not be saved.'
+                                                       'Do you want to close without saving.',
+                                             detailed_text=errors, cancel=True)
+                else:
+                    save = Dialogs.error_box('Errors', 'There are errors in the mathematical properties of the tree. '
+                                                       'Therefore the tree cannot be saved. '
+                                                       'Do you want to close without saving.',
+                                             detailed_text=errors, cancel=True)
+                return save, errors
         # empty list as errors, as the errors are only relevant when saving
         return DialogEnum.No, []
 
@@ -222,12 +209,32 @@ class MainWindow(QMainWindow):
         Method that needs to be called when updating self.tree. Will automatically run the verification
         """
         self.toolbar_widget.verify_tree()
+        # if node is given check if a subtree changed
         if node is not None and Settings.auto_update_roles():
             node = self.tree.find_role_subtree_node_above_node(node)
             if node:
                 self.collection.update_subtrees_in_collection(self.tree, node)
             elif 'roles' is self.category:
                 self.collection.update_subtrees_in_collection(self.tree)
+        # rebuild menu bar
+        self.update_window_title_and_menu_bar()
+
+    def update_window_title_and_menu_bar(self):
+        """
+        Method that determines the window title of the main window depending on the
+        tree currently open and if there are changes to the tree
+        also updates the menu bar to reflect on the local changes
+        """
+        # update menu bar with asterisk and filename if changes happened
+        if self.collection and self.filename and self.filename in self.load_collection.collection[self.category] and \
+                self.tree == self.load_collection.collection[self.category][self.filename]:
+            self.setWindowTitle(self.def_window_title + ' - ' + self.category + '/' + self.filename)
+        elif self.tree is not None:
+            self.setWindowTitle(self.def_window_title + ' - ' + self.category + '/' + self.filename + '*')
+        else:
+            self.setWindowTitle(self.def_window_title)
+        # update menu bar
+        self.menubar.build_menu_bar()
 
     def closeEvent(self, event):
         """
@@ -235,18 +242,15 @@ class MainWindow(QMainWindow):
         check for unsaved changes
         :param event: the event
         """
-        save, errors = self.check_unsaved_changes_collection()
+        save, errors = self.check_unsaved_changes(collection=True)
         if save is DialogEnum.Cancel:
-            event.ignore()
-            return
+            return event.ignore()
         elif save is DialogEnum.No:
-            event.accept()
-            return
+            return event.accept()
         elif save is DialogEnum.Yes:
             if len(errors) == 0:
-                event.accept()
-                return
-        event.ignore()
+                return event.accept()
+        return event.ignore()
 
 
 class MenuBar:
@@ -302,12 +306,12 @@ class MenuBar:
         self.save_tree_as_act.setStatusTip('Save the current tree as')
         self.save_tree_as_act.triggered.connect(self.save_tree_as)
 
-    def build_menu_bar(self, collection: Collection=None):
+    def build_menu_bar(self):
         """
         Reinitialized the menubar with a collection dict containing categories and filenames
-        :param collection: collection object loaded
         """
-        collection_dict = collection.categories_and_filenames() if collection is not None else None
+        collection_dict = self.main_window.collection.categories_and_filenames() \
+            if self.main_window.collection is not None and self.main_window.load_collection is not None else None
 
         # clears the current menubar
         menubar = self.main_window.menuBar()
@@ -359,7 +363,13 @@ class MenuBar:
                 category_menu.addAction(add_tree_act)
                 # adds an action for each file in the category
                 for filename in filenames:
-                    category_file_act = QAction(filename, self.main_window)
+                    changed = False if filename in self.main_window.load_collection.collection[category] and \
+                        self.main_window.load_collection.collection[category][filename] == \
+                        self.main_window.collection.collection[category][filename] else True
+                    if changed:
+                        category_file_act = QAction(filename + "*", self.main_window)
+                    else:
+                        category_file_act = QAction(filename, self.main_window)
                     category_file_act.setStatusTip('Open ' + filename + ' in editor')
                     # displays a tree in main menu when selected
                     category_file_act.triggered.connect(partial(self.open_tree,
@@ -381,7 +391,7 @@ class MenuBar:
         calls the emit signal for opening a collection
         :return:
         """
-        self.main_window.check_unsaved_changes_collection()
+        self.main_window.check_unsaved_changes(collection=True)
         self.main_window.main_listener.open_collection_signal.emit()
 
     def open_tree(self, category: str, filename: str):
@@ -454,8 +464,10 @@ class MenuBar:
             filename = name + '.json'
             tree = Tree(name, '')
             self.main_window.show_tree(category, filename, tree)
+            self.main_window.load_tree = None
             # add to collection
             self.main_window.collection.collection[category][filename] = tree
+            self.build_menu_bar()
 
 
 class Dialogs:
@@ -497,23 +509,33 @@ class Dialogs:
         return True if clicked == QMessageBox.Yes else False
 
     @staticmethod
-    def error_box(title: str, text: str, detailed_text: List[str] = None):
+    def error_box(title: str, text: str, detailed_text: List[str] = None, cancel: bool = False) -> DialogEnum:
         """
         Displays an error box with a title and message and only an ok button
         :param title: title in top bar
         :param text: text in the error box
         :param detailed_text: detailed list of errors
+        :param cancel: if a cancel button is needed
+        :return DialogEnum: if ok or cancel is pressed
         """
         if detailed_text is None:
-            QMessageBox.critical(QMessageBox(), title, text, QMessageBox.Ok, QMessageBox.Ok)
+            if cancel:
+                clicked = QMessageBox.critical(QMessageBox(), title, text, QMessageBox.Ok |
+                                               QMessageBox.Cancel, QMessageBox.Ok)
+            else:
+                clicked = QMessageBox.critical(QMessageBox(), title, text, QMessageBox.Ok, QMessageBox.Ok)
         else:
             msg = QMessageBox()
             msg.setIcon(QMessageBox.Critical)
             msg.setText(text)
             msg.setWindowTitle(title)
             msg.setDetailedText('\n'.join(detailed_text))
-            msg.setStandardButtons(QMessageBox.Ok)
-            msg.exec()
+            if cancel:
+                msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+            else:
+                msg.setStandardButtons(QMessageBox.Ok)
+            clicked = msg.exec_()
+        return DialogEnum.No if clicked == QMessageBox.Ok else DialogEnum.Cancel
 
     # noinspection PyArgumentList
     @staticmethod

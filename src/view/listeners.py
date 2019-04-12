@@ -86,7 +86,7 @@ class MainListener(QObject):
         """
         self.gui.load_collection = collection
         self.gui.collection = deepcopy(collection)
-        self.gui.menubar.build_menu_bar(self.gui.collection)
+        self.gui.menubar.build_menu_bar()
 
     # noinspection PyArgumentList
     @pyqtSlot(list)
@@ -99,7 +99,6 @@ class MainListener(QObject):
         """
         # update the collection
         if len(errors) == 0:
-            view.windows.Dialogs.message_box("Success", 'Tree written successfully!')
             self.open_collection_signal.emit()
         else:
             # show errors
@@ -119,7 +118,6 @@ class MainListener(QObject):
         """
         # update the collection
         if len(errors) == 0:
-            view.windows.Dialogs.message_box("Success", 'Tree written successfully!')
             self.open_collection_signal.emit()
         else:
             # show the failed tree on the screen
@@ -138,10 +136,7 @@ class MainListener(QObject):
         :param errors: a list with errors
         """
         # update the collection
-        if len(errors) == 0:
-            view.windows.Dialogs.message_box("Success", 'Tree {} written successfully!'.format(tree.name))
-            self.open_collection_signal.emit()
-        else:
+        if not len(errors) == 0:
             view.windows.Dialogs.error_box("ERROR", 'There were errors while writing tree {} to '.format(tree.name)
                                            + str(path) + '!', errors)
 
@@ -156,6 +151,7 @@ class MainListener(QObject):
         self.gui.load_node_types = node_types
         self.gui.node_types_widget.set_up_node_types(node_types)
 
+    # noinspection PyArgumentList
     @pyqtSlot(dict, str)
     def db_query_finished(self, heatmap_dict: dict, status_type: str):
         """

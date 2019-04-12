@@ -500,10 +500,7 @@ class Node(QGraphicsItem):
             # todo fix display issues
             self.scene.gui.update_tree(parent_node.model_node)
         # remove the property display
-        if self.scene.view.parent().property_display:
-            self.scene.view.parent().property_display.setParent(None)
-            self.scene.view.parent().property_display.deleteLater()
-            self.scene.view.parent().property_display = None
+        self.scene.parent().remove_property_display()
 
     def reconnect_edge(self):
         if not self.parentItem():

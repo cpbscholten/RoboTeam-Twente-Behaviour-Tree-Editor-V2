@@ -235,6 +235,22 @@ class TreeViewWidget(QWidget):
         if self.property_display is not None:
             self.property_display.resize()
 
+    def remove_property_display(self):
+        """
+        Method to remove property display widget
+        """
+        if self.property_display is not None:
+            self.property_display.setParent(None)
+            self.property_display.deleteLater()
+            self.property_display = None
+
+    def remove_tree(self):
+        """
+        clears tree from the widget and also the property display
+        """
+        self.graphics_scene.clear()
+        self.remove_property_display()
+
 
 class NodeColorLegendWidget(QWidget):
     """
