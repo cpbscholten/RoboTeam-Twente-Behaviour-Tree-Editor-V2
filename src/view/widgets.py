@@ -64,7 +64,6 @@ class NodeTypesWidget(QWidget):
 
         # set up triggers
         self.node_types_widget.currentItemChanged.connect(self.node_type_selected)
-        self.node_types_widget.itemDoubleClicked.connect(self.node_from_selected_type)
 
         # emit signal to worker
         self.gui.main_listener.open_node_types_signal.emit()
@@ -232,14 +231,14 @@ class TreeViewWidget(QWidget):
         :param resize_event: the old dimensions
         """
         self.node_color_legend_widget.resize()
-        if self.property_display is not None:
+        if self.property_display:
             self.property_display.resize()
 
     def remove_property_display(self):
         """
         Method to remove property display widget
         """
-        if self.property_display is not None:
+        if self.property_display:
             self.property_display.setParent(None)
             self.property_display.deleteLater()
             self.property_display = None

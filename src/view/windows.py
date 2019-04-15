@@ -320,7 +320,7 @@ class MenuBar:
         Reinitialized the menubar with a collection dict containing categories and filenames
         """
         collection_dict = self.main_window.collection.categories_and_filenames() \
-            if self.main_window.collection is not None and self.main_window.load_collection is not None else None
+            if self.main_window.collection and self.main_window.load_collection else None
 
         # clears the current menubar
         menubar = self.main_window.menuBar()

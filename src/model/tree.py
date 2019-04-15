@@ -174,6 +174,19 @@ class Node:
         return str(self.create_json())
 
 
+class DisconnectedNode(Node):
+
+    def __init__(self, node: Node = None):
+        """
+        Constructor for a Disconnected Node object
+        :param node: the normal Node instance
+        """
+        if not node:
+            super(DisconnectedNode, self).__init__('')
+        else:
+            super(DisconnectedNode, self).__init__(node.title, node.id, node.attributes, node.children)
+
+
 class Tree:
     logger = logging.getLogger("tree")
 

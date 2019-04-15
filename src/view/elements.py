@@ -115,7 +115,7 @@ class Node(QGraphicsItem):
             self.top_collapse_expand_button.setParentItem(None)
             self.bottom_collapse_expand_button.setParentItem(None)
         self.info_display = []
-        self.max_width = self.text_width
+        self.max_width = self.text_width + 10
         self.total_height = self.NODE_HEIGHT
         if self.scene.info_mode:
             self.create_info_display(self.x, self.y, self.model_node.attributes)
@@ -166,7 +166,7 @@ class Node(QGraphicsItem):
         self.top_collapse_expand_button.collapse.connect(self.collapse_upwards)
         self.top_collapse_expand_button.expand.connect(self.expand_upwards)
         self.top_collapse_expand_button.isCollapsed = top_collapsed
-        if self.scene.root_ui_node == self or self.scene.reconnecting_node == self:
+        if self.scene.root_ui_node == self or self in self.scene.disconnected_nodes or self.scene.reconnecting_node == self:
             self.top_collapse_expand_button.hide()
         # position the top button at the top-center of the node
         button_x = self.x - (self.top_collapse_expand_button.boundingRect().width() / 2)
@@ -291,13 +291,31 @@ class Node(QGraphicsItem):
         if not child.top_collapse_expand_button.isVisible():
             child.top_collapse_expand_button.show()
 
+    def remove_child(self, child):
+        """
+        Removes child from this node (no data changes)
+        :param child: Child of this node
+        """
+        if child not in self.children:
+            Node.logger.error("Incorrect child can not be removed from wrong parent.")
+        edge = child.parentItem()
+        child.setParentItem(None)
+        self.children.remove(child)
+        self.edges.remove(edge)
+        edge.setParentItem(None)
+        self.scene.removeItem(edge)
+        if not self.children:
+            self.bottom_collapse_expand_button.hide()
+
     def moveBy(self, x, y):
         super(Node, self).moveBy(x, y)
+        # move edge correctly with node
         if self.parentItem() and isinstance(self.parentItem(), Edge):
             self.parentItem().change_position()
 
     def setPos(self, *args):
         super(Node, self).setPos(*args)
+        # move edge correctly with node
         if self.parentItem() and isinstance(self.parentItem(), Edge):
             self.parentItem().change_position()
 
@@ -342,25 +360,23 @@ class Node(QGraphicsItem):
         return self._rect
 
     def detach_from_parent(self):
+        """
+        Detaches node from parent (no data changes)
+        :return: Positional data that can be used to reattach node
+        """
         if not self.parentItem() or not self.parentItem().parentItem():
             Node.logger.error("The node can't detach from parent, no parent")
             return
         # store attach data used to restore the state when attaching
         xpos, ypos = self.xpos(), self.ypos()
         root_item = self.scene.root_ui_node
-        parent_edge = self.parentItem()
         parent_node = self.parentItem().parentItem()
         attach_data = {
             "abs_pos": QPointF(xpos, ypos),
             "old_parent": parent_node,
             "top_level_item": self.topLevelItem(),
         }
-        # disconnect and remove parent edge
-        self.setParentItem(None)
-        parent_node.children.remove(self)
-        parent_node.edges.remove(parent_edge)
-        parent_edge.setParentItem(None)
-        self.scene.removeItem(parent_edge)
+        parent_node.remove_child(self)
         # move node to retain correct position
         self.setPos(0, 0)
         move_x = xpos - root_item.xpos() - (self.scene.node_init_pos[0] - root_item.xpos())
@@ -369,6 +385,10 @@ class Node(QGraphicsItem):
         return attach_data
 
     def attach_to_parent(self, data, parent=None):
+        """
+        Attaches node to parent (no data changes)
+        :param: data: Positional data from detachment used for attaching
+        """
         if not parent:
             parent = data['old_parent']
         new_abs_pos = QPointF(self.xpos(), self.ypos())
@@ -444,66 +464,99 @@ class Node(QGraphicsItem):
         """
         Detects if node order has changed and updates model accordingly
         """
-        # parent node of self
-        parent_node = self.parentItem().parentItem()
-        # own child index
-        node_index = parent_node.children.index(self)
-        # check if node is swapped with left neighbour
-        try:
-            # can throw IndexError if there is no left neighbour
-            left_node = parent_node.children[node_index - 1]
-            # check if node is swapped
-            if left_node.xpos() > self.xpos():
-                # sort children of parent
-                sorted_nodes = parent_node.sort_children()
-                # change model tree structure accordingly
-                self.scene.gui.tree.nodes[parent_node.model_node.id].children = [n.id for n in sorted_nodes]
-        except IndexError:
-            pass
-        # check if node is swapped with right neighbour
-        try:
-            # can throw IndexError if there is no right neighbour
-            right_node = parent_node.children[node_index + 1]
-            # check if node is swapped
-            if right_node.xpos() < self.xpos():
-                # sort children of parent
-                sorted_nodes = parent_node.sort_children()
-                # change model tree structure accordingly
-                self.scene.gui.tree.nodes[parent_node.model_node.id].children = [n.id for n in sorted_nodes]
-        except IndexError:
-            pass
+        if not self.parentItem():
+            # sort top level nodes, this prevents alignment issues
+            self.scene.disconnected_nodes = sorted(self.scene.disconnected_nodes, key=lambda n: n.xpos())
+        else:
+            # parent node of self
+            parent_node = self.parentItem().parentItem()
+            # own child index
+            node_index = parent_node.children.index(self)
+            # check if node is swapped with left neighbour
+            try:
+                # can throw IndexError if there is no left neighbour
+                left_node = parent_node.children[node_index - 1]
+                # check if node is swapped
+                if left_node.xpos() > self.xpos():
+                    # sort children of parent
+                    sorted_nodes = parent_node.sort_children()
+                    # change model tree structure accordingly
+                    self.scene.gui.tree.nodes[parent_node.model_node.id].children = [n.id for n in sorted_nodes]
+            except IndexError:
+                pass
+            # check if node is swapped with right neighbour
+            try:
+                # can throw IndexError if there is no right neighbour
+                right_node = parent_node.children[node_index + 1]
+                # check if node is swapped
+                if right_node.xpos() < self.xpos():
+                    # sort children of parent
+                    sorted_nodes = parent_node.sort_children()
+                    # change model tree structure accordingly
+                    self.scene.gui.tree.nodes[parent_node.model_node.id].children = [n.id for n in sorted_nodes]
+            except IndexError:
+                pass
 
     def delete_self(self):
-        # remove children
-        for c in self.children:
-            c.delete_self()
-        # remove child reference from parent
-        parent_node = None
+        """
+        Deletes this node and makes children disconnected subtrees/nodes
+        """
+        for c in self.children[:]:
+            c.detach_from_parent()
+            # add child to disconnected nodes
+            if self in self.scene.disconnected_nodes:
+                index = self.scene.disconnected_nodes.index(self)
+                self.scene.disconnected_nodes.insert(index, c)
+            else:
+                self.scene.disconnected_nodes.insert(0, c)
+            c.top_collapse_expand_button.hide()
         if self.parentItem():
             parent_node: Node = self.parentItem().parentItem()
-            parent_node.children.remove(self)
-            parent_node.edges.remove(self.parentItem())
-            if not parent_node.children:
-                parent_node.bottom_collapse_expand_button.hide()
+            parent_node.remove_child(self)
             self.scene.gui.tree.nodes[parent_node.model_node.id].children.remove(self.model_node.id)
-            # remove parent edge and this node
-            self.scene.removeItem(self.parentItem())
-        else:
-            # remove this node
-            self.scene.removeItem(self)
+        if self in self.scene.disconnected_nodes:
+            self.scene.disconnected_nodes.remove(self)
+        self.scene.removeItem(self)
+        self.scene.close_property_display()
+        del self.scene.nodes[self.model_node.id]
+        # reset root if this is the root
+        if self.scene.gui.tree.root == self.model_node.id:
+            self.scene.gui.tree.root = ''
+        # remove node from internal tree structure
+        del self.scene.gui.tree.nodes[self.model_node.id]
+
+    def delete_subtree(self, delete_parent_relation=True):
+        """
+        Deletes node and its children
+        :param delete_parent_relation: Boolean indicating if parent relation should be modified
+        """
+        # remove children
+        for c in self.children:
+            c.delete_subtree(delete_parent_relation=False)
+        # remove child reference from parent
+        parent_node = None
+        if delete_parent_relation and self.parentItem():
+            parent_node: Node = self.parentItem().parentItem()
+            parent_node.remove_child(self)
+            self.scene.gui.tree.nodes[parent_node.model_node.id].children.remove(self.model_node.id)
+        self.scene.removeItem(self)
+        self.scene.close_property_display()
+        if self in self.scene.disconnected_nodes:
+            self.scene.disconnected_nodes.remove(self)
         del self.scene.nodes[self.model_node.id]
         if self.scene.gui.tree.root == self.model_node.id:
             self.scene.gui.tree.root = ''
         # remove node from internal tree structure
         del self.scene.gui.tree.nodes[self.model_node.id]
-        if parent_node:
+        if delete_parent_relation and parent_node:
             # todo fix view not being updated
             self.scene.gui.update_tree(parent_node.model_node)
-        # remove the property display
-        self.scene.parent().remove_property_display()
 
     def reconnect_edge(self):
-        if not self.parentItem():
+        """
+        Starts edge reconnection process
+        """
+        if not self.parentItem() and self not in self.scene.disconnected_nodes:
             Node.logger.error("The edge trying to reconnext does not exist.")
         else:
             self.scene.start_reconnect_edge(self)
@@ -535,25 +588,31 @@ class Node(QGraphicsItem):
             dx = m_event.scenePos().x() - m_event.lastScenePos().x()
             dy = m_event.scenePos().y() - m_event.lastScenePos().y()
             self.setPos(self.pos().x() + dx, self.pos().y() + dy)
-            # Set correct order for children if node has a parent
-            if self.parentItem():
-                self.detect_order_change()
+            # Set correct order for children if node has a parent and the order of disconnected nodes
+            self.detect_order_change()
             # reposition incoming edge
             if isinstance(self.parentItem(), Edge):
                 self.parentItem().change_position()
 
     def contextMenuEvent(self, menu_event):
+        """
+        Creates context menu for right clicks on this node
+        :param menu_event: Context about the right click event
+        """
         menu = QMenu()
-        reconnect_edge_action = QAction("Reconnect Edge")
-        parent_exists = True if self.parentItem() else False
-        reconnect_edge_action.setEnabled(parent_exists)
+        reconnect_edge_action = QAction("Reconnect Edge" if self.parentItem() else "Connect Edge")
         reconnect_edge_action.triggered.connect(self.reconnect_edge)
         menu.addAction(reconnect_edge_action)
-        delete_node_action = QAction("Delete Node")
-        delete_node_action.setShortcut('Ctrl+D')
-        delete_node_action.setToolTip('Delete node and all its children.')
-        delete_node_action.triggered.connect(self.delete_self)
-        menu.addAction(delete_node_action)
+        delete_action = QAction("Delete Node")
+        delete_action.setShortcut("Del")
+        delete_action.setToolTip('Delete only this node.')
+        delete_action.triggered.connect(self.delete_self)
+        menu.addAction(delete_action)
+        delete_subtree_action = QAction("Delete Subtree")
+        delete_subtree_action.setShortcut('Ctrl+D')
+        delete_subtree_action.setToolTip('Delete node and all its children.')
+        delete_subtree_action.triggered.connect(lambda: self.delete_subtree())
+        menu.addAction(delete_subtree_action)
         menu.exec(menu_event.screenPos())
         menu_event.setAccepted(True)
 
