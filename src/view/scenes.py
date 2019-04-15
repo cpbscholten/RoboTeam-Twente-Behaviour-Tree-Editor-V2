@@ -89,16 +89,17 @@ class TreeScene(QGraphicsScene):
         self.root_ui_node.top_collapse_expand_button.hide()
         self.addItem(self.root_ui_node)
 
-    def add_subtree(self, tree: Tree, subtree_root: ModelNode):
+    def add_subtree(self, tree: Tree, subtree_root: ModelNode, root=True):
         """
         Recursive functions that adds node and its children to the tree.
         :param tree: The complete tree, used for node lookup
         :param subtree_root: The root of this subtree/branch
+        :param is_root: is the node is the root
         :return: The created subtree root node,
                  the width of both sides of the subtree
         """
         subtree_root_node = ViewNode(*self.node_init_pos, scene=self, title=subtree_root.title,
-                                     model_node=subtree_root, node_types=self.gui.load_node_types)
+                                     model_node=subtree_root, node_types=self.gui.load_node_types, is_root=root)
         if isinstance(subtree_root, DisconnectedNode):
             subtree_root_node.top_collapse_expand_button.hide()
         self.nodes[subtree_root.id] = subtree_root_node
@@ -116,7 +117,8 @@ class TreeScene(QGraphicsScene):
             child = tree.nodes[child_id]
             # add the child and its own subtree,
             # returned values are used to adjust the nodes position to prevent overlap
-            child_view_node, child_subtree_width_left, child_subtree_width_right = self.add_subtree(tree, child)
+            child_view_node, child_subtree_width_left, child_subtree_width_right = self.add_subtree(tree, child,
+                                                                                                    root=False)
             subtree_root_node.add_child(child_view_node)
             move_x = - (child_subtree_width_left + child_subtree_width_right)
             # prevent double spacing when there is no middle node
@@ -142,7 +144,8 @@ class TreeScene(QGraphicsScene):
             child = tree.nodes[child_id]
             # add the child and its own subtree,
             # returned values are used to adjust the nodes position to prevent overlap
-            child_view_node, child_subtree_width_left, child_subtree_width_right = self.add_subtree(tree, child)
+            child_view_node, child_subtree_width_left, child_subtree_width_right = self.add_subtree(tree, child,
+                                                                                                    root=False)
             subtree_root_node.add_child(child_view_node)
             child_view_node.moveBy(0, (subtree_root_node.rect().height() / 2) + self.NODE_Y_OFFSET)
             # move all left nodes further to the left to make room for the middle node
@@ -158,7 +161,8 @@ class TreeScene(QGraphicsScene):
             child = tree.nodes[child_id]
             # add the child and its own subtree,
             # returned values are used to adjust the nodes position to prevent overlap
-            child_view_node, child_subtree_width_left, child_subtree_width_right = self.add_subtree(tree, child)
+            child_view_node, child_subtree_width_left, child_subtree_width_right = self.add_subtree(tree, child,
+                                                                                                    root=False)
             if not isinstance(child, DisconnectedNode):
                 subtree_root_node.add_child(child_view_node)
             else:

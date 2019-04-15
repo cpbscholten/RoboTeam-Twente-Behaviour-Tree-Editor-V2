@@ -1,7 +1,7 @@
 import logging
 
 from PyQt5.QtCore import pyqtSignal, Qt, QRectF, QPointF, QRect
-from PyQt5.QtGui import QPixmap, QFontMetrics, QBrush, QColor, QIcon, QPainter
+from PyQt5.QtGui import QPixmap, QFontMetrics, QBrush, QColor, QIcon, QPainter, QPen
 from PyQt5.QtWidgets import QGraphicsObject, QGraphicsScene, QGraphicsItem, \
     QGraphicsSimpleTextItem, QGraphicsLineItem, QPushButton, QMenu, QAction, QStyleOptionGraphicsItem, QGraphicsRectItem
 
@@ -29,13 +29,14 @@ class Node(QGraphicsItem):
     DEFAULT_SIMULATOR_COLOR = Qt.white
 
     def __init__(self, x: float, y: float, scene: QGraphicsScene, model_node: ModelNode, title: str = None,
-                 parent: QGraphicsItem = None, node_types: NodeTypes = None):
+                 parent: QGraphicsItem = None, node_types: NodeTypes = None, is_root=False):
         """
         The constructor for a UI node
         :param x: x position for the center of the node
         :param y: y position for the center of the node
         :param title: title of the node displayed in the ui
         :param parent: parent of this graphics item
+        :param is_root: if it is the root node
         """
         if title:
             self.title = title
@@ -50,6 +51,7 @@ class Node(QGraphicsItem):
         self.model_node = model_node
         self.children = []
         self.edges = []
+        self.is_root = is_root
         # store node positional data when detaching from parent
         self.expand_data = None
         # add node name label centered in the eclipse, elide if title is too long
@@ -263,6 +265,10 @@ class Node(QGraphicsItem):
         :param widget: The widget being painted
         """
         painter.setPen(Qt.SolidLine)
+        if self.is_root:
+            pen = QPen(Qt.black, 2.0)
+            pen.setStyle(Qt.DotLine)
+            painter.setPen(pen)
         if self.scene.simulator_mode:
             brush = self.simulator_brush
         else:
