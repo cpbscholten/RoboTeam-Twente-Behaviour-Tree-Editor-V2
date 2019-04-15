@@ -133,11 +133,11 @@ class NodeTypesWidget(QWidget):
         """
         pyqtSlot for adding a subtree to the view by selecting the tree in a dialog
         """
-        dialog = view.windows.TreeSelectDialog(self.gui.load_collection)
+        dialog = view.windows.TreeSelectDialog(self.gui.collection)
         category, filename = dialog.show()
         if category is None or filename is None:
             return
-        tree = self.gui.load_collection.collection.get(category).get(filename)
+        tree = self.gui.collection.collection.get(category).get(filename)
         category_singular = singularize(capitalize(category))
         node = Node(category_singular, attributes={"name": tree.name})
         # special case for rules, which are defined differently as subtrees as other trees
@@ -145,7 +145,7 @@ class NodeTypesWidget(QWidget):
             node.attributes['properties'] = {'ROLE': tree.name}
             node.attributes['role'] = tree.name
             self.add_node_to_view(node)
-            self.gui.tree.add_subtree(self.gui.load_collection.collection.get('roles').get(filename), node.id)
+            self.gui.tree.add_subtree(self.gui.collection.collection.get('roles').get(filename), node.id)
         else:
             self.add_node_to_view(node)
 
@@ -439,7 +439,7 @@ class ToolbarWidget(QWidget):
         Slot that checks a tree when the verify button has been clicked
         :param message: If a dialog should be shown, or only update the checkmark
         """
-        collection = self.gui.load_collection
+        collection = self.gui.collection
         tree = self.gui.tree
         category = self.gui.category
         errors = collection.verify_tree(tree, category)

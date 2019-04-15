@@ -65,6 +65,7 @@ class MainWindow(QMainWindow):
         self.toolbar_widget.layout.setContentsMargins(0, 0, 0, 0)
         self.tree_and_toolbar_layout.addWidget(self.toolbar_widget)
 
+
         # collection and NodeTypes that has been loaded, used for checking for unsaved changes
         self.load_collection: Collection = None
         self.load_node_types: NodeTypes = None
@@ -78,6 +79,7 @@ class MainWindow(QMainWindow):
 
         # create a menubar instance
         self.menubar = MenuBar(self)
+        self.enable_tree_actions(False)
 
         # set the window title and build the menu bar
         self.update_window_title_and_menu_bar()
@@ -222,7 +224,7 @@ class MainWindow(QMainWindow):
         Method to discard changes to the current tree.
         """
         discard = Dialogs.yes_no_message_box('Discard changes', 'Are you sure you want to discard '
-                                                                'the changes to the current tree?')
+                                                                'the changes of {}'.format(self.filename))
         if discard:
             if self.load_tree and self.filename in self.load_collection.collection[self.category]:
                 # not a new file, discard and reload
