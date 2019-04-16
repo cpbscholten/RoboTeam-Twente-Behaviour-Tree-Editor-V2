@@ -65,7 +65,6 @@ class MainWindow(QMainWindow):
         self.toolbar_widget.layout.setContentsMargins(0, 0, 0, 0)
         self.tree_and_toolbar_layout.addWidget(self.toolbar_widget)
 
-
         # collection and NodeTypes that has been loaded, used for checking for unsaved changes
         self.load_collection: Collection = None
         self.load_node_types: NodeTypes = None
@@ -96,6 +95,7 @@ class MainWindow(QMainWindow):
         """
         self.menubar.close_tree_act.setEnabled(enable)
         self.menubar.discard_tree_changes_act.setEnabled(enable)
+        self.menubar.discard_collection_changes_act.setEnabled(enable)
         self.menubar.save_tree_act.setEnabled(enable)
         self.menubar.save_tree_as_act.setEnabled(enable)
         self.tree_view_widget.toolbar.setEnabled(enable)
@@ -137,8 +137,12 @@ class MainWindow(QMainWindow):
         """
         self.close_tree()
         self.category = category
-        self.load_tree = deepcopy(tree)
+        if category in self.load_collection.collection and filename in self.load_collection.collection.get(category):
+            self.load_tree = self.load_collection.collection[category][filename]
+        else:
+            self.load_tree = None
         self.tree = tree
+        self.collection.collection[category][filename] = tree
         self.filename = filename
         self.enable_tree_actions(True)
         self.tree_view_widget.graphics_scene.add_tree(tree)
@@ -206,6 +210,10 @@ class MainWindow(QMainWindow):
         also updates the menu bar to reflect on the local changes
         """
         # update menu bar with asterisk and filename if changes happened
+        if self.collection == self.load_collection:
+            self.menubar.discard_collection_changes_act.setEnabled(False)
+        else:
+            self.menubar.discard_collection_changes_act.setEnabled(True)
         if self.collection and self.filename and self.filename in self.load_collection.collection[self.category] and \
                 self.tree == self.load_collection.collection[self.category][self.filename]:
             self.setWindowTitle(self.category + '/' + self.filename)
@@ -219,24 +227,35 @@ class MainWindow(QMainWindow):
         # update menu bar
         self.menubar.build_menu_bar()
 
+    def discard_collection_changes(self):
+        """
+        Method to discard changes to the current collection.
+        """
+        discard = Dialogs.yes_no_message_box('Discard changes', 'Are you sure you want to discard '
+                                                                'the changes of all trees in the collection?'
+                                             .format(self.filename))
+        if discard:
+            self.collection = deepcopy(self.load_collection)
+            if self.load_tree and self.filename in self.load_collection.collection.get(self.category):
+                self.show_tree(self.category, self.filename, deepcopy(self.load_tree))
+            else:
+                self.close_tree()
+
     def discard_tree_changes(self):
         """
         Method to discard changes to the current tree.
         """
         discard = Dialogs.yes_no_message_box('Discard changes', 'Are you sure you want to discard '
-                                                                'the changes of {}'.format(self.filename))
+                                                                'the changes of {}?'.format(self.filename))
         if discard:
             if self.load_tree and self.filename in self.load_collection.collection[self.category]:
                 # not a new file, discard and reload
                 self.collection.collection[self.category][self.filename] = self.load_tree
-                self.show_tree(self.category, self.filename, self.load_tree)
+                self.show_tree(self.category, self.filename, deepcopy(self.load_tree))
             else:
                 # new file, discard and
                 self.collection.collection.get(self.category).pop(self.filename, None)
                 self.close_tree()
-        else:
-            # do nothing, as changes should not be discarded
-            pass
 
     def closeEvent(self, event):
         """
@@ -282,6 +301,12 @@ class MenuBar:
         self.open_collection_act.setShortcut('Ctrl+O')
         self.open_collection_act.setStatusTip('Open JSON files Collection folder')
         self.open_collection_act.triggered.connect(self.open_collection_custom_path)
+
+        # discard collection changes
+        self.discard_collection_changes_act = QAction('Discard changes')
+        self.discard_collection_changes_act.setShortcut('Ctrl+Shift+D')
+        self.discard_collection_changes_act.setToolTip('Remove changes in the collection')
+        self.discard_collection_changes_act.triggered.connect(self.main_window.discard_collection_changes)
 
         # save collection
         self.save_collection_act = QAction('Save', self.main_window)
@@ -334,6 +359,7 @@ class MenuBar:
         # creates a collection menu
         collection_menu = menubar.addMenu('&Collection')
         collection_menu.addAction(self.open_collection_act)
+        collection_menu.addAction(self.discard_collection_changes_act)
         collection_menu.addAction(self.save_collection_act)
         collection_menu.addAction(self.save_collection_as_act)
 
@@ -455,6 +481,10 @@ class MenuBar:
             self.main_window.main_listener.write_tree_custom_path_signal.emit(path, self.main_window.tree)
 
     def create_tree(self, category: str):
+        """
+        Method called when a new tree is created
+        :param category: the category of the tree
+        """
         name = Dialogs.text_input_dialog('Choose Tree name', 'Choose a name for the tree', "[A-Za-z0-9_+-]+")
         if name is None:
             return
@@ -462,9 +492,6 @@ class MenuBar:
             filename = name + '.json'
             tree = Tree(name, '')
             self.main_window.show_tree(category, filename, tree)
-            self.main_window.load_tree = None
-            # add to collection
-            self.main_window.collection.collection[category][filename] = tree
             self.build_menu_bar()
 
 

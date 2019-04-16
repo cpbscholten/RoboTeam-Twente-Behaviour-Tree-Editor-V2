@@ -8,7 +8,7 @@ import pytest
 from controller.utils import read_json
 from model.config import Settings
 from model.exceptions import InvalidTreeJsonFormatException, InvalidNodeTypeException
-from model.tree import Node, Tree, Collection, NodeTypes, Verification
+from model.tree import Node, Tree, Collection, NodeTypes, Verification, DisconnectedNode
 
 
 class TestNode(object):
@@ -362,6 +362,12 @@ class TestTree(object):
         tree = Tree.from_json(self.tree_enter_formation_tactic)
         assert tree.nodes.get('0ia3adfsyai4m') == \
             tree.find_role_subtree_node_above_node(tree.nodes.get('3j1eplzumct1ky2l'))
+
+    def test_find_role_subtree_below_node(self):
+        tree = Tree.from_json(self.tree_enter_formation_tactic)
+        assert 7 == len(tree.find_role_subtree_nodes_below_node(tree.nodes.get(tree.root)))
+        tree.nodes.get(tree.root).add_child('abcd')
+        assert 7 == len(tree.find_role_subtree_nodes_below_node(tree.nodes.get(tree.root)))
 
     def test_find_role_subtree_nodes_if_exist(self):
         tree = Tree.from_json(self.tree_demo_twente_strategy)
@@ -910,3 +916,7 @@ class TestNodeTypes:
         node_types = NodeTypes.from_csv()
         assert str(node_types.node_types) == str(node_types)
         assert repr(node_types) == str(node_types)
+
+    def test_disconnected_node_init(self):
+        DisconnectedNode(Node('abcd'))
+        DisconnectedNode()

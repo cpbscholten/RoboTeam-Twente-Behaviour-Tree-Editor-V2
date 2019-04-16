@@ -405,6 +405,22 @@ class Tree:
                 return node
         return None
 
+    def find_role_subtree_nodes_below_node(self, node: Node) -> List[Node]:
+        """
+        Finds if there is a role subtree node somewhere below this node. Used for updating trees with the same role
+        :return: the subtree node if it exists else None.
+        """
+        role_nodes = []
+        for child_id in node.children:
+            if child_id in self.nodes.keys():
+                child_node = self.nodes.get(child_id)
+                if child_node.title == 'Role' and 'role' in child_node.attributes:
+                    role_nodes.append(child_node)
+                role_nodes.extend(self.find_role_subtree_nodes_below_node(child_node))
+            else:
+                self.logger.error('Child node {} does not exist.'.format(child_id))
+        return role_nodes
+
     def find_parent_node_if_exists(self, node: Node) -> Union[Node, None]:
         """
         Finds the node that has the provided node as a child
@@ -684,9 +700,8 @@ class Collection:
             start_node_id = role_node.children[0]
         for category, trees in self.collection.items():
             for _, loop_tree in trees.items():
-                if category == 'roles' and loop_tree.name == role_name:
-                    # only continue if the tree we are updating from is not this role
-                    if tree != loop_tree:
+                if category == 'roles' and loop_tree.name == role_name and tree != loop_tree and \
+                            len(tree.find_role_subtree_nodes_below_node(tree.nodes.get(start_node_id))) == 0:
                         old_root = loop_tree.root
                         loop_tree.update_subtree(tree, old_root, start_node_id)
                         # remove the old root and change root to new subtree
@@ -697,20 +712,24 @@ class Collection:
                     # update all subtrees below the given role node
                     role_nodes = loop_tree.find_role_subtree_nodes_if_exist(role_name)
                     for node in role_nodes:
-                        if tree == loop_tree and role_node is not None and node.id == role_node.id:
-                            # skip the node we're currently at
-                            pass
-                        elif node in loop_tree.nodes.values() and None \
-                                is tree.find_role_subtree_node_above_node(node):
-                            loop_tree.update_subtree(tree, node.id, start_node_id)
-                            # propagate ROLE attribute again
-                            if 'properties' in node.attributes and 'ROLE' in \
-                                    node.attributes.get('properties'):
-                                loop_tree.propagate_role(node.id, node.attributes['properties']['ROLE'])
-                            else:
-                                loop_tree.remove_propagation(node.id)
+                        if not loop_tree.find_role_subtree_node_above_node(node) and \
+                                len(tree.find_role_subtree_nodes_below_node(tree.nodes.get(start_node_id))) == 0:
+                            if tree.name == loop_tree.name and role_node is not None and node.id == role_node.id:
+                                # skip the node we're currently at
+                                continue
+                            elif node in loop_tree.nodes.values():
+                                loop_tree.update_subtree(tree, node.id, start_node_id)
+                                # propagate ROLE attribute again
+                                if 'properties' in node.attributes and 'ROLE' in \
+                                        node.attributes.get('properties'):
+                                    loop_tree.propagate_role(node.id, node.attributes['properties']['ROLE'])
+                                else:
+                                    loop_tree.remove_propagation(node.id)
+                                continue
                         else:
-                            Collection.logger.warning('Prevented a cycle when updating the tree')
+                            # do not update subtrees with a role node above it if
+                            # the tree updating from has a role node below it.
+                            Collection.logger.warning('Prevented a cycle. Found a subtree above or below a subtree.')
 
     def verify_tree(self, tree, category=None, only_check_mathematical_properties=False) -> List[str]:
         """
