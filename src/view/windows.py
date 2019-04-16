@@ -296,6 +296,12 @@ class MenuBar:
         self.exit_act.setStatusTip('Exit application')
         self.exit_act.triggered.connect(self.main_window.close)
 
+        # reload current collection
+        self.reload_collection_act = QAction('Reload', self.main_window)
+        self.reload_collection_act.setShortcut('Ctrl+Shift+R')
+        self.reload_collection_act.setToolTip('Reload the collection from the file system')
+        self.reload_collection_act.triggered.connect(self.reload_collection)
+
         # collection actions
         self.open_collection_act = QAction('Open', self.main_window)
         self.open_collection_act.setShortcut('Ctrl+O')
@@ -303,7 +309,7 @@ class MenuBar:
         self.open_collection_act.triggered.connect(self.open_collection_custom_path)
 
         # discard collection changes
-        self.discard_collection_changes_act = QAction('Discard changes')
+        self.discard_collection_changes_act = QAction('Discard changes', self.main_window)
         self.discard_collection_changes_act.setShortcut('Ctrl+Shift+D')
         self.discard_collection_changes_act.setToolTip('Remove changes in the collection')
         self.discard_collection_changes_act.triggered.connect(self.main_window.discard_collection_changes)
@@ -359,6 +365,7 @@ class MenuBar:
         # creates a collection menu
         collection_menu = menubar.addMenu('&Collection')
         collection_menu.addAction(self.open_collection_act)
+        collection_menu.addAction(self.reload_collection_act)
         collection_menu.addAction(self.discard_collection_changes_act)
         collection_menu.addAction(self.save_collection_act)
         collection_menu.addAction(self.save_collection_as_act)
@@ -422,6 +429,15 @@ class MenuBar:
         :return:
         """
         self.main_window.main_listener.open_collection_signal.emit()
+
+    def reload_collection(self):
+        """
+        Asks to save current changes and reloads the collection
+        """
+        save, errors = self.main_window.check_unsaved_changes(write=True)
+        if save is not DialogEnum.Cancel:
+            self.main_window.close_tree()
+            self.main_window.main_listener.open_collection_signal.emit()
 
     def open_tree(self, category: str, filename: str):
         """
