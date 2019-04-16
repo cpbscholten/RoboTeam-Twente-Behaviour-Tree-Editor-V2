@@ -1,3 +1,4 @@
+import json
 import math
 from copy import deepcopy
 from typing import Tuple
@@ -5,7 +6,7 @@ from typing import Tuple
 from PyQt5.QtCore import QRectF, Qt, QPoint, QPointF
 from PyQt5.QtWidgets import QGraphicsScene, QGraphicsLineItem, QGraphicsItem, QGraphicsObject, QGraphicsEllipseItem
 
-from model.tree import Tree, DisconnectedNode
+from model.tree import Tree, DisconnectedNode, NodeTypes
 from model.tree import Node as ModelNode
 from view.elements import Node as ViewNode, CollapseExpandButton
 
@@ -38,6 +39,8 @@ class TreeScene(QGraphicsScene):
         self.dragging = False
         # The tree ModelNode being added to the scene
         self.adding_node: ModelNode = None
+        # The drag drop node being added
+        self.drag_drop_node: ViewNode = None
         # The node being connected to the tree
         self.connecting_node = None
         # Line connected to cursor when connecting nodes
@@ -67,8 +70,6 @@ class TreeScene(QGraphicsScene):
         self.node_init_pos = (x, y)
         # remove old content
         self.clear()
-        self.nodes.clear()
-        self.disconnected_nodes.clear()
         tree = deepcopy(tree)
         # check if there is a root, otherwise do not display the tree
         if not tree.root:
@@ -88,6 +89,35 @@ class TreeScene(QGraphicsScene):
         self.root_ui_node = self.add_subtree(tree, root_node)[0]
         self.root_ui_node.top_collapse_expand_button.hide()
         self.addItem(self.root_ui_node)
+
+    def clear(self):
+        self.root_ui_node = None
+        self.nodes.clear()
+        self.disconnected_nodes.clear()
+        return super(TreeScene, self).clear()
+
+    def keyReleaseEvent(self, key_event):
+        if key_event.key() == Qt.Key_Escape:
+            if self.connecting_node:
+                self.disconnected_nodes.append(self.connecting_node)
+                self.removeItem(self.connecting_line)
+                self.app.restoreOverrideCursor()
+                # remove reset cursor filter (cursor already reset)
+                self.app.removeEventFilter(self.app.wait_for_click_filter)
+                node = self.connecting_node
+                self.connecting_node = None
+                self.gui.update_tree(node)
+            elif self.reconnecting_node:
+                if self.reconnecting_node not in self.disconnected_nodes:
+                    self.disconnected_nodes.append(self.reconnecting_node)
+                self.removeItem(self.connecting_line)
+                self.app.restoreOverrideCursor()
+                # remove reset cursor filter (cursor already reset)
+                self.app.removeEventFilter(self.app.wait_for_click_filter)
+                node = self.reconnecting_node
+                self.reconnecting_node = None
+                self.reconnect_edge_data = None
+                self.gui.update_tree(node)
 
     def add_subtree(self, tree: Tree, subtree_root: ModelNode, root=True):
         """
@@ -381,6 +411,21 @@ class TreeScene(QGraphicsScene):
         """
         super(TreeScene, self).mouseMoveEvent(m_event)
         # pass move event to dragged node
+        if self.drag_drop_node:
+            # initiate connection state if tree has a root
+            if self.gui.tree and self.gui.tree.root != '':
+                self.connecting_node = self.drag_drop_node
+                x, y = self.drag_drop_node.xpos(), self.drag_drop_node.ypos()
+                self.connecting_line = QGraphicsLineItem(x, y - self.drag_drop_node.rect().height() / 2, x, y)
+                # keep connection line on top
+                self.connecting_line.setZValue(1)
+                self.addItem(self.connecting_line)
+                self.app.add_cross_cursor(self)
+            else:
+                # add root to model of the tree
+                self.gui.tree.root = self.drag_drop_node.model_node.id
+                self.root_ui_node = self.drag_drop_node
+            self.drag_drop_node = None
         if self.dragging_node:
             self.dragging_node.mouseMoveEvent(m_event)
             return
@@ -430,6 +475,37 @@ class TreeScene(QGraphicsScene):
         zoom_value = 1 + (self.ZOOM_SENSITIVITY * (wheel_event.delta() / 120))
         self.zoom(zoom_value, zoom_value)
 
+    def dragEnterEvent(self, drag_drop_event):
+        if self.drag_drop_node:
+            return
+        mime_data = drag_drop_event.mimeData()
+        if mime_data.hasText() and self.gui.tree:
+            drag_drop_event.accept()
+            node_type = json.loads(mime_data.text())
+            node = NodeTypes.create_node_from_node_type(node_type)
+            # setting this attribute starts node addition sequence in the scene
+            self.gui.tree.add_node(node)
+            node = ViewNode(*self.node_init_pos, scene=self, model_node=node, title=node.title,
+                            node_types=self.gui.load_node_types)
+            self.drag_drop_node = node
+            node.top_collapse_expand_button.hide()
+            self.nodes[node.id] = node
+            x, y = drag_drop_event.scenePos().x(), drag_drop_event.scenePos().y()
+            node.moveBy(x - self.node_init_pos[0], y - self.node_init_pos[1])
+            self.addItem(node)
+        else:
+            drag_drop_event.ignore()
+
+    def dragMoveEvent(self, drag_drop_event):
+        x, y = drag_drop_event.scenePos().x(), drag_drop_event.scenePos().y()
+        if self.drag_drop_node:
+            self.drag_drop_node.setPos(x - self.node_init_pos[0], y - self.node_init_pos[1])
+
+    def dragLeaveEvent(self, drag_drop_event):
+        if self.drag_drop_node:
+            self.removeItem(self.drag_drop_node)
+            self.drag_drop_node = None
+
     def start_node_addition(self, x, y):
         """
         Starts node addition sequence, spawn a node and let a connection line follow the cursor
@@ -454,8 +530,6 @@ class TreeScene(QGraphicsScene):
             self.connecting_line.setZValue(1)
             self.addItem(self.connecting_line)
         else:
-            # top root node can not collapse upwards
-            node.top_collapse_expand_button.hide()
             # add root to model of the tree
             self.gui.tree.root = node.model_node.id
             # reset back to normal cursor

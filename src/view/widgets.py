@@ -1,11 +1,12 @@
+import json
 import logging
 from functools import partial
 
 from PyQt5 import QtWidgets
-from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QIcon, QPainter, QPalette, QKeySequence
+from PyQt5.QtCore import Qt, QTimer, QMimeData
+from PyQt5.QtGui import QIcon, QPainter, QPalette, QKeySequence, QDrag
 from PyQt5.QtWidgets import QGraphicsView, QTreeWidget, QTreeWidgetItem, QWidget, QVBoxLayout, QPushButton, QLabel, \
-    QLineEdit, QFormLayout, QApplication, QGridLayout, QHBoxLayout, QComboBox, QAction
+    QLineEdit, QFormLayout, QApplication, QGridLayout, QHBoxLayout, QComboBox, QAction, QAbstractItemView
 
 import view.windows
 import view.scenes
@@ -14,6 +15,37 @@ from controller.utils import singularize, capitalize
 from model.tree import NodeTypes, Node
 
 from typing import Dict, Any, Tuple
+
+
+class NodeTreeWidget(QTreeWidget):
+
+    def __init__(self, parent=None):
+        super(NodeTreeWidget, self).__init__(parent=parent)
+        self.setDragDropMode(QAbstractItemView.DragOnly)
+        self.setDragEnabled(True)
+        self.setAcceptDrops(True)
+        self.setDropIndicatorShown(False)
+
+    def mimeData(self, items, _=None):
+        if items:
+            item = items[0]
+            node_type = item.data(1, Qt.UserRole)
+            if node_type:
+                data = QMimeData()
+                data.setText(json.dumps(node_type))
+                return data
+        return
+
+    def startDrag(self, supported_actions):
+        drag = QDrag(self)
+        data = QMimeData()
+        if self.selectedItems():
+            item = self.selectedItems()[0]
+            node_type = item.data(1, Qt.UserRole)
+            if node_type:
+                data.setText(json.dumps(node_type))
+        drag.setMimeData(data)
+        drag.exec(supported_actions)
 
 
 class NodeTypesWidget(QWidget):
@@ -28,7 +60,7 @@ class NodeTypesWidget(QWidget):
         self.setLayout(self.layout)
 
         # create the widget to display the node types
-        self.node_types_widget = QTreeWidget()
+        self.node_types_widget = NodeTreeWidget()
         self.layout.addWidget(self.node_types_widget)
 
         # button to create a node type from the selected node type

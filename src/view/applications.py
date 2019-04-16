@@ -1,5 +1,5 @@
 from PyQt5.QtCore import QObject, Qt
-from PyQt5.QtGui import QMouseEvent, QIcon
+from PyQt5.QtGui import QMouseEvent, QIcon, QDragEnterEvent, QDragMoveEvent
 from PyQt5.QtWidgets import QApplication, QGraphicsView, QPushButton
 
 from view.scenes import TreeScene
@@ -21,6 +21,8 @@ class Application(QApplication):
         self.setApplicationVersion('2.0')
         self.setWindowIcon(QIcon('view/icon/appicon.png'))
         self.wait_for_click_filter = None
+        self.drag_drop_filter = DragDropCursor(self)
+        self.installEventFilter(self.drag_drop_filter)
 
     def add_cross_cursor(self, scene: TreeScene):
         """
@@ -35,6 +37,19 @@ class Application(QApplication):
         # Install new filter
         self.wait_for_click_filter = ResetCursorAfterClick(self, scene)
         self.installEventFilter(self.wait_for_click_filter)
+
+
+class DragDropCursor(QObject):
+
+    def __init__(self, app, parent=None):
+        super(DragDropCursor, self).__init__(parent)
+        self.app = app
+
+    def eventFilter(self, drag_drop_object, event):
+        if isinstance(event, QDragEnterEvent) or isinstance(event, QDragMoveEvent):
+            if event.mimeData().text():
+                event.accept()
+        return super(DragDropCursor, self).eventFilter(drag_drop_object, event)
 
 
 class ResetCursorAfterClick(QObject):
