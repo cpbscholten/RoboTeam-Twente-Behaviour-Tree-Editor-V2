@@ -521,7 +521,7 @@ class TreeViewPropertyDisplay(QWidget):
         self.setLayout(self.layout)
 
         # Add attributes if given
-        if attributes:
+        if attributes is not None:
             self.add_properties(attributes, node_id, node_title)
 
         self.setAutoFillBackground(True)
