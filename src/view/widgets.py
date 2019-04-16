@@ -65,7 +65,6 @@ class NodeTypesWidget(QWidget):
 
         # button to create a node type from the selected node type
         self.node_from_type_button = QPushButton('Create selected Type', self)
-        # todo fix shortcut node addition
         self.node_from_type_button.setShortcut('Ctrl+T')
         self.node_from_type_button.setToolTip('Create a node from the selected node type. Shortcut: Ctrl+T')
         self.node_from_type_button.clicked.connect(self.node_from_selected_type)
@@ -131,7 +130,7 @@ class NodeTypesWidget(QWidget):
         if not current or not self.gui.load_tree:
             return
         # check if the item is a node type
-        if current.data(1, Qt.UserRole) is None:
+        if not current.data(1, Qt.UserRole):
             self.selected = None
             self.node_from_type_button.setEnabled(False)
         else:
@@ -145,7 +144,7 @@ class NodeTypesWidget(QWidget):
         if self.app.wait_for_click_filter:
             self.app.wait_for_click_filter.reset_event_filter()
         title = view.windows.Dialogs.text_input_dialog("Create Node", "Title of the node:")
-        if title is not None or '':
+        if title or '':
             node = Node(title)
             self.add_node_to_view(node)
             # todo correctly display subtree
@@ -154,7 +153,7 @@ class NodeTypesWidget(QWidget):
         """
         pyqtSlot for adding a node from the selected node types to the view
         """
-        if self.selected is None:
+        if not self.selected:
             return
         node_type = self.selected.data(1, Qt.UserRole)
         node = NodeTypes.create_node_from_node_type(node_type)
@@ -166,7 +165,7 @@ class NodeTypesWidget(QWidget):
         """
         dialog = view.windows.TreeSelectDialog(self.gui.collection)
         category, filename = dialog.show()
-        if category is None or filename is None:
+        if not (category or filename):
             return
         tree = self.gui.collection.collection.get(category).get(filename)
         category_singular = singularize(capitalize(category))
@@ -522,7 +521,7 @@ class TreeViewPropertyDisplay(QWidget):
         self.setLayout(self.layout)
 
         # Add attributes if given
-        if attributes is not None:
+        if attributes:
             self.add_properties(attributes, node_id, node_title)
 
         self.setAutoFillBackground(True)
@@ -561,7 +560,7 @@ class TreeViewPropertyDisplay(QWidget):
         node_to_update.add_property("", "")
         updated_view = TreeViewPropertyDisplay(self.parent().graphics_scene, self.attributes,
                                                parent=self.parent(), node_id=self.node_id, node_title=self.node_title)
-        if self.parent().property_display is not None:
+        if self.parent().property_display:
             self.setParent(None)
             self.deleteLater()
         self.scene.view.parent().property_display = updated_view
@@ -620,7 +619,7 @@ class TreeViewPropertyDisplay(QWidget):
         node_to_update.remove_property(key)
         updated_view = TreeViewPropertyDisplay(self.parent().graphics_scene, self.attributes, parent=self.parent(),
                                                node_id=self.node_id, node_title=self.node_title)
-        if self.parent().property_display is not None:
+        if self.parent().property_display:
             self.setParent(None)
             self.deleteLater()
         self.scene.view.parent().property_display = updated_view
@@ -637,9 +636,9 @@ class TreeViewPropertyDisplay(QWidget):
         display_attributes = dict()
         display_properties = dict()
 
-        if node_id is not None:
+        if node_id:
             display_attributes['id'] = node_id
-        if title is not None:
+        if title:
             display_attributes['title'] = title
 
         # Fill the attributes and properties dicts

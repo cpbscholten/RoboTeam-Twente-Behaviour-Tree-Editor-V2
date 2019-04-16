@@ -107,7 +107,7 @@ class MainWindow(QMainWindow):
         current_selected = self.node_types_widget.node_types_widget.currentItem()
         if self.node_types_widget.node_from_type_button.isEnabled():
             self.node_types_widget.node_from_type_button.setEnabled(enable)
-        elif current_selected is not None and current_selected.data(1, Qt.UserRole) is not None:
+        elif current_selected and current_selected.data(1, Qt.UserRole):
             self.node_types_widget.node_from_type_button.setEnabled(enable)
 
     def close_tree(self):
@@ -194,11 +194,11 @@ class MainWindow(QMainWindow):
         """
         self.toolbar_widget.verify_tree()
         # if node is given check if a subtree changed
-        if node is not None and Settings.auto_update_roles():
+        if node and Settings.auto_update_roles():
             node = self.tree.find_role_subtree_node_above_node(node)
             if node:
                 self.collection.update_subtrees_in_collection(self.tree, node)
-            elif 'roles' is self.category:
+            elif 'roles' == self.category:
                 self.collection.update_subtrees_in_collection(self.tree)
         # rebuild menu bar
         self.update_window_title_and_menu_bar()
@@ -218,7 +218,7 @@ class MainWindow(QMainWindow):
                 self.tree == self.load_collection.collection[self.category][self.filename]:
             self.setWindowTitle(self.category + '/' + self.filename)
             self.menubar.discard_tree_changes_act.setEnabled(False)
-        elif self.tree is not None:
+        elif self.tree:
             self.setWindowTitle('*' + self.category + '/' + self.filename)
             self.menubar.discard_tree_changes_act.setEnabled(True)
         else:
@@ -380,7 +380,7 @@ class MenuBar:
         # counter for collection categories shortcut. First one will be Ctrl+1, second Ctrl+2, etc.
         shortcut_count = 0
         # initializes the collection menus and trees
-        if not (collection_dict is None or len(collection_dict.keys()) == 0):
+        if not (not collection_dict or len(collection_dict.keys()) == 0):
             for category, filenames in sorted(collection_dict.items()):
                 shortcut_count += 1
                 # create a menu for the category
@@ -455,7 +455,7 @@ class MenuBar:
         json_path = Settings.default_json_folder()
         path = Dialogs.open_folder_dialog('Open collection folder', json_path)
         # do a call to the controller to open the collection
-        if path is not None:
+        if path:
             self.main_window.check_unsaved_changes(write=True)
             self.main_window.main_listener.open_collection_custom_path_signal.emit(path)
 
@@ -473,7 +473,7 @@ class MenuBar:
         json_path = Settings.default_json_folder()
         path = Dialogs.open_folder_dialog('Save collection folder', json_path)
         # do a call to the controller to write the collection
-        if path is not None:
+        if path:
             self.main_window.main_listener.write_collection_custom_path_signal.emit(self.main_window.collection,
                                                                                     path)
 
@@ -493,7 +493,7 @@ class MenuBar:
         json_path = Settings.default_json_folder() / self.main_window.category
         path = Dialogs.save_file_dialog('Save tree as', json_path / self.main_window.filename, )
         # do a call to the controller to write the collection
-        if path is not None:
+        if path:
             self.main_window.main_listener.write_tree_custom_path_signal.emit(path, self.main_window.tree)
 
     def create_tree(self, category: str):
@@ -502,7 +502,7 @@ class MenuBar:
         :param category: the category of the tree
         """
         name = Dialogs.text_input_dialog('Choose Tree name', 'Choose a name for the tree', "[A-Za-z0-9_+-]+")
-        if name is None:
+        if not name:
             return
         else:
             filename = name + '.json'
@@ -559,7 +559,7 @@ class Dialogs:
         :param cancel: if a cancel button is needed
         :return DialogEnum: if ok or cancel is pressed
         """
-        if detailed_text is None:
+        if not detailed_text:
             if cancel:
                 clicked = QMessageBox.critical(QMessageBox(), title, text, QMessageBox.Ok |
                                                QMessageBox.Cancel, QMessageBox.Ok)
@@ -648,7 +648,7 @@ class Dialogs:
         """
         string, ok_pressed = QInputDialog.getText(None, title, text, QLineEdit.Normal, "")
         if ok_pressed and string != '':
-            if regex is not None:
+            if regex:
                 if not re.match(regex, string):
                     Dialogs.error_box("ERROR", "Invalid input given. Input should match pattern: " + regex)
                     return Dialogs.text_input_dialog(title, text, regex)
@@ -855,7 +855,6 @@ class SettingsDialog(QDialog):
         # checkbox for enabling auto updating of roles
         self.auto_update_roles = Settings.auto_update_roles()
         self.auto_update_roles_new = self.auto_update_roles
-        print(self.auto_update_roles)
         self.auto_update_roles_check = QCheckBox()
         self.auto_update_roles_check.setChecked(self.auto_update_roles)
         self.auto_update_roles_check.setText('Automatically update roles subtrees')
@@ -867,7 +866,7 @@ class SettingsDialog(QDialog):
         Selector for the logfile
         """
         path = Dialogs.save_file_dialog("Select logfile", self.logfile_path, False)
-        if path is None:
+        if not path:
             return
         self.enable_apply(True)
         self.logfile_path_new = path
@@ -878,7 +877,7 @@ class SettingsDialog(QDialog):
         Selector for the node types folder
         """
         path = Dialogs.open_folder_dialog("Select Node types folder", self.node_types_path)
-        if path is None:
+        if not path:
             return
         self.enable_apply(True)
         self.node_types_path_new = path
@@ -889,7 +888,7 @@ class SettingsDialog(QDialog):
         Selector for the jsons folder
         """
         path = Dialogs.open_folder_dialog("Select JSONS path", self.jsons_path)
-        if path is None:
+        if not path:
             return
         self.enable_apply(True)
         self.jsons_path_new = path

@@ -25,7 +25,7 @@ class Settings:
         :return: The value of the queried setting
         """
         # set path default value when not initialized
-        if path is None:
+        if not path:
             path = Settings.SETTINGS_PATH
         settings: Dict[str, Any] = read_json(path)
         if setting not in settings.keys():
@@ -45,7 +45,7 @@ class Settings:
         :param path for overriding the default settings path
         """
         # set path default value when not initialized
-        if path is None:
+        if not path:
             path = Settings.SETTINGS_PATH
         settings: Dict[str, Any] = read_json(path)
         if setting not in settings.keys():

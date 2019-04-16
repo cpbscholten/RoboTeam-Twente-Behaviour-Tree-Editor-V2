@@ -24,11 +24,11 @@ class Node:
         """
         self.title: str = title
         # generate ID if not provided
-        self.id: str = node_id if node_id is not None else Node.generate_id()
+        self.id: str = node_id if node_id else Node.generate_id()
         # if statements and list/dict copies because because of mutability
         # A node will always have a title but not always a name, if it has a name it will be saved in attributes
-        self.attributes: Dict[str, Any] = dict(attributes) if attributes is not None else {}
-        self.children: List[str] = list(children) if children is not None else []
+        self.attributes: Dict[str, Any] = dict(attributes) if attributes else {}
+        self.children: List[str] = list(children) if children else []
 
     @classmethod
     def from_json(cls, node: Dict[str, Any]):
@@ -59,7 +59,7 @@ class Node:
         :return: the generated id
         """
         # set size default value when not initialized
-        if size is None:
+        if not size:
             size = Settings.query_setting("default_id_size", "Controller")
         return ''.join(random.choice(chars) for _ in range(size))
 
@@ -200,7 +200,7 @@ class Tree:
         self.name: str = name
         self.root: str = root
         # if statement and dict copy because of mutability
-        self.nodes: Dict[str, Node] = dict(nodes) if nodes is not None else {}
+        self.nodes: Dict[str, Node] = dict(nodes) if nodes else {}
 
     @staticmethod
     def check_presence(tree_name: str, attribute_name: str, dictionary: Dict[str, Any]):
@@ -349,7 +349,7 @@ class Tree:
             return Tree.logger.error("Node {} from subtree {} to does not exist".format(node_id, tree.name))
         if start_node_id and start_node_id not in tree.nodes.keys():
             return Tree.logger.error("Node {} from subtree {} does not exist".format(start_node_id, tree.name))
-        if start_node_id is None:
+        if not start_node_id:
             start_node_id = tree.root
         node = self.nodes.get(node_id)
         subtree_node: Node = tree.nodes.get(start_node_id)
@@ -372,7 +372,7 @@ class Tree:
             return Tree.logger.error("Node {} from subtree {} to does not exist".format(node_id, tree.name))
         if start_node_id and start_node_id not in tree.nodes.keys():
             return Tree.logger.error("Node {} from subtree {} does not exist".format(start_node_id, tree.name))
-        if start_node_id is None:
+        if not start_node_id:
             start_node_id = tree.root
         self.remove_subtree(node_id)
         self.add_subtree(tree, node_id, start_node_id)
@@ -399,7 +399,7 @@ class Tree:
         :return: the subtree node if it exists else None.
         """
 
-        while node is not None:
+        while node:
             node = self.find_parent_node_if_exists(node)
             if node and node.title == 'Role' and 'role' in node.attributes:
                 return node
@@ -529,7 +529,7 @@ class Collection:
         :param path: the path of the collection None if using custom path
         """
         self.path = path
-        self.collection: Dict[str, Dict[str, Tree]] = dict(collection) if collection is not None else {}
+        self.collection: Dict[str, Dict[str, Tree]] = dict(collection) if collection else {}
 
     @classmethod
     def from_path(cls, path: Path=None, only_verify_mathematical_properties: bool=True):
@@ -552,7 +552,7 @@ class Collection:
         :param path: the path of the main JSON folder
         """
         # set the path to the path specified in settings if None
-        if path is None:
+        if not path:
             path = Settings.default_json_folder()
         # clean the current collection
         collection = {}
@@ -610,9 +610,9 @@ class Collection:
         """
         errors = []
         # set the path to the path specified in settings if None
-        if path is None and self.path is None:
+        if not path and not self.path:
             path = Settings.default_json_folder()
-        elif path is None and self.path is not None:
+        elif not path and self.path:
             path = self.path
         # make a copy of the current collection
         collection = dict(self.collection)
@@ -685,9 +685,10 @@ class Collection:
         """
         Helper method to automatically update the subtrees in other trees
         :param tree: the tree containing the new subtree
-        :param role_node: the node to update from
+        :param role_node: the role node to update from. Leave empty if tree is a role
         """
-        if role_node is None:
+        if not role_node:
+            # update from the root of the tree. Tree should be a role
             role_name = tree.name
             start_node_id = tree.root
         else:
@@ -714,7 +715,7 @@ class Collection:
                     for node in role_nodes:
                         if not loop_tree.find_role_subtree_node_above_node(node) and \
                                 len(tree.find_role_subtree_nodes_below_node(tree.nodes.get(start_node_id))) == 0:
-                            if tree.name == loop_tree.name and role_node is not None and node.id == role_node.id:
+                            if tree.name == loop_tree.name and role_node and node.id == role_node.id:
                                 # skip the node we're currently at
                                 continue
                             elif node in loop_tree.nodes.values():
@@ -803,7 +804,7 @@ class Collection:
         Helper method to find the correct path to save to
         :return: the path to save to
         """
-        if self.path is None:
+        if not self.path:
             return Settings.default_json_folder()
         else:
             return self.path
@@ -825,7 +826,7 @@ class NodeTypes:
         """
         self.path: Path = path
         # set to dict() if empty, due to mutability issues in python
-        self.node_types: Dict[str, List[List[str]]] = node_types if not None else dict()
+        self.node_types: Dict[str, List[List[str]]] = node_types if node_types else dict()
 
     @classmethod
     def from_csv(cls, path: Path=None):
@@ -837,7 +838,7 @@ class NodeTypes:
                 number of children allowed
         """
         # set default path, for when Settings.NODE_TYPES_PATH changes
-        if path is None:
+        if not path:
             read_path = Settings.default_node_types_folder()
         else:
             read_path = path
@@ -857,7 +858,7 @@ class NodeTypes:
                     csv_file: List[List[str]] = read_csv(Path(root) / file)
                     node_types[filename_without_csv] = csv_file
             break
-        # only write path if the given variable is not None
+        # only write path if the given variable exists
         return cls(node_types, path)
 
     def write(self, path: Path=None):
@@ -866,9 +867,9 @@ class NodeTypes:
         :param path: the path to write to defaults to config/node_types/
         """
         # change path if specified
-        if path is None and self.path is None:
+        if not path and not self.path:
             path = Settings.default_node_types_folder()
-        elif path is None and self.path is not None:
+        elif not path and self.path:
             path = self.path
         # writes each category to a csv file in the path
         for category, csv_content in self.node_types.items():
@@ -915,7 +916,7 @@ class NodeTypes:
             self.node_types[category] = []
         node_type = [name]
         # extend the node type list with attributes if they exist
-        if attributes is not None:
+        if attributes:
             node_type.extend(attributes)
         # adds the node type to the requested category
         self.node_types.get(category).append(node_type)
@@ -1168,14 +1169,14 @@ class Verification:
         errors = []
         children = tree.nodes[current_node].children
         current_node_properties = tree.nodes[current_node].properties()
-        if current_node_properties is None:
-            if current_role is not None:
+        if not current_node_properties:
+            if current_role:
                 error = "Error in structure of tree {}, node {} has no properties, but should inherit the " \
                         "{} ROLE property from parent".format(tree.name, current_node, current_role)
                 Verification.logger.error(error)
                 errors.append(error)
         elif "ROLE" in current_node_properties.keys():
-            if current_role is None:
+            if not current_role:
                 current_role = current_node_properties["ROLE"]
             else:
                 if not current_role == current_node_properties["ROLE"]:
@@ -1205,7 +1206,7 @@ class Verification:
         root = tree.root
 
         # Is a category given? If so, check the tree structure
-        if category is not None:
+        if category:
             # First check if the root node is of the required type
             category_root_nodes = collection.get_root_nodes_by_category(category)
             found = False
@@ -1313,7 +1314,7 @@ class Verification:
                 errors.append(error)
                 return errors
         # Check for Keeper property here, since this kind of can replace Role apparently.
-        elif tree.nodes[current_node].properties() is not None \
+        elif tree.nodes[current_node].properties() \
                 and "ROLE" in tree.nodes[current_node].properties().keys() \
                 and tree.nodes[current_node].properties()["ROLE"] == "Keeper":
             passed_nodes[2] = True

@@ -75,7 +75,7 @@ class Node(QGraphicsItem):
         self.brush = QBrush(QColor(*self.NODE_COLOR))
         self.simulator_brush = QBrush(self.DEFAULT_SIMULATOR_COLOR)
         # give node another color
-        if node_types is not None:
+        if node_types:
             # check for node types and color them
             types = node_types.get_node_type_by_name(model_node.title)
             if len(types) > 0:
@@ -574,7 +574,7 @@ class Node(QGraphicsItem):
         """
         super(Node, self).mousePressEvent(m_event)
         tree = self.scene.gui.tree.nodes[self.id]
-        if self.scene.view.parent().property_display is not None:
+        if self.scene.view.parent().property_display:
             self.scene.view.parent().property_display.update_properties()
             self.scene.view.parent().property_display.setParent(None)
             self.scene.view.parent().property_display.deleteLater()
@@ -610,12 +610,10 @@ class Node(QGraphicsItem):
         reconnect_edge_action.triggered.connect(self.reconnect_edge)
         menu.addAction(reconnect_edge_action)
         delete_action = QAction("Delete Node")
-        delete_action.setShortcut("Del")
         delete_action.setToolTip('Delete only this node.')
         delete_action.triggered.connect(self.delete_self)
         menu.addAction(delete_action)
         delete_subtree_action = QAction("Delete Subtree")
-        delete_subtree_action.setShortcut('Ctrl+D')
         delete_subtree_action.setToolTip('Delete node and all its children.')
         delete_subtree_action.triggered.connect(lambda: self.delete_subtree())
         menu.addAction(delete_subtree_action)

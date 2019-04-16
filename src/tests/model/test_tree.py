@@ -129,7 +129,7 @@ class TestNode(object):
 
     def test_properties(self):
         node = Node.from_json(self.node_attributes_no_children_json)
-        assert None is node.properties()
+        assert not node.properties()
         node.add_property("a", "b")
         assert {"a": "b"} == node.properties()
 
@@ -353,12 +353,12 @@ class TestTree(object):
 
     def test_find_parent_node_if_exists(self):
         tree = Tree.from_json(self.tree_demo_twente_strategy)
-        assert None is tree.find_parent_node_if_exists(tree.nodes.get(tree.root))
+        assert not tree.find_parent_node_if_exists(tree.nodes.get(tree.root))
         assert tree.nodes.get(tree.root) == tree.find_parent_node_if_exists(tree.nodes.get('abcdefgh314'))
 
     def test_find_role_subtree_node_above_node(self):
         tree = Tree.from_json(self.tree_demo_twente_strategy)
-        assert None is tree.find_role_subtree_node_above_node(tree.nodes.get('abcdefgh314'))
+        assert not tree.find_role_subtree_node_above_node(tree.nodes.get('abcdefgh314'))
         tree = Tree.from_json(self.tree_enter_formation_tactic)
         assert tree.nodes.get('0ia3adfsyai4m') == \
             tree.find_role_subtree_node_above_node(tree.nodes.get('3j1eplzumct1ky2l'))
@@ -513,7 +513,7 @@ class TestCollection(object):
 
     def test_get_tree_by_name(self):
         collection = Collection.from_path(self.path)
-        assert None is collection.get_tree_by_name('abcdefgh')
+        assert not collection.get_tree_by_name('abcdefgh')
         assert collection.get_tree_by_name('Assister') == TestCollection.assister_role
 
     def test_remove_tree_by_name_dir_not_exists(self):
@@ -562,7 +562,7 @@ class TestCollection(object):
         result = collection.get_category_from_node("sx6fvrxlaoudhmmq9")
         assert result == "roles"
         result = collection.get_category_from_node("invalid_category")
-        assert result is None
+        assert not result
 
     def test_verify_trees(self):
         collection = Collection.from_path(Settings.default_json_folder(), only_verify_mathematical_properties=False)
