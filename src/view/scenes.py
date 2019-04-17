@@ -104,7 +104,7 @@ class TreeScene(QGraphicsScene):
                 self.app.restoreOverrideCursor()
                 # remove reset cursor filter (cursor already reset)
                 self.app.removeEventFilter(self.app.wait_for_click_filter)
-                node = self.connecting_node
+                node = self.gui.tree.nodes.get(self.connecting_node.id)
                 self.connecting_node = None
                 self.gui.update_tree(node)
             elif self.reconnecting_node:
@@ -114,7 +114,7 @@ class TreeScene(QGraphicsScene):
                 self.app.restoreOverrideCursor()
                 # remove reset cursor filter (cursor already reset)
                 self.app.removeEventFilter(self.app.wait_for_click_filter)
-                node = self.reconnecting_node
+                node = self.gui.tree.nodes.get(self.reconnecting_node)
                 self.reconnecting_node = None
                 self.reconnect_edge_data = None
                 self.gui.update_tree(node)
@@ -423,8 +423,10 @@ class TreeScene(QGraphicsScene):
                 self.app.add_cross_cursor(self)
             else:
                 # add root to model of the tree
-                self.gui.tree.root = self.drag_drop_node.model_node.id
+                self.gui.tree.root = self.drag_drop_node.id
                 self.root_ui_node = self.drag_drop_node
+            node = self.gui.tree.nodes.get(self.drag_drop_node.id)
+            self.gui.update_tree(node)
             self.drag_drop_node = None
         if self.dragging_node:
             self.dragging_node.mouseMoveEvent(m_event)
@@ -513,15 +515,14 @@ class TreeScene(QGraphicsScene):
         :param y: Clicked y position in the scene
         :return:
         """
-        # create node based on model node
-        node = ViewNode(*self.node_init_pos, scene=self, model_node=self.adding_node, title=self.adding_node.title,
-                        node_types=self.gui.load_node_types)
+        # create subtree based on model node
+        node = self.add_subtree(self.gui.tree, self.adding_node, root=False)[0]
         node.top_collapse_expand_button.hide()
         self.nodes[self.adding_node.id] = node
         # adjust to correct position
         node.moveBy(x - self.node_init_pos[0], y - self.node_init_pos[1])
         self.addItem(node)
-        self.gui.tree.add_node(node.model_node)
+        self.gui.tree.add_node(self.adding_node)
         # initiate connection state if tree has a root
         if self.gui.tree and self.gui.tree.root != '':
             self.connecting_node = node
@@ -531,14 +532,16 @@ class TreeScene(QGraphicsScene):
             self.addItem(self.connecting_line)
         else:
             # add root to model of the tree
-            self.gui.tree.root = node.model_node.id
+            self.gui.tree.root = node.id
             # reset back to normal cursor
             self.app.restoreOverrideCursor()
 
     def finish_connect_edge(self, parent_node):
         # check for cycles in subtree
-        if TreeScene.check_for_cycles_when_connecting(self.connecting_node.model_node,
-                                                      parent_node.model_node, self.gui.tree):
+        connecting_model_node = self.gui.tree.nodes.get(self.connecting_node.id)
+        parent_model_node = self.gui.tree.nodes.get(parent_node.id)
+        if TreeScene.check_for_cycles_when_connecting(connecting_model_node,
+                                                      parent_model_node, self.gui.tree):
             return
         # remember current node position
         node_pos = (self.connecting_node.xpos(), self.connecting_node.ypos())
@@ -551,14 +554,14 @@ class TreeScene(QGraphicsScene):
         # sort the children in the UI and get correct model node order
         sorted_children = parent_node.sort_children()
         # set correct child order
-        parent_node.model_node.children = [c.id for c in sorted_children]
-        self.gui.tree.nodes[parent_node.model_node.id].children = [c.id for c in sorted_children]
+        parent_model_node.children = [c.id for c in sorted_children]
+        self.gui.tree.nodes[parent_model_node.id].children = [c.id for c in sorted_children]
         self.removeItem(self.connecting_line)
         # reset back to normal cursor
         self.app.restoreOverrideCursor()
         # remove reset cursor filter (cursor already reset)
         self.app.removeEventFilter(self.app.wait_for_click_filter)
-        node = self.connecting_node
+        node = self.gui.tree.nodes.get(self.connecting_node)
         self.connecting_node = None
         self.connecting_line = None
         self.gui.update_tree(node)
@@ -576,8 +579,10 @@ class TreeScene(QGraphicsScene):
         self.app.add_cross_cursor(self)
 
     def finish_reconnect_edge(self, parent_node):
-        if TreeScene.check_for_cycles_when_connecting(self.reconnecting_node.model_node,
-                                                      parent_node.model_node, self.gui.tree):
+        reconnecting_model_node = self.gui.tree.nodes.get(self.reconnecting_node.id)
+        parent_model_node = self.gui.tree.nodes.get(parent_node.id)
+        if TreeScene.check_for_cycles_when_connecting(reconnecting_model_node,
+                                                      parent_model_node, self.gui.tree):
             return
         self.reconnecting_node.attach_to_parent(self.reconnect_edge_data, parent_node)
         self.reconnecting_node.top_collapse_expand_button.show()
@@ -590,7 +595,7 @@ class TreeScene(QGraphicsScene):
         self.app.restoreOverrideCursor()
         # remove reset cursor filter (cursor already reset)
         self.app.removeEventFilter(self.app.wait_for_click_filter)
-        node = self.reconnecting_node
+        node = self.gui.tree.nodes.get(self.reconnecting_node.id)
         self.reconnecting_node = None
         self.reconnect_edge_data = None
         self.gui.update_tree(node)

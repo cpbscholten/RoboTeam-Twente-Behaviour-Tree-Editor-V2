@@ -857,7 +857,7 @@ class SettingsDialog(QDialog):
         self.auto_update_roles_new = self.auto_update_roles
         self.auto_update_roles_check = QCheckBox()
         self.auto_update_roles_check.setChecked(self.auto_update_roles)
-        self.auto_update_roles_check.setText('Automatically update roles subtrees')
+        self.auto_update_roles_check.setText('Automatically update roles subtrees (Experimental)')
         self.auto_update_roles_check.stateChanged.connect(self.auto_update_roles_changed)
         self.settings_layout.addWidget(self.auto_update_roles_check, 4, 0, 1, 0)
 

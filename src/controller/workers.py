@@ -4,7 +4,7 @@ from PyQt5.QtCore import pyqtSignal, QObject, pyqtSlot
 
 from model.tree import NodeTypes, Tree, Collection
 
-from database.tree_data import *
+from controller.tree_data import *
 
 
 class MainWorker(QObject):

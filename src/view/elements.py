@@ -476,6 +476,7 @@ class Node(QGraphicsItem):
         else:
             # parent node of self
             parent_node = self.parentItem().parentItem()
+            parent_model_node = self.scene.gui.tree.nodes.get(parent_node.id)
             # own child index
             node_index = parent_node.children.index(self)
             # check if node is swapped with left neighbour
@@ -487,7 +488,8 @@ class Node(QGraphicsItem):
                     # sort children of parent
                     sorted_nodes = parent_node.sort_children()
                     # change model tree structure accordingly
-                    self.scene.gui.tree.nodes[parent_node.model_node.id].children = [n.id for n in sorted_nodes]
+                    parent_model_node.children = [n.id for n in sorted_nodes]
+                    self.scene.gui.update_tree(parent_model_node)
             except IndexError:
                 pass
             # check if node is swapped with right neighbour
@@ -499,7 +501,8 @@ class Node(QGraphicsItem):
                     # sort children of parent
                     sorted_nodes = parent_node.sort_children()
                     # change model tree structure accordingly
-                    self.scene.gui.tree.nodes[parent_node.model_node.id].children = [n.id for n in sorted_nodes]
+                    parent_model_node.children = [n.id for n in sorted_nodes]
+                    self.scene.gui.update_tree(parent_model_node)
             except IndexError:
                 pass
 
@@ -516,20 +519,24 @@ class Node(QGraphicsItem):
             else:
                 self.scene.disconnected_nodes.insert(0, c)
             c.top_collapse_expand_button.hide()
+        parent_model_node = None
         if self.parentItem():
             parent_node: Node = self.parentItem().parentItem()
             parent_node.remove_child(self)
-            self.scene.gui.tree.nodes[parent_node.model_node.id].children.remove(self.model_node.id)
+            parent_model_node = self.scene.gui.tree.nodes.get(parent_node.id)
+            parent_model_node.children.remove(self.id)
         if self in self.scene.disconnected_nodes:
             self.scene.disconnected_nodes.remove(self)
         self.scene.removeItem(self)
         self.scene.close_property_display()
-        del self.scene.nodes[self.model_node.id]
+        del self.scene.nodes[self.id]
         # reset root if this is the root
-        if self.scene.gui.tree.root == self.model_node.id:
+        if self.scene.gui.tree.root == self.id:
             self.scene.gui.tree.root = ''
         # remove node from internal tree structure
-        del self.scene.gui.tree.nodes[self.model_node.id]
+        del self.scene.gui.tree.nodes[self.id]
+        if parent_model_node:
+            self.scene.gui.update_tree(parent_model_node)
 
     def delete_subtree(self, delete_parent_relation=True):
         """
@@ -544,19 +551,20 @@ class Node(QGraphicsItem):
         if delete_parent_relation and self.parentItem():
             parent_node: Node = self.parentItem().parentItem()
             parent_node.remove_child(self)
-            self.scene.gui.tree.nodes[parent_node.model_node.id].children.remove(self.model_node.id)
+            self.scene.gui.tree.nodes[parent_node.id].children.remove(self.id)
         self.scene.removeItem(self)
         self.scene.close_property_display()
         if self in self.scene.disconnected_nodes:
             self.scene.disconnected_nodes.remove(self)
-        del self.scene.nodes[self.model_node.id]
-        if self.scene.gui.tree.root == self.model_node.id:
+        del self.scene.nodes[self.id]
+        if self.scene.gui.tree.root == self.id:
             self.scene.gui.tree.root = ''
         # remove node from internal tree structure
-        del self.scene.gui.tree.nodes[self.model_node.id]
+        del self.scene.gui.tree.nodes[self.id]
         if delete_parent_relation and parent_node:
             # todo fix view not being updated
-            self.scene.gui.update_tree(parent_node.model_node)
+            node = self.gui.tree.nodes.get(parent_node.id)
+            self.scene.gui.update_tree(node)
 
     def reconnect_edge(self):
         """
