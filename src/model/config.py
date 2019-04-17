@@ -67,7 +67,7 @@ class Settings:
     @staticmethod
     def alter_default_node_types_folder(path: Path):
         """
-        Alters the default_node_types setting to the posix path of the provided path avriable
+        Alters the default_node_types setting to the posix path of the provided path variable
         :param path: path object containing the location of the node_types directory
         """
         Settings.alter_setting('default_node_types_folder', PurePosixPath(path).as_posix(), 'settings')
@@ -76,14 +76,14 @@ class Settings:
     def default_json_folder() -> Path:
         """
         Reads the default_jsons_folder setting and returns a path variable from it
-        :return: a path variable containing the path to the jsons fodler
+        :return: a path variable containing the path to the jsons folder
         """
         return Path(Settings.query_setting("default_json_folder", "settings"))
 
     @staticmethod
     def alter_default_json_folder(path: Path):
         """
-        Alters the default_jsons_folder setting to the posix path of the provided path avriable
+        Alters the default_jsons_folder setting to the posix path of the provided path variable
         :param path: path object containing the location of the json directory
         """
         Settings.alter_setting("default_json_folder", PurePosixPath(path).as_posix(), "settings")

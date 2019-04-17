@@ -6,8 +6,8 @@ from typing import Union, List, Tuple
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QAction, QMainWindow, QFileDialog, QMessageBox, QInputDialog, QLineEdit, QWidget, \
-    QHBoxLayout, QDialog, QFormLayout, QLabel, QComboBox, QPushButton, QVBoxLayout, QApplication, QGridLayout, QSpinBox, \
-    QCheckBox
+    QHBoxLayout, QDialog, QFormLayout, QLabel, QComboBox, QPushButton, QVBoxLayout, QApplication, QGridLayout, \
+    QSpinBox, QCheckBox
 
 from controller.heatmap_demo import HeatmapDemoThread
 from controller.utils import singularize, capitalize
@@ -765,7 +765,7 @@ class TreeSelectDialog(QDialog):
 
     def enable_buttons(self, category):
         """
-        Cheks if the category has trees and enables or disables the ok button and tree selection
+        Checks if the category has trees and enables or disables the ok button and tree selection
         :param category:
         :return:
         """

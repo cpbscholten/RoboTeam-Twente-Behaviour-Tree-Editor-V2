@@ -168,7 +168,8 @@ class Node(QGraphicsItem):
         self.top_collapse_expand_button.collapse.connect(self.collapse_upwards)
         self.top_collapse_expand_button.expand.connect(self.expand_upwards)
         self.top_collapse_expand_button.isCollapsed = top_collapsed
-        if self.scene.root_ui_node == self or self in self.scene.disconnected_nodes or self.scene.reconnecting_node == self:
+        if self.scene.root_ui_node == self or self in self.scene.disconnected_nodes \
+                or self.scene.reconnecting_node == self:
             self.top_collapse_expand_button.hide()
         # position the top button at the top-center of the node
         button_x = self.x - (self.top_collapse_expand_button.boundingRect().width() / 2)
@@ -571,7 +572,7 @@ class Node(QGraphicsItem):
         Starts edge reconnection process
         """
         if not self.parentItem() and self not in self.scene.disconnected_nodes:
-            Node.logger.error("The edge trying to reconnext does not exist.")
+            Node.logger.error("The edge trying to reconnect does not exist.")
         else:
             self.scene.start_reconnect_edge(self)
 

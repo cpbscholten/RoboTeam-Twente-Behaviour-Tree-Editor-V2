@@ -93,6 +93,6 @@ class TestSettings(object):
     def test_alter_auto_update_roles(self):
         val = Settings.auto_update_roles()
         Settings.alter_auto_update_roles(not val)
-        assert not val is Settings.auto_update_roles()
+        assert val is not Settings.auto_update_roles()
         # revert to original value
         Settings.alter_auto_update_roles(val)

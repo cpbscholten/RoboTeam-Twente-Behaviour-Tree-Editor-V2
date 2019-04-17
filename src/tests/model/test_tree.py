@@ -306,7 +306,7 @@ class TestTree(object):
         for node_id, node in tree.nodes.items():
             assert 'properties' not in node.attributes
 
-    def test_remove_propogate(self):
+    def test_remove_propagate(self):
         tree = Tree.from_json(self.tree_demo_twente_strategy)
         tree.propagate_role(tree.root, "t")
         tree.remove_propagation(tree.root)

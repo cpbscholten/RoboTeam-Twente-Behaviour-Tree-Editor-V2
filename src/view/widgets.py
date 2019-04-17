@@ -36,7 +36,7 @@ class NodeTreeWidget(QTreeWidget):
                 return data
         return
 
-    def startDrag(self, supported_actions):
+    def startDrag(self, supported_actions, **kwargs):
         drag = QDrag(self)
         data = QMimeData()
         if self.selectedItems():
@@ -526,6 +526,7 @@ class TreeViewPropertyDisplay(QWidget):
     Y_OFFSET = 10
     X_OFFSET = 10
 
+    # noinspection PyArgumentList
     def __init__(self, scene, attributes: Dict[str, Any], parent=None, node_id=None, node_title=None):
         """
         The constructor for a tree view toolbar
@@ -649,6 +650,7 @@ class TreeViewPropertyDisplay(QWidget):
             self.deleteLater()
         self.scene.view.parent().property_display = updated_view
 
+    # noinspection PyArgumentList
     def add_properties(self, attributes: Dict, node_id=None, title=None):
         """
         Show the properties of a node that was selected

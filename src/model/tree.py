@@ -450,7 +450,7 @@ class Tree:
     def remove_node_and_children_by_id(self, node_id: str) -> bool:
         """
         Removes a node and all of its children recursively
-        :param node_id: the id of the node to remvoe
+        :param node_id: the id of the node to remove
         :return success: if the node and the children were removed successfully
         """
         if node_id not in self.nodes.keys():
@@ -767,6 +767,7 @@ class Collection:
                 if self.collection[category][tree].root == node:
                     return category
 
+    # noinspection PyBroadException
     def write_tree(self, tree: Tree, path: Path, only_verify_mathematical_properties=True) -> List[str]:
         """
         Method that writes a tree to a file

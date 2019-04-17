@@ -1,10 +1,9 @@
 import json
 import math
 from copy import deepcopy
-from typing import Tuple
 
 from PyQt5.QtCore import QRectF, Qt, QPoint, QPointF
-from PyQt5.QtWidgets import QGraphicsScene, QGraphicsLineItem, QGraphicsItem, QGraphicsObject, QGraphicsEllipseItem
+from PyQt5.QtWidgets import QGraphicsScene, QGraphicsLineItem
 
 from model.tree import Tree, DisconnectedNode, NodeTypes
 from model.tree import Node as ModelNode
@@ -124,7 +123,7 @@ class TreeScene(QGraphicsScene):
         Recursive functions that adds node and its children to the tree.
         :param tree: The complete tree, used for node lookup
         :param subtree_root: The root of this subtree/branch
-        :param is_root: is the node is the root
+        :param root: is the node is the root
         :return: The created subtree root node,
                  the width of both sides of the subtree
         """
