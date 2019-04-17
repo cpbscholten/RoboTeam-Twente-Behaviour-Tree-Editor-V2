@@ -119,8 +119,8 @@ class MainWorker(QObject):
         query = session.query(TreeNode).filter_by(tree_id=tid)
 
         # Determine which status we're interested in
-        if not query:
-            query = []
+        if not query.count():
+            return
         for node in query:
             if status_type == "Success":
                 node_dict[node.id] = node.successes
@@ -131,9 +131,14 @@ class MainWorker(QObject):
             else:
                 node_dict[node.id] = node.failures
         total_count = sum(node_dict.values())
+        average = total_count / len(node_dict)
         heatmap_dict = {}
 
         # Calculate the percentage (node's status count divided by total status count) for each node
         for key in node_dict.keys():
-            heatmap_dict[key] = node_dict[key] / total_count
+            heatmap_dict[key] = node_dict[key] / average
+        max_value = max(map(abs, node_dict.values()))
+        adjustment = 2.0 / max_value
+        for key, value in node_dict.items():
+            heatmap_dict[key] = value * adjustment
         self.db_query_finished_signal.emit(heatmap_dict, status_type)

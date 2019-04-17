@@ -483,8 +483,8 @@ class ToolbarWidget(QWidget):
                     timer.stop()
                     timer = QTimer()
                     self.gui.main_listener.heatmap_timer = timer
-                timer.timeout.connect(lambda: signal.emit(self.gui.tree.name, mode))
-                timer.start(500)
+                timer.timeout.connect(lambda: signal.emit(self.gui.tree.name, mode) if self.gui.tree else None)
+                timer.start(250)
         else:
             self.gui.tree_view_widget.graphics_scene.simulator_mode = False
             self.gui.main_listener.heatmap_timer.stop()

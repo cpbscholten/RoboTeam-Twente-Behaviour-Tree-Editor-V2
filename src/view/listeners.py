@@ -5,6 +5,7 @@ from typing import Dict, List
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot, Qt, QTimer
 from PyQt5.QtGui import QColor
 
+from controller.heatmap_demo import HeatmapDemoThread
 from controller.workers import MainWorker
 from model.tree import Tree, Collection, NodeTypes
 
@@ -177,7 +178,7 @@ class MainListener(QObject):
         for node_id, percentage in heatmap_dict.items():
             color = QColor(start_color)
             # skip the lower (dark) part of the spectrum and keep the lightness between 0.5 and 0.9
-            lightness = ((1 - percentage) * 0.4) + 0.5
+            lightness = 1 - (percentage * 0.3 + 0.2)
             color.setHslF(color.hslHue() / 360, color.hslSaturation() / 255, lightness)
             heatmap_color_dict[node_id] = color
         self.gui.tree_view_widget.graphics_scene.change_colors(heatmap_color_dict)

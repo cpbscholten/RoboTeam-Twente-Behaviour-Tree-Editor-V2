@@ -10,7 +10,7 @@ if __name__ == '__main__':
 
     # start UI
     app = Application(sys.argv)
-    main_window = MainWindow(app)
+    main_window = MainWindow(app, sys.argv)
     main_window.show()
     exit_state = app.exec()
     sys.exit(exit_state)

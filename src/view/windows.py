@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import QAction, QMainWindow, QFileDialog, QMessageBox, QInp
     QHBoxLayout, QDialog, QFormLayout, QLabel, QComboBox, QPushButton, QVBoxLayout, QApplication, QGridLayout, QSpinBox, \
     QCheckBox
 
+from controller.heatmap_demo import HeatmapDemoThread
 from controller.utils import singularize, capitalize
 from model.config import Settings
 from model.tree import Tree, Collection, NodeTypes, Node
@@ -24,7 +25,7 @@ class MainWindow(QMainWindow):
     """
 
     # noinspection PyArgumentList
-    def __init__(self, app: QApplication, parent=None):
+    def __init__(self, app: QApplication, sys_args=None, parent=None):
         """
         Constructor for the main widget
         """
@@ -79,6 +80,13 @@ class MainWindow(QMainWindow):
         # create a menubar instance
         self.menubar = MenuBar(self)
         self.enable_tree_actions(False)
+
+        # demo the heatmaps based on system arguments
+        self.heatmap_demo = True if sys_args and '--simulator-demo' in sys_args else False
+        # create a thread that demos the heatmaps in the editor
+        if self.heatmap_demo:
+            self.heatmap_demo_thread = HeatmapDemoThread(self)
+            self.heatmap_demo_thread.start()
 
         # set the window title and build the menu bar
         self.update_window_title_and_menu_bar()
@@ -267,8 +275,14 @@ class MainWindow(QMainWindow):
         if save is DialogEnum.Cancel:
             return event.ignore()
         elif save is DialogEnum.No:
+            if self.heatmap_demo:
+                self.heatmap_demo_thread.stop()
+                self.heatmap_demo_thread.join()
             return event.accept()
         elif save is DialogEnum.Yes:
+            if self.heatmap_demo:
+                self.heatmap_demo_thread.stop()
+                self.heatmap_demo_thread.join()
             if len(errors) == 0:
                 # written here to prevent exceptions from thread when closing window
                 self.collection.write_collection()
