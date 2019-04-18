@@ -26,7 +26,7 @@ Run `pytest` from the `tests` directory
 - Discarding changes in the tree and collection
 - Reloading collection from file system
 - Opening collection from a custom location
-- Saving collectionto default path or a custom location
+- Saving collection to default path or a custom location
 - Saving trees to default path or custom location
 - Creating new nodes (`Ctrl+N`), nodes from node types from csv files (`Ctrl+T`) and creating subtrees (`Ctrl+Shift+N`)
 - Creating new trees for each collection category: Keeper, Roles, Strategies, Tactics
@@ -38,15 +38,15 @@ The application supports advanced tree verification. The verification runs autom
   - Verify if a root node exists.  
  And supports verifying the additional properties:
   - Verify if there are no unconnected nodes
-  - Verify if decorators and compositors only have one child
+  - Verify if decorators and composites only have one child
   - Verify if trees follow the Strategy -> Tactic -> Role structure
   - Verify if the `ROLE` property is inherited properly
 - Settings menu  
-The application supports adjusting the location of the log file, json trees and node type csv files. It also supports adjusting the default size of id's generated for new nodes and if roles should be updated automatically. The settings menu can be opened from the menu bar or with the shortcut `Ctrl+Alt+S`
+The application supports adjusting the location of the log file, json trees and node type csv files. It also supports adjusting the default size of ids generated for new nodes and if roles should be updated automatically. The settings menu can be opened from the menu bar or with the shortcut `Ctrl+Alt+S`
 - Editing multiple tree files at once:  
 The editor supports editing multiple tree files at once. Switching between tree files can be done using the menubar, which will also show which files have unsaved changes.
 - Multiple tree views:  
-The editor supports multiple views. The main view (`F1`), with simple nodes. The info view (`F2`), which also shows all attributes and properties of nodes and 4 heatmap views (successes (`F6`), waiting (`F7`), running (`F8`), failure (`F9`)). The heatmaps can be used in combination with the simulator script (run main.py with argument `--heatmap-demo`), the simulator simulator made by andrei: [GitHub](https://github.com/cjcr-andrei/rtt_data_snooper) or the simulator of the RoboTeam: [GitHub](https://github.com/RoboTeamTwente/grSim/commits/master)
+The editor supports multiple views. The main view (`F1`), with simple nodes. The info view (`F2`), which also shows all attributes and properties of nodes and 4 heatmap views (success (`F6`), waiting (`F7`), running (`F8`), failure (`F9`)). The heatmaps can be used in combination with the simulator script (run main.py with argument `--heatmap-demo`), or the message spoofer or listener made by Andrei: [GitHub](https://github.com/cjcr-andrei/rtt_data_snooper)
 - Auto updating roles (experimental):  
 The roles can be updated automatically in trees. This setting is disabled by default as it currently is not updated to the view of the current tree, which could cause issues. Use at your own risk.
 
@@ -61,7 +61,7 @@ project
 └───model
 │   │   config.py - Contains methods for reading and updating settings from the configuration file
 │   │   exceptions.py - Contains all custom mode exceptions for the model 
-│   │   tree.py - Contains all model classes for representing trees, nodetypes and contains verification methods=
+│   │   tree.py - Contains all model classes for representing trees, nodetypes and contains verification methods
 │   
 └───view
 |   │   applications.py - Contains the application initialized by the main.py file
@@ -70,24 +70,24 @@ project
 |   |   listeners.py - Containing Qt signals to communicate with controller worker thread
 |   |   scenes.py - Contains the scene class used for drawing the trees
 |   |   widgets.py - Contains all widget classes: the node types widget, verification toolbar, legend widget, etc.
-|   |   windows.py - contains all window classes and dialogs. MainWindow, settigs menu, open and save dialogs, etc.
+|   |   windows.py - Contains all window classes and dialogs: MainWindow, settigs menu, open and save dialogs, etc.
 |   |
 |   └───icon - Directory containing all icons
 |
 └───controller
 |   |   heatmap_demo.py - File for creating mock simulator data when application is started with the --heatmap-demo argument
 |   |   utils.py - File containing helper functions for reading and writing json and csv files
-|   |   tree_data.py - Class to connect with simulator/ROS database
-|   |   workers.py - File containing worker thread to handle I/O from filesystem and communication with Simulator/ROS
+|   |   tree_data.py - ORM class to connect with ROS snooper database
+|   |   workers.py - File containing worker thread to handle I/O from filesystem and communication with ROS
 |
 └───config
-|   |   settings.json - configuration file containing all settigns
+|   |   settings.json - Configuration file containing all settigns
 |   |
-|   └───node_types - directory containing node type csv files. Retrieved from: https://github.com/RoboTeamTwente/roboteam_ai
+|   └───node_types - Directory containing node type csv files. Retrieved from: https://github.com/RoboTeamTwente/roboteam_ai
 /tree/development/roboteam_ai/src/treeinterp/config_files
 |   |   *Some node types csv files*
 |
-└───jsons - directory containing json tree files. Editor loads trees from the first subdirectory. Retrieved from: https://github.com/RoboTeamTwente/roboteam_ai/tree/development/roboteam_ai/src/jsons
+└───jsons - Directory containing json tree files. Editor loads trees from the first subdirectory. Retrieved from: https://github.com/RoboTeamTwente/roboteam_ai/tree/development/roboteam_ai/src/jsons
 |   |
 |   └───keeper
 |   |   *Some keeper json files*
@@ -106,27 +106,27 @@ project
 ## Shortcuts
 - Exit application: Alt+F4  
 - Settings: Ctrl+Alt+S  
-- Open Collection: Ctrl+O  
-- Reload Collection from filesystem: Ctrl+Sift+R  
+- Open collection: Ctrl+O  
+- Reload collection from filesystem: Ctrl+Sift+R  
 - Discard changes in collection: Ctrl+Shift+D  
-- Save Collection: Ctrl+W  
-- Save Collection as: Ctrl+Shift+W  
+- Save collection: Ctrl+W  
+- Save collection as: Ctrl+Shift+W  
 - Close tree: Ctrl+Q  
 - Discard changes in current tree: Ctrl+D  
 - Save tree: Ctrl+S  
-- Save Tree as: Ctrl+Shift+S  
+- Save tree as: Ctrl+Shift+S  
 - Create new keeper, role, strategy, tactic: Ctrl+1-4  
-- Create Node from selected node type: Ctrl+T  
+- Create node from selected node type: Ctrl+T  
 - Create new node: Ctrl+N  
-- Create Subtree: Ctrl+Shift+n  
+- Create subtree: Ctrl+Shift+n  
 - Verify tree: Ctrl+E  
 - Open or close legend: Ctrl+L  
 - Realign tree: F5/Ctrl+R
 - Zoom in: Ctrl++
 - Zoom out: Ctrl+-
 - Switch Views: 
-    - Main View: F1
-    - Info View: F2
+    - Main view: F1
+    - Info view: F2
     - Heatmap success: F6
     - Heatmap waiting: F7
     - Heatmap running: F8
