@@ -29,14 +29,13 @@ class Node(QGraphicsItem):
     DEFAULT_SIMULATOR_COLOR = Qt.white
 
     def __init__(self, x: float, y: float, scene: QGraphicsScene, model_node: ModelNode, title: str = None,
-                 parent: QGraphicsItem = None, node_types: NodeTypes = None, is_root=False):
+                 parent: QGraphicsItem = None, node_types: NodeTypes = None):
         """
         The constructor for a UI node
         :param x: x position for the center of the node
         :param y: y position for the center of the node
         :param title: title of the node displayed in the ui
         :param parent: parent of this graphics item
-        :param is_root: if it is the root node
         """
         if title:
             self.title = title
@@ -51,7 +50,6 @@ class Node(QGraphicsItem):
         self.model_node = model_node
         self.children = []
         self.edges = []
-        self.is_root = is_root
         # store node positional data when detaching from parent
         self.expand_data = None
         # add node name label centered in the eclipse, elide if title is too long
@@ -120,7 +118,8 @@ class Node(QGraphicsItem):
         self.max_width = self.text_width + 10
         self.total_height = self.NODE_HEIGHT
         if self.scene.info_mode:
-            self.create_info_display(self.x, self.y, self.model_node.attributes)
+            model_node = self.scene.gui.tree.nodes[self.id]
+            self.create_info_display(self.x, self.y, model_node.attributes)
         if self.max_width > self.NODE_MIN_WIDTH - 10:
             self._rect = QRect(self.x - self.max_width / 2, self.y - self.total_height / 2, self.max_width,
                                self.total_height)
@@ -266,7 +265,7 @@ class Node(QGraphicsItem):
         :param widget: The widget being painted
         """
         painter.setPen(Qt.SolidLine)
-        if self.is_root:
+        if self == self.scene.root_ui_node:
             pen = QPen(Qt.black, 2.0)
             pen.setStyle(Qt.DotLine)
             painter.setPen(pen)
@@ -313,6 +312,13 @@ class Node(QGraphicsItem):
         self.scene.removeItem(edge)
         if not self.children:
             self.bottom_collapse_expand_button.hide()
+
+    def nodes_below(self):
+        nodes = []
+        for c in self.children:
+            nodes.append(c)
+            nodes.extend(c.nodes_below())
+        return nodes
 
     def moveBy(self, x, y):
         super(Node, self).moveBy(x, y)
@@ -386,8 +392,10 @@ class Node(QGraphicsItem):
         parent_node.remove_child(self)
         # move node to retain correct position
         self.setPos(0, 0)
-        move_x = xpos - root_item.xpos() - (self.scene.node_init_pos[0] - root_item.xpos())
-        move_y = ypos - root_item.ypos() - (self.scene.node_init_pos[1] - root_item.ypos())
+        root_x = root_item.xpos() if root_item else self.scene.node_init_pos[0]
+        root_y = root_item.ypos() if root_item else self.scene.node_init_pos[1]
+        move_x = xpos - root_x - (self.scene.node_init_pos[0] - root_x)
+        move_y = ypos - root_y - (self.scene.node_init_pos[1] - root_y)
         self.moveBy(move_x, move_y)
         return attach_data
 
@@ -451,7 +459,7 @@ class Node(QGraphicsItem):
         # gather all the edges
         child_edges = [edge for edge in self.childItems() if isinstance(edge, Edge)]
         # sort edges by x position of the child nodes
-        child_edges.sort(key=lambda c: c.childItems()[0].xpos())
+        child_edges.sort(key=lambda c: c.end_node.xpos())
         # reset internal structure
         self.edges.clear()
         self.children.clear()
@@ -459,12 +467,12 @@ class Node(QGraphicsItem):
         for e in child_edges:
             e.setParentItem(None)
             self.edges.append(e)
-            self.children.append(e.childItems()[0])
+            self.children.append(e.end_node)
         # set the parent of the children in the correct order
         for e in child_edges:
             e.setParentItem(self)
         # return the model nodes in the correct order
-        model_nodes_order = [e.childItems()[0].model_node for e in child_edges]
+        model_nodes_order = [e.end_node.model_node for e in child_edges]
         return model_nodes_order
 
     def detect_order_change(self):
@@ -482,15 +490,16 @@ class Node(QGraphicsItem):
             node_index = parent_node.children.index(self)
             # check if node is swapped with left neighbour
             try:
-                # can throw IndexError if there is no left neighbour
-                left_node = parent_node.children[node_index - 1]
-                # check if node is swapped
-                if left_node.xpos() > self.xpos():
-                    # sort children of parent
-                    sorted_nodes = parent_node.sort_children()
-                    # change model tree structure accordingly
-                    parent_model_node.children = [n.id for n in sorted_nodes]
-                    self.scene.gui.update_tree(parent_model_node)
+                if node_index - 1 >= 0:
+                    # can throw IndexError if there is no left neighbour
+                    left_node = parent_node.children[node_index - 1]
+                    # check if node is swapped
+                    if left_node.xpos() > self.xpos():
+                        # sort children of parent
+                        sorted_nodes = parent_node.sort_children()
+                        # change model tree structure accordingly
+                        parent_model_node.children = [n.id for n in sorted_nodes]
+                        self.scene.gui.update_tree(parent_model_node)
             except IndexError:
                 pass
             # check if node is swapped with right neighbour
@@ -539,10 +548,11 @@ class Node(QGraphicsItem):
         if parent_model_node:
             self.scene.gui.update_tree(parent_model_node)
 
-    def delete_subtree(self, delete_parent_relation=True):
+    def delete_subtree(self, delete_parent_relation=True, update_tree=True):
         """
         Deletes node and its children
         :param delete_parent_relation: Boolean indicating if parent relation should be modified
+        :param update_tree: Boolean indicating if the tree needs an update
         """
         # remove children
         for c in self.children:
@@ -552,19 +562,21 @@ class Node(QGraphicsItem):
         if delete_parent_relation and self.parentItem():
             parent_node: Node = self.parentItem().parentItem()
             parent_node.remove_child(self)
-            self.scene.gui.tree.nodes[parent_node.id].children.remove(self.id)
+            try:
+                self.scene.gui.tree.nodes[parent_node.id].children.remove(self.id)
+            except ValueError:
+                pass
         self.scene.removeItem(self)
         self.scene.close_property_display()
         if self in self.scene.disconnected_nodes:
             self.scene.disconnected_nodes.remove(self)
-        del self.scene.nodes[self.id]
+        self.scene.nodes.pop(self.id, None)
         if self.scene.gui.tree.root == self.id:
             self.scene.gui.tree.root = ''
         # remove node from internal tree structure
-        del self.scene.gui.tree.nodes[self.id]
-        if delete_parent_relation and parent_node:
-            # todo fix view not being updated
-            node = self.gui.tree.nodes.get(parent_node.id)
+        self.scene.gui.tree.nodes.pop(self.id, None)
+        if delete_parent_relation and parent_node and update_tree:
+            node = self.scene.gui.tree.nodes.get(parent_node.id)
             self.scene.gui.update_tree(node)
 
     def reconnect_edge(self):
@@ -584,13 +596,11 @@ class Node(QGraphicsItem):
         super(Node, self).mousePressEvent(m_event)
         tree = self.scene.gui.tree.nodes[self.id]
         if self.scene.view.parent().property_display:
-            self.scene.view.parent().property_display.update_properties()
             self.scene.view.parent().property_display.setParent(None)
             self.scene.view.parent().property_display.deleteLater()
         self.scene.view.parent().property_display = view.widgets.TreeViewPropertyDisplay(
             self.scene.view.parent().graphics_scene, tree.attributes, parent=self.scene.view.parent(), node_id=tree.id,
             node_title=tree.title)
-        self.sort_children()
 
     def mouseMoveEvent(self, m_event):
         """

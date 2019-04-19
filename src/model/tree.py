@@ -699,6 +699,7 @@ class Collection:
                                                ' children'.format(role_node.title, role_node.id))
             role_name = role_node.attributes.get('role')
             start_node_id = role_node.children[0]
+        updated_roots = []
         for category, trees in self.collection.items():
             for _, loop_tree in trees.items():
                 if category == 'roles' and loop_tree.name == role_name and tree != loop_tree and \
@@ -720,6 +721,7 @@ class Collection:
                                 continue
                             elif node in loop_tree.nodes.values():
                                 loop_tree.update_subtree(tree, node.id, start_node_id)
+                                updated_roots.append(node.id)
                                 # propagate ROLE attribute again
                                 if 'properties' in node.attributes and 'ROLE' in \
                                         node.attributes.get('properties'):
@@ -731,6 +733,7 @@ class Collection:
                             # do not update subtrees with a role node above it if
                             # the tree updating from has a role node below it.
                             Collection.logger.warning('Prevented a cycle. Found a subtree above or below a subtree.')
+        return updated_roots
 
     def verify_tree(self, tree, category=None, only_check_mathematical_properties=False) -> List[str]:
         """

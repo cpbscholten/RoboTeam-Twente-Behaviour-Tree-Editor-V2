@@ -1,5 +1,5 @@
 {
-  "auto_update_roles": false,
+  "auto_update_roles": true,
   "default_collection_categories": [
     "keeper",
     "roles",

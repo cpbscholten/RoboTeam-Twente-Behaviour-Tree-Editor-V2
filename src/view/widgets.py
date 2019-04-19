@@ -6,7 +6,7 @@ from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt, QTimer, QMimeData
 from PyQt5.QtGui import QIcon, QPainter, QPalette, QKeySequence, QDrag
 from PyQt5.QtWidgets import QGraphicsView, QTreeWidget, QTreeWidgetItem, QWidget, QVBoxLayout, QPushButton, QLabel, \
-    QLineEdit, QFormLayout, QApplication, QGridLayout, QHBoxLayout, QComboBox, QAction, QAbstractItemView
+    QLineEdit, QFormLayout, QApplication, QGridLayout, QHBoxLayout, QComboBox, QAction, QAbstractItemView, QCheckBox
 
 import view.windows
 import view.scenes
@@ -617,8 +617,7 @@ class TreeViewPropertyDisplay(QWidget):
                     skip = False
                     pass
         # remove empty line property
-        if '' in properties.keys():
-            properties.pop('')
+        properties.pop('', None)
         # optional propagate ROLE
         if "ROLE" in properties.keys():
             self.scene.gui.tree.propagate_role(self.node_id, properties.get("ROLE"))
@@ -681,12 +680,26 @@ class TreeViewPropertyDisplay(QWidget):
         attributes_label = QLabel('Attributes')
         attributes_label.setStyleSheet('font-weight: bold')
         self.layout.addWidget(attributes_label, current_row, 0, 1, 0, Qt.AlignCenter)
+        # Add root checkbox
+        current_row = self.layout.rowCount()
+        root_label = QLabel("root")
+        root_checkbox = QCheckBox()
+        if node_id and self.scene.nodes[node_id].parentItem():
+            root_checkbox.setDisabled(True)
+        else:
+            root_checkbox.setCheckState(Qt.Checked if node_id == self.scene.gui.tree.root else Qt.Unchecked)
+            root_checkbox.stateChanged.connect(lambda state: self.scene.change_root(node_id) if state else self.scene.change_root(''))
+        self.layout.addWidget(root_label, current_row, 0)
+        self.layout.addWidget(root_checkbox, current_row, 1)
         for key in display_attributes:
             current_row = self.layout.rowCount()
             key_label = QLabel(str(key))
             key_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
             value_label = QLabel(str(display_attributes[key]))
             value_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+            max_width = max(key_label.sizeHint().width(), value_label.sizeHint().width())
+            key_label.setMinimumWidth(max_width)
+            value_label.setMinimumWidth(max_width)
             self.layout.addWidget(key_label, current_row, 0)
             self.layout.addWidget(value_label, current_row, 1)
 

@@ -202,12 +202,16 @@ class MainWindow(QMainWindow):
         """
         self.toolbar_widget.verify_tree()
         # if node is given check if a subtree changed
+        changed_nodes = []
         if node and Settings.auto_update_roles():
+            view_node = self.tree_view_widget.graphics_scene.nodes[node.id]
             node = self.tree.find_role_subtree_node_above_node(node)
             if node:
-                self.collection.update_subtrees_in_collection(self.tree, node)
+                changed_nodes = self.collection.update_subtrees_in_collection(self.tree, node)
             elif 'roles' == self.category:
-                self.collection.update_subtrees_in_collection(self.tree)
+                changed_nodes = self.collection.update_subtrees_in_collection(self.tree)
+            self.tree_view_widget.graphics_scene.update_children(changed_nodes)
+            view_node.initiate_view(True)
         # rebuild menu bar
         self.update_window_title_and_menu_bar()
 
